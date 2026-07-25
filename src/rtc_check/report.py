@@ -188,6 +188,21 @@ def agregar(achados: list[Achado]) -> list[GrupoSku]:
     )
 
 
+# Quantos CNPJs cabem no cabeçalho antes de a linha virar uma parede. Um
+# escritório com cinquenta empresas não precisa ver as cinquenta ali em cima.
+EMITENTES_NO_CABECALHO = 3
+
+
+def rotulo_dos_emitentes(resumo: Resumo, limite: int = EMITENTES_NO_CABECALHO) -> str:
+    documentos = resumo.documentos_emitentes
+    if not documentos:
+        return "(nenhum XML válido)"
+    if len(documentos) <= limite:
+        return ", ".join(documentos)
+    restantes = len(documentos) - limite
+    return f"{', '.join(documentos[:limite])} e mais {restantes}"
+
+
 def _linhas_por_emitente(resumo: Resumo) -> list[str]:
     linhas = ["  Por emitente:", ""]
     for e in resumo.emitentes_ordenados:
@@ -232,7 +247,7 @@ def formatar_texto(
     comparativo: Comparativo | None = None,
 ) -> str:
     dias = dias_ate_corte(hoje)
-    emitente = ", ".join(resumo.documentos_emitentes) or "(nenhum XML válido)"
+    emitente = rotulo_dos_emitentes(resumo)
     linhas = [
         "",
         "  RTC Check | prontidão para a Reforma Tributária",
@@ -270,7 +285,17 @@ def formatar_texto(
         linhas.append("  SKUs com risco de rejeição se o padrão continuar após 03/08:")
         linhas.append("")
         for g in bloqueios[:limite]:
-            linhas.append(f"    {g.sku}  ({g.ocorrencias}x em {len(g.arquivos)} nota(s))")
+            # Com mais de um emitente no acervo, o mesmo código de produto
+            # aparece uma vez por empresa. Sem o CNPJ na linha, as duas ficam
+            # idênticas e quem lê não sabe qual cadastro corrigir.
+            de_quem = (
+                f"  [emitente {g.emitente_documento}]"
+                if resumo.tem_multiplos_emitentes
+                else ""
+            )
+            linhas.append(
+                f"    {g.sku}  ({g.ocorrencias}x em {len(g.arquivos)} nota(s)){de_quem}"
+            )
             linhas.append(f"      {g.descricao[:64]}")
             for codigo in sorted(g.codigos):
                 linhas.append(f"      [{codigo}] {g.mensagens[codigo]}")
@@ -486,7 +511,13 @@ def formatar_html(
     dias = dias_ate_corte(hoje)
     b = resumo.por_severidade[Severidade.BLOQUEIO.value]
     a = resumo.por_severidade[Severidade.ALERTA.value]
-    emitente = e(", ".join(resumo.documentos_emitentes) or "(nenhum XML válido)")
+    emitente = e(rotulo_dos_emitentes(resumo))
+
+    # Só existe coluna de emitente quando há mais de um: num acervo de uma
+    # empresa só, ela seria a mesma resposta repetida em toda linha.
+    varios = resumo.tem_multiplos_emitentes
+    coluna_emitente = "<th>Emitente</th>" if varios else ""
+    colunas = 7 if varios else 6
 
     linhas = []
     for g in resumo.grupos:
@@ -494,8 +525,12 @@ def formatar_html(
             f'<div class="msg"><code>{e(c)}</code> {e(g.mensagens[c])}</div>'
             for c in sorted(g.codigos)
         )
+        celula_emitente = (
+            f"<td><code>{e(g.emitente_documento)}</code></td>" if varios else ""
+        )
         linhas.append(
             f"<tr><td><code>{e(g.sku)}</code></td>"
+            f"{celula_emitente}"
             f"<td>{e(g.descricao[:70])}{msgs}</td>"
             f"<td><code>{e(g.ncm)}</code></td>"
             f'<td><span class="tag {g.severidade_max.value}">'
@@ -503,7 +538,7 @@ def formatar_html(
             f"<td>{g.ocorrencias}</td><td>{len(g.arquivos)}</td></tr>"
         )
 
-    corpo = "".join(linhas) or '<tr><td colspan="6">Nenhum achado.</td></tr>'
+    corpo = "".join(linhas) or f'<tr><td colspan="{colunas}">Nenhum achado.</td></tr>'
 
     cartoes = [
         ("", resumo.arquivos_lidos, "XMLs lidos"),
@@ -541,7 +576,7 @@ Tabela CST/cClassTrib: <a href="{e(NORMATIVA_RTC.fonte_tabela)}">{
 <div class="cards">{cards}</div>
 {secoes}
 <div class="tw"><table>
-<thead><tr><th>SKU</th><th>Produto / achados</th><th>NCM</th>
+<thead><tr><th>SKU</th>{coluna_emitente}<th>Produto / achados</th><th>NCM</th>
 <th>Severidade</th><th>Ocorrências</th><th>Notas</th></tr></thead>
 <tbody>{corpo}</tbody></table></div>
 <footer>Gerado localmente pelo RTC Check. Nenhum dado saiu desta máquina.<br>

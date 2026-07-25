@@ -3,7 +3,13 @@ from datetime import date
 from pathlib import Path
 
 from rtc_check.cli import analisar, main
-from rtc_check.report import comparar, formatar_html, formatar_json, formatar_texto
+from rtc_check.report import (
+    comparar,
+    formatar_html,
+    formatar_json,
+    formatar_texto,
+    rotulo_dos_emitentes,
+)
 from rtc_check.rules import Severidade
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -172,6 +178,55 @@ def test_acervo_multi_emitente_nao_mistura_skus_iguais(tmp_path):
     assert resumo.tem_multiplos_emitentes
     assert resumo.documentos_emitentes == ("11111111000111", "22222222000122")
     assert len(resumo.grupos) == 2
+
+
+def test_relatorio_de_texto_diz_de_qual_emitente_e_cada_sku(tmp_path):
+    """Separar os grupos por emitente não serve de nada se as linhas saem iguais."""
+    for documento in ("11111111000111", "22222222000122"):
+        (tmp_path / f"{documento}.xml").write_text(
+            _nota_crt3("SKU-X", documento=documento), encoding="utf-8"
+        )
+
+    saida = formatar_texto(analisar(tmp_path))
+
+    assert "[emitente 11111111000111]" in saida
+    assert "[emitente 22222222000122]" in saida
+
+
+def test_relatorio_de_texto_nao_polui_acervo_de_um_emitente_so(tmp_path):
+    saida = formatar_texto(analisar(_acervo_emitente_unico(tmp_path)))
+    assert "[emitente" not in saida
+
+
+def test_html_ganha_coluna_de_emitente_quando_ha_mais_de_um(tmp_path):
+    for documento in ("11111111000111", "22222222000122"):
+        (tmp_path / f"{documento}.xml").write_text(
+            _nota_crt3("SKU-X", documento=documento), encoding="utf-8"
+        )
+
+    saida = formatar_html(analisar(tmp_path))
+
+    assert "<th>Emitente</th>" in saida
+    assert "22222222000122" in saida
+
+
+def test_html_de_um_emitente_so_nao_ganha_coluna_repetida(tmp_path):
+    saida = formatar_html(analisar(_acervo_emitente_unico(tmp_path)))
+    assert "<th>Emitente</th>" not in saida
+
+
+def test_cabecalho_nao_vira_parede_com_muitos_emitentes(tmp_path):
+    for i in range(9):
+        documento = f"1111111100{i:04d}"
+        (tmp_path / f"{documento}.xml").write_text(
+            _nota_crt3("SKU-X", documento=documento), encoding="utf-8"
+        )
+
+    resumo = analisar(tmp_path)
+    rotulo = rotulo_dos_emitentes(resumo)
+
+    assert rotulo.endswith("e mais 6")
+    assert rotulo.count(",") == 2
 
 
 def test_comparativo_multi_emitente_nao_colapsa_sku_igual(tmp_path):

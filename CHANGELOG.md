@@ -43,6 +43,15 @@ pagos, com 14 dias de teste grátis liberados por um comando local.
   proibido, conforme UB13-10, UB13-20 e UB13-30.
 - Caminhos relativos preservam a identidade de XMLs homônimos em subpastas.
 - Erros de leitura e permissão viram arquivos ilegíveis sem interromper a varredura.
+- O emitente aparece na lista de SKUs do relatório de texto e como coluna do HTML
+  quando o acervo tem mais de uma empresa. Separar os grupos por emitente não
+  resolvia nada enquanto as duas linhas saíam idênticas na tela.
+- O cabeçalho resume a lista de emitentes em três documentos e um contador, em
+  vez de despejar todos os CNPJs numa linha só.
+- A tabela de CST do IBS/CBS ganhou teste com a lista literal dos 18 códigos
+  oficiais. Os testes parametrizados liam a mesma constante que a regra consulta,
+  então um código digitado errado passava com a suíte verde, e errar essa tabela
+  gera bloqueio, não alerta.
 
 ## [0.1.1] / 2026-07-25
 

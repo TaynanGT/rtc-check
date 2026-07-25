@@ -4,7 +4,11 @@ import pytest
 
 from rtc_check.parser import ler_nota
 from rtc_check.rules import avaliar_nota
-from rtc_check.tabelas_rtc import CSTS_EXIGEM_GIBSCBS, CSTS_PROIBEM_GIBSCBS
+from rtc_check.tabelas_rtc import (
+    CSTS_EXIGEM_GIBSCBS,
+    CSTS_IBSCBS,
+    CSTS_PROIBEM_GIBSCBS,
+)
 
 
 def _xml_rtc(
@@ -58,6 +62,32 @@ def test_ub12_nao_confunde_ibscbs_com_gibscbs(tmp_path):
         incluir_gibscbs=False,
     )
     assert not codigos & {"RTC001", "RTC003", "RTC004", "RTC005"}
+
+
+# Os 18 CST do IBS/CBS, transcritos do Informe Técnico 2025.002 e conferidos
+# contra a tabela publicada. A lista fica literal aqui de propósito: os testes
+# parametrizados abaixo leem a mesma constante que a regra consulta, então sem
+# esta âncora um código digitado errado passaria com a suíte verde. E errar a
+# tabela não gera alerta, gera bloqueio: é o falso positivo que faz o relatório
+# inteiro perder a confiança. Mexer na tabela tem que doer aqui primeiro.
+CSTS_OFICIAIS = {
+    "000", "010", "011", "200", "220", "221", "222", "400", "410",
+    "510", "515", "550", "620", "800", "810", "811", "820", "830",
+}
+
+
+def test_tabela_de_cst_bate_com_a_publicada():
+    assert set(CSTS_IBSCBS) == CSTS_OFICIAIS
+
+
+def test_cst_nao_pode_exigir_e_proibir_gibscbs_ao_mesmo_tempo():
+    assert not CSTS_EXIGEM_GIBSCBS & CSTS_PROIBEM_GIBSCBS
+    assert CSTS_EXIGEM_GIBSCBS | CSTS_PROIBEM_GIBSCBS == CSTS_OFICIAIS
+
+
+def test_cst_que_nao_existe_na_tabela_nao_e_aceito():
+    """Guarda contra o 210, que circula em material desatualizado."""
+    assert "210" not in CSTS_IBSCBS
 
 
 @pytest.mark.parametrize("cst", sorted(CSTS_EXIGEM_GIBSCBS))
