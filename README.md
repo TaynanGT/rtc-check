@@ -1,5 +1,11 @@
 # RTC Check
 
+[![CI](https://github.com/TaynanGT/rtc-check/actions/workflows/ci.yml/badge.svg)](https://github.com/TaynanGT/rtc-check/actions/workflows/ci.yml)
+[![Licença: AGPL v3](https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%20a%203.14-blue.svg)](pyproject.toml)
+
+**[Página do projeto](https://taynangt.github.io/rtc-check/)**
+
 **Descubra hoje quais dos seus produtos o SEFAZ vai rejeitar em 3 de agosto.**
 
 A partir de **03/08/2026**, a NF-e emitida por empresa no Regime Normal (CRT=3) sem os
@@ -101,7 +107,7 @@ acervo inteiro, e o validador oficial para confirmar a nota corrigida antes de e
 ## Desenvolvimento
 
 ```bash
-git clone <repo> && cd rtc-check
+git clone https://github.com/TaynanGT/rtc-check && cd rtc-check
 uv venv && uv pip install -e ".[dev]"
 uv run pytest          # testes
 uv run ruff check .    # lint
