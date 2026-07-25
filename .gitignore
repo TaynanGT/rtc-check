@@ -15,3 +15,8 @@ htmlcov/
 !site/index.html
 xmls/
 acervo/
+
+# Material comercial: fica fora do repo publico. As empresas listadas
+# nao precisam se encontrar numa lista de prospeccao com comentario ao lado.
+docs/prospeccao.md
+docs/mensagens.md
