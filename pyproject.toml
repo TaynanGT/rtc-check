@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "Auditoria local de prontidão da NF-e para a Reforma Tributária (IBS/CBS)"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 keywords = ["nfe", "sefaz", "reforma-tributaria", "ibs", "cbs", "fiscal"]
 classifiers = [
     "Development Status :: 4 - Beta",
