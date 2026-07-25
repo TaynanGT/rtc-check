@@ -86,7 +86,7 @@ sentido eu indicar vocês pra emissão e vocês indicarem isso pra auditoria pr�
 
 ## Registro de contatos
 
-Preencha conforme enviar. Vazio de propósito, não há nada enviado. enviado.
+Preencha conforme enviar. Está vazio de propósito: não há nada enviado.
 
 | Data | Empresa | Segmento | Contato | Canal | Mensagem | Resposta | Próximo passo | Status |
 |---|---|---|---|---|---|---|---|---|
