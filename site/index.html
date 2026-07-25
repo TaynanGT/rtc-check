@@ -262,15 +262,19 @@ regulatória foi usada.</p>
 <section class="w" id="comecar">
 <h2>Começar</h2>
 
-<p>Precisa de Python 3.11 ou mais novo. Ainda não está no PyPI; use a release
-publicada, não a branch <code>main</code>:</p>
+<p>Precisa de Python 3.11 ou mais novo. Ainda não está no PyPI:</p>
 
-<pre><code>pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git@v0.2.0"
+<pre><code>pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git"
 rtc-check ./pasta-com-xmls</code></pre>
 
 <p>Ou sem instalar nada permanente:</p>
 
-<pre><code>uvx --from git+https://github.com/TaynanGT/rtc-check.git@v0.2.0 rtc-check ./pasta-com-xmls</code></pre>
+<pre><code>uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./pasta-com-xmls</code></pre>
+
+<p class="nota">Em produção, fixe uma versão em vez de acompanhar a
+<code>main</code>: acrescente a tag da release à URL, como em
+<code>...rtc-check.git@v0.1.1</code>. As tags estão em
+<a href="https://github.com/TaynanGT/rtc-check/releases">releases</a>.</p>
 
 <p>O agrupamento interno usa documento do emitente + SKU. Códigos iguais de
 empresas diferentes não são misturados; o detalhamento visual por CNPJ está

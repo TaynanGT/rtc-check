@@ -54,17 +54,20 @@ Exportar, automatizar e comparar execuções fazem parte dos planos pagos, com
 ## Instalação
 
 Ainda não está no PyPI ([falta um passo que só o dono da conta faz](docs/publicar-no-pypi.md)).
-Para uma instalação reproduzível, use a release publicada, nunca a branch `main`:
 
 ```bash
-pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git@v0.2.0"
+pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git"
 ```
 
 Ou rode sem instalar nada de forma permanente:
 
 ```bash
-uvx --from git+https://github.com/TaynanGT/rtc-check.git@v0.2.0 rtc-check ./xmls
+uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
+
+Em produção, prefira fixar uma versão a acompanhar a `main`: acrescente a tag da
+release à URL, como em `...rtc-check.git@v0.1.1`. As tags disponíveis estão em
+[releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.14.
 

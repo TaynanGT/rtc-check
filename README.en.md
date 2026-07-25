@@ -51,14 +51,18 @@ automating and comparing runs are part of the paid plans, with a
 ## Install
 
 ```bash
-pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git@v0.2.0"
+pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git"
 ```
 
 Or without installing anything permanent:
 
 ```bash
-uvx --from git+https://github.com/TaynanGT/rtc-check.git@v0.2.0 rtc-check ./xmls
+uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
+
+In production, pin a version instead of tracking `main`: append the release tag to
+the URL, as in `...rtc-check.git@v0.1.1`. Available tags are listed under
+[releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requires Python 3.11+. Tested on Windows, Linux and macOS, from 3.11 to 3.14.
 
