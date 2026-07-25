@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RTC Check — quais dos seus produtos o SEFAZ vai rejeitar em agosto</title>
+<title>RTC Check: quais dos seus produtos o SEFAZ vai rejeitar em agosto</title>
 <meta name="description" content="Varre o acervo de XML de NF-e que você já tem no disco e lista os SKUs que serão rejeitados a partir de 03/08/2026. Roda local, nenhum arquivo sai da máquina.">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -66,7 +66,7 @@ ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
 
 <header class="w">
   <div class="alerta">
-    <div class="dias" id="dias">—</div>
+    <div class="dias" id="dias">··</div>
     <div>
       <p><strong>3 de agosto de 2026.</strong></p>
       <p>Data em que o SEFAZ passa a rejeitar NF-e de emitente no Regime Normal
@@ -77,7 +77,7 @@ ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
   <h1>Descubra hoje quais dos seus produtos vão ser rejeitados em agosto.</h1>
 
   <p class="lead">Entender a regra é a parte fácil. O problema é saber quais dos
-  seus milhares de SKUs estão fora — e isso está todo no XML que você já tem
+  seus milhares de SKUs estão fora, e isso está todo no XML que você já tem
   guardado no disco.</p>
 
   <div class="btns">
@@ -95,7 +95,7 @@ trabalho:</p>
 
 <pre><code>$ rtc-check ./xmls
 
-  RTC Check — prontidão para a Reforma Tributária
+  RTC Check | prontidão para a Reforma Tributária
   ----------------------------------------------------
   Corte da obrigatoriedade (CRT=3): 03/08/2026  (9 dias)
 
@@ -157,7 +157,7 @@ primeira execução, que leva alguns segundos.</blockquote>
 
 <p>Emitente do Simples Nacional (CRT=1 e 2) <strong>não</strong> gera bloqueio: a
 transição deles segue regra própria e não cai no corte de agosto. Apontar bloqueio
-onde não existe é pior que não apontar nada — um relatório com falso positivo é um
+onde não existe é pior que não apontar nada. Um relatório com falso positivo é um
 relatório que ninguém lê até o fim.</p>
 </section>
 
@@ -166,7 +166,7 @@ relatório que ninguém lê até o fim.</p>
 
 <p>Não é validador de schema, e não tenta ser. O
 <a href="https://dfe-portal.svrs.rs.gov.br/Cff/ValidadorRtcNfe">validador oficial
-do SEFAZ-RS</a> é a fonte de verdade para conformidade estrutural — e é gratuito.</p>
+do SEFAZ-RS</a> é a fonte de verdade para conformidade estrutural, e é gratuito.</p>
 
 <p>A diferença é o escopo: o oficial valida <em>uma nota por vez</em>. Se você tem
 quatro mil notas e não sabe por onde começar, ele não ajuda. O RTC Check varre o
@@ -234,14 +234,14 @@ ou a memória saírem da ordem de grandeza. Você pode reproduzir com
 <tr><td>Todos os formatos de saída</td><td class="ok">sim</td><td class="ok">sim</td></tr>
 <tr><td>Atualização de regras</td><td class="no">via GitHub</td>
   <td class="ok">no dia da NT</td></tr>
-<tr><td>Vários CNPJ num relatório</td><td class="no">—</td><td class="ok">sim</td></tr>
-<tr><td>Comparativo entre execuções</td><td class="no">—</td><td class="ok">sim</td></tr>
+<tr><td>Vários CNPJ num relatório</td><td class="no">não</td><td class="ok">sim</td></tr>
+<tr><td>Comparativo entre execuções</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Suporte</td><td class="no">issues públicas</td><td class="ok">e-mail, 1 dia útil</td></tr>
 </tbody>
 </table>
 
 <p>O plano gratuito não é isca: ele resolve o problema inteiro para quem tem um CNPJ
-e sabe rodar um comando. O que se paga é tempo — regra atualizada no dia em que a
+e sabe rodar um comando. O que se paga é tempo: regra atualizada no dia em que a
 nota técnica sai, em vez de você acompanhando o portal do SEFAZ.</p>
 
 <p>A NT 2025.002 já passou de trinta revisões. Uma varredura é foto; a obrigação
@@ -249,7 +249,7 @@ nota técnica sai, em vez de você acompanhando o portal do SEFAZ.</p>
 </section>
 
 <footer class="w">
-  <p>RTC Check — AGPL-3.0-or-later. Uso interno na sua empresa, inclusive
+  <p>RTC Check, AGPL-3.0-or-later. Uso interno na sua empresa, inclusive
   comercial, está liberado.</p>
   <p>Ferramenta independente, sem vínculo com a SEFAZ, a Receita Federal ou
   qualquer órgão público. Não substitui orientação do seu contador.</p>

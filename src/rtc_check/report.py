@@ -76,7 +76,7 @@ def formatar_texto(resumo: Resumo, hoje: date | None = None) -> str:
     dias = dias_ate_corte(hoje)
     linhas = [
         "",
-        "  RTC Check — prontidão para a Reforma Tributária",
+        "  RTC Check | prontidão para a Reforma Tributária",
         "  " + "-" * 52,
         f"  Corte da obrigatoriedade (CRT=3): 03/08/2026  ({dias} dias)",
         "",
@@ -237,11 +237,11 @@ def formatar_html(resumo: Resumo, hoje: date | None = None) -> str:
     return f"""<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RTC Check — relatório de prontidão</title><style>{_CSS}</style></head>
+<title>RTC Check: relatório de prontidão</title><style>{_CSS}</style></head>
 <body><div class="wrap">
 <h1>Prontidão para a Reforma Tributária</h1>
 <p class="sub">Corte da obrigatoriedade para emitentes CRT=3:
-<strong>03/08/2026</strong> — faltam {dias} dias.</p>
+<strong>03/08/2026</strong>, faltam {dias} dias.</p>
 <div class="cards">{cards}</div>
 <div class="tw"><table>
 <thead><tr><th>SKU</th><th>Produto / achados</th><th>NCM</th>

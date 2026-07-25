@@ -2,7 +2,7 @@
 
 Só toca em campos do layout 4.00, estáveis e públicos desde 2018. A detecção
 dos grupos da Reforma Tributária é por *presença*, não por validação de schema
-— o XSD oficial é a fonte de verdade para conformidade estrutural.
+O XSD oficial é a fonte de verdade para conformidade estrutural.
 """
 
 from __future__ import annotations

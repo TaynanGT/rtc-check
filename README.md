@@ -5,12 +5,12 @@
 A partir de **03/08/2026**, a NF-e emitida por empresa no Regime Normal (CRT=3) sem os
 campos de IBS e CBS passa a ser rejeitada. Nota rejeitada é mercadoria parada na doca.
 
-O problema prático não é entender a regra — é saber **quais dos seus milhares de produtos
+O problema prático não é entender a regra. É saber **quais dos seus milhares de produtos
 estão fora**. O RTC Check varre o acervo de XML que você já tem no disco e devolve a lista
 de SKUs que precisam de ação, agrupada por produto e ordenada por impacto.
 
 ```
-  RTC Check — prontidão para a Reforma Tributária
+  RTC Check | prontidão para a Reforma Tributária
   ----------------------------------------------------
   Corte da obrigatoriedade (CRT=3): 03/08/2026  (9 dias)
 
@@ -28,7 +28,7 @@ de SKUs que precisam de ação, agrupada por produto e ordenada por impacto.
 ## Roda na sua máquina. Ponto.
 
 Nenhum XML sai do seu computador. Sem upload, sem conta, sem servidor, sem telemetria.
-Zero dependências além da biblioteca padrão do Python — dá para auditar o que ele faz em
+Zero dependências além da biblioteca padrão do Python. Dá para auditar o que ele faz em
 uma tarde, e é por isso que o código é aberto.
 
 ## Instalação
@@ -85,7 +85,7 @@ rtc-check ./xmls --falhar-em-bloqueio
 | `NCM001` | bloqueio | NCM ausente ou fora do formato de 8 dígitos |
 | `GTIN001` | alerta | GTIN com dígito verificador inválido, ausente ou malformado |
 
-Notas de emitentes no Simples Nacional (CRT=1 e 2) não geram bloqueio de RTC — a transição
+Notas de emitentes no Simples Nacional (CRT=1 e 2) não geram bloqueio de RTC. A transição
 delas segue regra própria e não cai no corte de agosto.
 
 ## O que ele *não* é
@@ -93,7 +93,7 @@ delas segue regra própria e não cai no corte de agosto.
 Não é um validador de schema. O RTC Check confere **presença e formato** de campos usando
 tags do layout 4.00, estáveis e públicas desde 2018. Ele não substitui o
 [validador oficial do SEFAZ-RS](https://dfe-portal.svrs.rs.gov.br/Cff/ValidadorRtcNfe),
-que é a fonte de verdade para conformidade estrutural — e que valida uma nota por vez.
+que é a fonte de verdade para conformidade estrutural, e valida uma nota por vez.
 
 Os dois se complementam: use o RTC Check para descobrir *onde* está o problema no seu
 acervo inteiro, e o validador oficial para confirmar a nota corrigida antes de emitir.
@@ -113,5 +113,5 @@ uv run mypy            # tipos
 AGPL-3.0-or-later. Uso interno na sua empresa, incluindo comercial, está liberado.
 
 Se você quer embarcar o RTC Check num produto fechado ou oferecê-lo como serviço sem
-publicar suas modificações, existe licença comercial — veja
+publicar suas modificações, existe licença comercial. Veja
 [COMMERCIAL.md](COMMERCIAL.md).

@@ -11,7 +11,7 @@ labels: falso-positivo
 **O que o SEFAZ diz:** (retorno da autorização, ou print do validador oficial)
 
 **XML mínimo que reproduz:**
-Remova dados reais — troque CNPJ, chave e descrição por valores fictícios.
+Remova dados reais: troque CNPJ, chave e descrição por valores fictícios.
 
 ```xml
 

@@ -1,7 +1,7 @@
 # Mensagens prontas
 
 Escritas para serem enviadas por **você**, no seu nome, uma a uma. Não são template
-de disparo em massa — cada uma tem um `[colchete]` que precisa ser preenchido com
+de disparo em massa. Cada uma tem um `[colchete]` que precisa ser preenchido com
 algo específico daquela empresa. Se você não consegue preencher, não mande: significa
 que não pesquisou o suficiente e a pessoa vai perceber.
 
@@ -15,7 +15,7 @@ Todas as afirmações abaixo são verdadeiras hoje. Não diga nada além disso.
 
 > Oi, [nome],
 >
-> Vi que vocês atendem [tipo de cliente — indústria, distribuidora, o que for
+> Vi que vocês atendem [tipo de cliente: indústria, distribuidora, o que for
 > verificável no site deles].
 >
 > Dia 3 de agosto o SEFAZ começa a rejeitar NF-e de emitente CRT=3 sem os campos de
@@ -26,7 +26,7 @@ Todas as afirmações abaixo são verdadeiras hoje. Não diga nada além disso.
 > SKUs que precisam de ação, agrupada por produto. Um SKU que aparece em 4.000 notas
 > vira uma linha, não quatro mil.
 >
-> Roda na máquina, nada sobe pra lugar nenhum — imagino que mandar XML de cliente pra
+> Roda na máquina, nada sobe pra lugar nenhum. Imagino que mandar XML de cliente pra
 > servidor de terceiro não seja uma opção pra vocês. É gratuita e de código aberto:
 > [link]
 >
@@ -42,7 +42,7 @@ feedback em vez de reunião.
 
 ## 2. Parceiro de infraestrutura fiscal (TecnoSpeed, Focus, NFE.io e afins)
 
-**Assunto:** ferramenta aberta de auditoria prévia — encaixa antes da emissão de vocês
+**Assunto:** ferramenta aberta de auditoria prévia, encaixa antes da emissão de vocês
 
 > Oi, [nome ou "time da [empresa]"],
 >
@@ -50,7 +50,7 @@ feedback em vez de reunião.
 > varre o acervo de XML do cliente e aponta quais itens vão ser rejeitados a partir de
 > 3 de agosto por falta de gIBSCBS/cClassTrib.
 >
-> O motivo de eu escrever: [algo específico e verificável — "vocês publicaram um
+> O motivo de eu escrever: [algo específico e verificável: "vocês publicaram um
 > material sobre preparar ISVs pra Reforma", "o posicionamento de vocês é economizar
 > tempo de dev do cliente"]. Isso é o mesmo problema, uma etapa antes.
 >
@@ -65,7 +65,7 @@ feedback em vez de reunião.
 > [seu nome]
 
 Por que funciona: chega como complemento, não como pedido. O argumento de "menos ticket
-de suporte" é interesse deles, não seu. E fecha reconhecendo o momento — quem trabalha
+de suporte" é interesse deles, não seu. E fecha reconhecendo o momento. Quem trabalha
 com fiscal está afogado agora, e fingir que não está soa falso.
 
 ---
@@ -79,7 +79,7 @@ com fiscal está afogado agora, e fingir que não está soa falso.
 > tem 4.000 notas no disco e não sabe quais dos seus produtos estão fora.
 >
 > Escrevi um programinha que lê essa pasta e responde isso. Ele agrupa por SKU, que é
-> como o trabalho realmente acontece — o mesmo produto quebrado em 4.000 notas é uma
+> como o trabalho realmente acontece. O mesmo produto quebrado em 4.000 notas é uma
 > correção de cadastro, não quatro mil.
 >
 > Roda na sua máquina, não sobe nada pra lugar nenhum, é aberto e é de graça: [link]
@@ -102,7 +102,7 @@ descrever, e o pedido final é de ajuda, não de venda.
 > that lack the new IBS/CBS fields, for companies on the regular tax regime.
 >
 > The rule is simple. Finding which of your thousands of product records are
-> non-compliant is not — the evidence is spread across every XML you've filed.
+> non-compliant is not. The evidence is spread across every XML you've filed.
 >
 > This is a CLI that reads a folder of those XMLs and reports which SKUs need fixing,
 > grouped by product rather than by occurrence. One broken SKU across 4,000 invoices
@@ -120,7 +120,7 @@ descrever, e o pedido final é de ajuda, não de venda.
 - **Uma por vez.** Se você conseguiria trocar o nome da empresa e a mensagem continuar
   funcionando, ela não está personalizada.
 - **Não invente número.** Não existe cliente, download ou depoimento ainda. A primeira
-  alegação falsa que um contador pegar derruba tudo — é um mercado pequeno e que conversa.
+  alegação falsa que um contador pegar derruba tudo. É um mercado pequeno e que conversa.
 - **Não use urgência falsa.** O prazo é real e é forte o bastante. "Últimas vagas" numa
   ferramenta gratuita é insulto à inteligência de quem lê.
 - **Respeite descadastro.** Pediu pra não receber mais, acabou, e anota isso.

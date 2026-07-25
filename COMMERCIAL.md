@@ -16,10 +16,10 @@ Você precisa de licença comercial em dois casos:
 | Varredura local, ilimitada | sim | sim | sim |
 | Todos os formatos de saída | sim | sim | sim |
 | Atualização de regras | via GitHub | pacote assinado, no dia da NT | idem |
-| Múltiplos CNPJ num relatório | — | sim | sim |
-| Comparativo entre execuções | — | sim | sim |
+| Múltiplos CNPJ num relatório | não | sim | sim |
+| Comparativo entre execuções | não | sim | sim |
 | Suporte | issues públicas | e-mail, 1 dia útil | contrato |
-| Licença para redistribuir | — | — | sim |
+| Licença para redistribuir | não | não | sim |
 
 O plano gratuito não é isca. Ele resolve o problema inteiro para quem tem um CNPJ e
 sabe rodar um comando. O que se paga é **tempo**: regra atualizada no dia em que a
@@ -32,7 +32,7 @@ validação ou prazo. Uma varredura é foto; a obrigação é filme.
 
 ## Cálculo de retorno
 
-Preencha com os seus números — não invento os seus:
+Preencha com os seus números, porque não invento os seus:
 
 ```
 notas rejeitadas por dia × horas para reprocessar cada uma × custo/hora

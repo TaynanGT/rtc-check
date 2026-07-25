@@ -1,10 +1,10 @@
-# Prospecção — RTC Check
+# Prospecção: RTC Check
 
 **Nada foi enviado.** Este arquivo é a lista qualificada e as mensagens prontas.
 O envio é seu: eu não disparo mensagem comercial em nome de ninguém.
 
 Nenhum e-mail abaixo foi inventado. Onde não consegui confirmar o endereço numa
-fonte pública, o campo está marcado `(confirmar no site)` — confira antes de mandar.
+fonte pública, o campo está marcado `(confirmar no site)`. Confira antes de mandar.
 Endereço errado queima domínio e vira spam.
 
 ---
@@ -19,11 +19,11 @@ reputação. Com 9 dias até o corte e orçamento zero, a ordem que rende mais �
 3. **Parceria com quem já vende fiscal** (mais lento, maior alcance)
 
 Faça o 1 primeiro. Chegar no 3 dizendo "300 escritórios já rodaram" muda a conversa
-inteira — hoje você chegaria dizendo "fiz uma ferramenta", que é o que todo mundo diz.
+inteira. Hoje você chegaria dizendo "fiz uma ferramenta", que é o que todo mundo diz.
 
 ---
 
-## Nível 1 — Comunidade (comece por aqui, hoje)
+## Nível 1: comunidade (comece por aqui, hoje)
 
 Não é prospecção, é distribuição. Zero custo, sem risco de spam, e é onde as pessoas
 com o problema já estão perguntando.
@@ -40,10 +40,10 @@ Post que só divulga é ignorado; resposta que resolve é compartilhada.
 
 ---
 
-## Nível 2 — Contabilidades e escritórios (maior alavancagem)
+## Nível 2: contabilidades e escritórios (maior alavancagem)
 
 Um escritório médio atende de 50 a 300 CNPJ. Se ele adota, você não ganhou um
-usuário — ganhou um canal, e a assinatura Escritório existe exatamente para isso.
+usuário, ganhou um canal, e a assinatura Escritório existe exatamente para isso.
 
 **Como montar a lista** (não inventei nomes; monte com fonte pública):
 
@@ -51,7 +51,7 @@ usuário — ganhou um canal, e a assinatura Escritório existe exatamente para 
 - Sindicato das empresas de serviços contábeis (SESCON) tem lista de associados
 - Busca no LinkedIn: `"escritório contábil" + sua cidade`, filtrando por porte
 
-**Critério de qualificação** — só vale o contato se:
+**Critério de qualificação**, só vale o contato se:
 
 - atende cliente em Lucro Real ou Presumido (CRT=3, que é quem cai no corte)
 - tem cliente com volume relevante de NF-e (indústria, distribuidora, atacado)
@@ -62,7 +62,7 @@ fiscal. Nunca WhatsApp pessoal sem contato prévio.
 
 ---
 
-## Nível 3 — Parceiros de distribuição (empresas reais, verificadas)
+## Nível 3: parceiros de distribuição (empresas reais, verificadas)
 
 Todas abaixo vendem infraestrutura fiscal para ERPs. O encaixe é **complementar, não
 concorrente**: elas emitem a nota; o RTC Check diz de antemão quais cadastros vão
@@ -71,14 +71,14 @@ derrubar a emissão. Menos rejeição na API delas é menos ticket de suporte.
 | Empresa | Site | Por que encaixa | Canal |
 |---|---|---|---|
 | TecnoSpeed | [tecnospeed.com.br](https://tecnospeed.com.br/plugdfe/nfe/) | Vende componente de NF-e para ERPs; faz suporte "de dev para dev". A base de clientes dela é exatamente quem precisa auditar acervo antes de agosto. | Formulário comercial do site *(confirmar no site)* |
-| Focus NFe | [focusnfe.com.br](https://focusnfe.com.br/) | API REST de emissão. Posicionamento é "economizar tempo de dev do cliente" — auditoria prévia é a mesma promessa, um passo antes. | Contato do site *(confirmar no site)* |
+| Focus NFe | [focusnfe.com.br](https://focusnfe.com.br/) | API REST de emissão. Posicionamento é "economizar tempo de dev do cliente". Auditoria prévia é a mesma promessa, um passo antes. | Contato do site *(confirmar no site)* |
 | NFE.io | [nfe.io](https://nfe.io/) | Plataforma de emissão com forte presença em dev. Público técnico, que instala CLI sem atrito. | Contato do site *(confirmar no site)* |
 | Fiscal.io | [fiscal.io](https://conteudo.fiscal.io/notas-fiscais-de-saida-integracao-com-erp/) | Já faz captura de XML e detecção de erro em nota. Sobreposição parcial: pode ser parceiro **ou** comprador estratégico. | Contato do site *(confirmar no site)* |
 | Brasil NFe | [brasilnfe.com.br](https://www.brasilnfe.com.br/) | API REST de emissão, sincroniza tributação com SEFAZ. | Contato do site *(confirmar no site)* |
 | Software Express | [softwareexpress.com.br](https://www.softwareexpress.com.br/pt/blog/TEF-e-integracao-fiscal-para-reforma-tributaria/) | Publicou material sobre preparar ISVs para a Reforma. Já está falando com o público certo sobre o problema certo. | Contato do site *(confirmar no site)* |
 
 **Não** aborde nenhuma delas como aquisição agora. Você tem duas semanas de código e
-zero usuário — proposta de compra nesse estágio queima a relação. A conversa correta
+zero usuário. Proposta de compra nesse estágio queima a relação. A conversa correta
 hoje é: "fiz isso, é aberto, resolve um pedaço do problema dos seus clientes, faz
 sentido eu indicar vocês pra emissão e vocês indicarem isso pra auditoria prévia?"
 
@@ -86,7 +86,7 @@ sentido eu indicar vocês pra emissão e vocês indicarem isso pra auditoria pr�
 
 ## Registro de contatos
 
-Preencha conforme enviar. Vazio de propósito — não há nada enviado.
+Preencha conforme enviar. Vazio de propósito, não há nada enviado. enviado.
 
 | Data | Empresa | Segmento | Contato | Canal | Mensagem | Resposta | Próximo passo | Status |
 |---|---|---|---|---|---|---|---|---|
@@ -98,9 +98,9 @@ Preencha conforme enviar. Vazio de propósito — não há nada enviado.
 
 Não pule etapa. Cada linha só faz sentido depois da anterior:
 
-1. Validar o problema — 5 conversas com quem emite NF-e em CRT=3
-2. Usuários-piloto — 10 rodando no acervo real deles
-3. Prova de valor — "achou 214 SKUs que eu não sabia" dito por outra pessoa
+1. Validar o problema: 5 conversas com quem emite NF-e em CRT=3
+2. Usuários-piloto: 10 rodando no acervo real deles
+3. Prova de valor: "achou 214 SKUs que eu não sabia" dito por outra pessoa
 4. Clientes pagantes
 5. Patrocínio e parceria
 6. Métricas de adoção

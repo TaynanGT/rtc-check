@@ -26,44 +26,81 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          python-version: ${{ matrix.python }}
+
+      - name: Criar ambiente isolado
+        run: uv venv --python ${{ matrix.python }}
 
       - name: Instalar dependências
-        run: uv pip install --system -e ".[dev]"
+        run: uv pip install -e ".[dev]"
+
+      # Sem isto a matriz mente: sem fixar a versão, todo job cai no Python do
+      # runner e o CI fica verde sem nunca ter testado 3.11 nem 3.14.
+      - name: Confirmar que o Python em uso é o da matriz
+        run: >
+          uv run python -c "import sys;
+          v='.'.join(map(str, sys.version_info[:2]));
+          assert v == '${{ matrix.python }}', f'matriz pediu ${{ matrix.python }}, veio {v}';
+          print('Python em uso:', sys.version)"
 
       - name: Lint
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Tipos
-        run: mypy
+        run: uv run mypy
 
       - name: Testes
-        run: pytest --cov=rtc_check --cov-report=term-missing --cov-fail-under=90
+        run: uv run pytest --cov=rtc_check --cov-report=term-missing --cov-fail-under=90
 
   instalacao-limpa:
-    name: Instalação limpa a partir do wheel
-    runs-on: windows-latest
+    name: Instalação limpa a partir do wheel (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
 
       - name: Construir o pacote
         run: uv build
 
       - name: Instalar só o wheel, sem as dependências de dev
+        shell: bash
         run: |
-          uv venv limpo
-          uv pip install --python limpo (Get-ChildItem dist/*.whl).FullName
-        shell: pwsh
+          uv venv .limpo
+          uv pip install --python .limpo dist/*.whl
 
-      - name: Rodar o binário instalado
+      - name: Rodar o binário instalado e conferir o exit code
+        shell: bash
         run: |
-          limpo/Scripts/rtc-check.exe --version
-          limpo/Scripts/rtc-check.exe tests/fixtures --falhar-em-bloqueio
-        shell: pwsh
-        continue-on-error: true
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            BIN=.limpo/Scripts/rtc-check.exe
+          else
+            BIN=.limpo/bin/rtc-check
+          fi
 
-      - name: Confirmar que o exit code sinaliza bloqueio
-        run: |
-          limpo/Scripts/rtc-check.exe tests/fixtures --falhar-em-bloqueio
-          if ($LASTEXITCODE -ne 1) { throw "esperado exit 1, veio $LASTEXITCODE" }
-        shell: pwsh
+          "$BIN" --version
+
+          # Acervo com bloqueio conhecido: precisa sair 1.
+          set +e
+          "$BIN" tests/fixtures --falhar-em-bloqueio > /dev/null
+          codigo=$?
+          set -e
+          [ "$codigo" -eq 1 ] || { echo "esperado exit 1 com bloqueio, veio $codigo"; exit 1; }
+
+          # Pasta vazia: precisa sair 0.
+          mkdir -p vazia
+          set +e
+          "$BIN" vazia --falhar-em-bloqueio > /dev/null
+          codigo=$?
+          set -e
+          [ "$codigo" -eq 0 ] || { echo "esperado exit 0 sem bloqueio, veio $codigo"; exit 1; }
+
+          echo "exit codes corretos nos dois cenários"

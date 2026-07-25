@@ -1,6 +1,6 @@
 """Teste de volume: um acervo real tem dezenas de milhares de notas.
 
-Não é benchmark rigoroso — é uma trava contra regressão acidental de ordem de
+Não é benchmark rigoroso. É uma trava contra regressão acidental de ordem de
 grandeza (um O(n²) escondido na agregação, por exemplo).
 """
 

@@ -4,7 +4,7 @@
 
 O RTC Check lê arquivos XML de entrada e escreve relatórios. Ele **não** faz
 requisição de rede, **não** abre porta, **não** executa código do XML e **não**
-tem dependência de terceiros em tempo de execução — só a biblioteca padrão.
+tem dependência de terceiros em tempo de execução, só a biblioteca padrão.
 
 O parser usa `xml.etree.ElementTree`, que **não** resolve entidades externas
 nem DTD remoto, o que fecha as classes XXE e billion-laughs por resolução
