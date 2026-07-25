@@ -28,8 +28,10 @@ jobs:
           enable-cache: true
           python-version: ${{ matrix.python }}
 
+      # --clear porque o setup-uv, quando recebe python-version, ja deixa um
+      # .venv criado e o uv venv se recusa a sobrescrever.
       - name: Criar ambiente isolado
-        run: uv venv --python ${{ matrix.python }}
+        run: uv venv --python ${{ matrix.python }} --clear
 
       - name: Instalar dependências
         run: uv pip install -e ".[dev]"
@@ -74,7 +76,7 @@ jobs:
       - name: Instalar só o wheel, sem as dependências de dev
         shell: bash
         run: |
-          uv venv .limpo
+          uv venv .limpo --clear
           uv pip install --python .limpo dist/*.whl
 
       - name: Rodar o binário instalado e conferir o exit code
