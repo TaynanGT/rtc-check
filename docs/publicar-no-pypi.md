@@ -30,6 +30,17 @@ Preencha exatamente assim:
 com o nome `pypi`. Se quiser um freio de mão, marque "Required reviewers" e coloque
 você mesmo: aí toda publicação espera sua aprovação num clique.
 
+**4. Ligue o interruptor:**
+
+```bash
+gh variable set PYPI_HABILITADO --body true
+```
+
+Enquanto essa variável não existir, o job do PyPI é pulado. Isso é de propósito:
+sem ela, a primeira tag falharia com `invalid-publisher` e deixaria o release
+vermelho por causa de uma etapa que ainda não foi configurada. Foi exatamente o
+que aconteceu na v0.1.0.
+
 ## Toda vez que for publicar
 
 ```bash

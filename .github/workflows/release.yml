@@ -61,7 +61,11 @@ jobs:
   pypi:
     needs: construir
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    # So roda depois que a publicacao confiavel estiver registrada no PyPI.
+    # Ligue com: gh variable set PYPI_HABILITADO --body true
+    # Sem isso o job e pulado, em vez de falhar com invalid-publisher e deixar
+    # o release vermelho por causa de uma etapa que ainda nao foi configurada.
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PYPI_HABILITADO == 'true'
     environment:
       name: pypi
       url: https://pypi.org/p/rtc-check
