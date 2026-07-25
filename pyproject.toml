@@ -1,23 +1,49 @@
 [project]
 name = "rtc-check"
-version = "0.1.1"
+version = "0.2.0"
 description = "Auditoria local de prontidão da NF-e para a Reforma Tributária (IBS/CBS)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
-keywords = ["nfe", "sefaz", "reforma-tributaria", "ibs", "cbs", "fiscal"]
+keywords = [
+    "nfe",
+    "nfce",
+    "sefaz",
+    "reforma-tributaria",
+    "ibs",
+    "cbs",
+    "fiscal",
+    "xml",
+    "compliance",
+    "brasil",
+    "nota-fiscal",
+    "erp",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Environment :: Console",
     "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: System Administrators",
     "Natural Language :: Portuguese (Brazilian)",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Office/Business :: Financial :: Accounting",
+    "Topic :: Text Processing :: Markup :: XML",
+    "Topic :: Utilities",
 ]
 dependencies = []
+
+[project.urls]
+Homepage = "https://taynangt.github.io/rtc-check/"
+Documentation = "https://github.com/TaynanGT/rtc-check#readme"
+Repository = "https://github.com/TaynanGT/rtc-check"
+Issues = "https://github.com/TaynanGT/rtc-check/issues"
+Changelog = "https://github.com/TaynanGT/rtc-check/blob/main/CHANGELOG.md"
+Planos = "https://taynangt.github.io/rtc-check/#precos"
 
 [project.scripts]
 rtc-check = "rtc_check.cli:main"

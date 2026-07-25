@@ -52,22 +52,32 @@ def _achado(
     )
 
 
-def avaliar_item(nota: NotaFiscal, item: Item) -> list[Achado]:
+# Todas as regras conhecidas. A edição em uso decide quais rodam: RTC001 e
+# RTC002 são o corte de agosto e ficam sempre ativas; NCM001 e GTIN001 são
+# higiene de cadastro e entram nos planos pagos.
+TODAS_AS_REGRAS = frozenset({"RTC001", "RTC002", "NCM001", "GTIN001"})
+
+
+def avaliar_item(
+    nota: NotaFiscal, item: Item, regras: frozenset[str] | None = None
+) -> list[Achado]:
+    ativas = TODAS_AS_REGRAS if regras is None else regras
     achados: list[Achado] = []
 
     if nota.em_escopo_agosto:
         if not item.tem_grupo_rtc:
-            achados.append(
-                _achado(
-                    Severidade.BLOQUEIO,
-                    "RTC001",
-                    "Item sem o grupo gIBSCBS. Emitente CRT=3 passa a ter a nota "
-                    "rejeitada a partir de 03/08/2026.",
-                    nota,
-                    item,
+            if "RTC001" in ativas:
+                achados.append(
+                    _achado(
+                        Severidade.BLOQUEIO,
+                        "RTC001",
+                        "Item sem o grupo gIBSCBS. Emitente CRT=3 passa a ter a nota "
+                        "rejeitada a partir de 03/08/2026.",
+                        nota,
+                        item,
+                    )
                 )
-            )
-        elif not item.tem_class_trib:
+        elif not item.tem_class_trib and "RTC002" in ativas:
             achados.append(
                 _achado(
                     Severidade.BLOQUEIO,
@@ -79,7 +89,9 @@ def avaliar_item(nota: NotaFiscal, item: Item) -> list[Achado]:
                 )
             )
 
-    if not item.ncm or len(item.ncm) != 8 or not item.ncm.isdigit():
+    if "NCM001" in ativas and (
+        not item.ncm or len(item.ncm) != 8 or not item.ncm.isdigit()
+    ):
         achados.append(
             _achado(
                 Severidade.BLOQUEIO,
@@ -91,36 +103,37 @@ def avaliar_item(nota: NotaFiscal, item: Item) -> list[Achado]:
             )
         )
 
-    if gtin.esta_vazio(item.cean):
-        # Antes do layout 4.00 nao existia o literal "SEM GTIN": cEAN vazio era
-        # a forma correta de declarar produto sem codigo de barras. Cobrar o
-        # literal numa nota antiga e falso positivo, e falso positivo derruba a
-        # confianca no relatorio inteiro.
-        if nota.exige_literal_sem_gtin:
-            achados.append(
-                _achado(
-                    Severidade.ALERTA,
-                    "GTIN001",
-                    "cEAN vazio. No layout 4.00, produto sem código de barras "
-                    "precisa do literal 'SEM GTIN'.",
-                    nota,
-                    item,
+    if "GTIN001" in ativas:
+        if gtin.esta_vazio(item.cean):
+            # Antes do layout 4.00 nao existia o literal "SEM GTIN": cEAN vazio era
+            # a forma correta de declarar produto sem codigo de barras. Cobrar o
+            # literal numa nota antiga e falso positivo, e falso positivo derruba a
+            # confianca no relatorio inteiro.
+            if nota.exige_literal_sem_gtin:
+                achados.append(
+                    _achado(
+                        Severidade.ALERTA,
+                        "GTIN001",
+                        "cEAN vazio. No layout 4.00, produto sem código de barras "
+                        "precisa do literal 'SEM GTIN'.",
+                        nota,
+                        item,
+                    )
                 )
-            )
-    else:
-        valido, motivo = gtin.validar(item.cean)
-        if not valido:
-            achados.append(
-                _achado(Severidade.ALERTA, "GTIN001", motivo, nota, item)
-            )
+        else:
+            valido, motivo = gtin.validar(item.cean)
+            if not valido:
+                achados.append(
+                    _achado(Severidade.ALERTA, "GTIN001", motivo, nota, item)
+                )
 
     return achados
 
 
-def avaliar_nota(nota: NotaFiscal) -> list[Achado]:
+def avaliar_nota(nota: NotaFiscal, regras: frozenset[str] | None = None) -> list[Achado]:
     achados: list[Achado] = []
     for item in nota.itens:
-        achados.extend(avaliar_item(nota, item))
+        achados.extend(avaliar_item(nota, item, regras))
     return achados
 
 

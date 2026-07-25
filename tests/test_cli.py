@@ -108,14 +108,14 @@ def test_texto_mostra_contagem_regressiva():
     assert "03/08/2026" in saida
 
 
-def test_main_grava_arquivo(tmp_path, capsys):
+def test_main_grava_arquivo(tmp_path, capsys, licenciado):
     destino = tmp_path / "r.html"
     assert main([str(FIXTURES), "-f", "html", "-o", str(destino)]) == 0
     assert destino.exists()
     assert destino.read_text(encoding="utf-8").startswith("<!doctype html>")
 
 
-def test_main_falha_em_bloqueio_quando_pedido(capsys):
+def test_main_falha_em_bloqueio_quando_pedido(capsys, licenciado):
     assert main([str(FIXTURES), "--falhar-em-bloqueio"]) == 1
     assert main([str(FIXTURES)]) == 0
 

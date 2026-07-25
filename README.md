@@ -4,7 +4,8 @@
 [![Licença: AGPL v3](https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%20a%203.14-blue.svg)](pyproject.toml)
 
-**[Página do projeto](https://taynangt.github.io/rtc-check/)**
+**[Página do projeto](https://taynangt.github.io/rtc-check/)** · **[Planos](#planos)** ·
+**[English](README.en.md)**
 
 **Descubra hoje quais dos seus produtos o SEFAZ vai rejeitar em 3 de agosto.**
 
@@ -37,6 +38,11 @@ Nenhum XML sai do seu computador. Sem upload, sem conta, sem servidor, sem telem
 Zero dependências além da biblioteca padrão do Python. Dá para auditar o que ele faz em
 uma tarde, e é por isso que o código é aberto.
 
+A varredura e o relatório acima são **gratuitos para sempre e sem cadastro**: qualquer
+pessoa com um CNPJ e um terminal descobre hoje se vai ter nota rejeitada em agosto.
+Exportar, automatizar e comparar execuções fazem parte dos planos pagos, com
+[14 dias de teste grátis](#planos) liberados por um comando local.
+
 ## Instalação
 
 Ainda não está no PyPI ([falta um passo que só o dono da conta faz](docs/publicar-no-pypi.md)). Instale direto do repositório:
@@ -59,6 +65,13 @@ Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.
 rtc-check ./pasta-com-xmls
 ```
 
+É isso que o plano gratuito faz, e é o suficiente para saber onde você está. Os
+comandos abaixo fazem parte dos planos pagos; para experimentar todos por 14 dias:
+
+```bash
+rtc-check --iniciar-teste
+```
+
 Relatório em HTML para mandar ao contador ou à diretoria:
 
 ```bash
@@ -77,21 +90,71 @@ Dentro de um pipeline, falhando o build se houver bloqueio:
 rtc-check ./xmls --falhar-em-bloqueio
 ```
 
-| Opção | O que faz |
-|---|---|
-| `-f, --formato` | `texto` (padrão), `json`, `csv`, `html` |
-| `-o, --saida` | grava em arquivo em vez da tela |
-| `--sem-recursao` | não entra em subpastas |
-| `--falhar-em-bloqueio` | sai com código 1 se houver bloqueios |
+Quantos bloqueios cada empresa do grupo tem:
+
+```bash
+rtc-check ./xmls --por-cnpj
+```
+
+E, depois que o time mexeu no cadastro, o que de fato andou:
+
+```bash
+rtc-check ./xmls --comparar prontidao-da-semana-passada.json
+```
+
+| Opção | O que faz | Plano |
+|---|---|---|
+| `-f, --formato` | `texto` (padrão), `json`, `csv`, `html` | pago, exceto `texto` |
+| `-o, --saida` | grava em arquivo em vez da tela | pago |
+| `--sem-recursao` | não entra em subpastas | gratuito |
+| `--falhar-em-bloqueio` | sai com código 1 se houver bloqueios | pago |
+| `--por-cnpj` | quebra o resultado por emitente | pago |
+| `--comparar` | diferença para um relatório JSON anterior | pago |
+| `--iniciar-teste` | libera 14 dias de teste nesta máquina | gratuito |
+| `--licenca` | ativa uma chave | gratuito |
+| `--plano` | mostra a edição em uso e o que está liberado | gratuito |
+
+Códigos de saída: `0` tudo certo, `1` há bloqueio (com `--falhar-em-bloqueio`),
+`2` erro de uso, `3` recurso fora do plano em uso.
+
+## Planos
+
+| | Comunidade | Escritório | Plataforma |
+|---|---|---|---|
+| **Preço** | R$ 0, para sempre | R$ 390/mês | sob consulta |
+| Varredura local ilimitada | sim | sim | sim |
+| Regras do corte (`RTC001`, `RTC002`) | sim | sim | sim |
+| Contagem de bloqueios e SKUs | sim | sim | sim |
+| Lista completa de SKUs | 5 primeiros | completa | completa |
+| Regras de cadastro (`NCM001`, `GTIN001`) | não | sim | sim |
+| Exportar JSON, CSV e HTML | não | sim | sim |
+| Gravar em arquivo, portão de CI | não | sim | sim |
+| Quebra por CNPJ, comparativo | não | sim | sim |
+| Atualização de regras | via GitHub | pacote assinado, no dia da NT | idem |
+| Suporte | issues públicas | e-mail, 1 dia útil | contrato |
+| Licença para redistribuir | não | não | sim |
+
+O teste grátis de 14 dias libera tudo da coluna Escritório, sem cadastro, sem cartão
+e sem rede: `rtc-check --iniciar-teste` grava um arquivo local e pronto. Detalhes de
+ativação, variáveis de ambiente e emissão de chaves em [docs/planos.md](docs/planos.md).
+
+O plano gratuito não é isca. Ele responde inteira a pergunta que fez você chegar aqui,
+que é *"eu vou ter nota rejeitada em agosto?"*. O que se paga é o trabalho depois da
+resposta: exportar para quem vai corrigir, travar o pipeline, acompanhar a fila
+semana a semana e receber a regra atualizada no dia em que a NT sai.
 
 ## O que ele verifica
 
-| Código | Severidade | Verificação |
-|---|---|---|
-| `RTC001` | bloqueio | Emitente CRT=3 com item sem o grupo `gIBSCBS` |
-| `RTC002` | bloqueio | Grupo `gIBSCBS` presente, mas sem `cClassTrib` |
-| `NCM001` | bloqueio | NCM ausente ou fora do formato de 8 dígitos |
-| `GTIN001` | alerta | GTIN com dígito verificador inválido ou malformado. `cEAN` vazio só alerta em layout 4.00 ou superior |
+| Código | Severidade | Verificação | Plano |
+|---|---|---|---|
+| `RTC001` | bloqueio | Emitente CRT=3 com item sem o grupo `gIBSCBS` | gratuito |
+| `RTC002` | bloqueio | Grupo `gIBSCBS` presente, mas sem `cClassTrib` | gratuito |
+| `NCM001` | bloqueio | NCM ausente ou fora do formato de 8 dígitos | pago |
+| `GTIN001` | alerta | GTIN com dígito verificador inválido ou malformado. `cEAN` vazio só alerta em layout 4.00 ou superior | pago |
+
+As duas regras do corte de agosto são as gratuitas, de propósito: elas respondem à
+pergunta que tem prazo. `NCM001` e `GTIN001` são higiene de cadastro, valem o ano
+inteiro e não têm data marcada.
 
 Notas de emitentes no Simples Nacional (CRT=1 e 2) não geram bloqueio de RTC. A transição
 delas segue regra própria e não cai no corte de agosto.
@@ -128,3 +191,10 @@ AGPL-3.0-or-later. Uso interno na sua empresa, incluindo comercial, está libera
 Se você quer embarcar o RTC Check num produto fechado ou oferecê-lo como serviço sem
 publicar suas modificações, existe licença comercial. Veja
 [COMMERCIAL.md](COMMERCIAL.md).
+
+Uma observação honesta sobre os planos: o código é aberto, então o gating dos recursos
+pagos está aqui no repositório e qualquer pessoa consegue removê-lo. Isso é conhecido e
+não vai mudar. O que a assinatura entrega não é acesso ao binário, é a regra atualizada
+no dia em que a nota técnica sai, o suporte com prazo e o direito de redistribuir. Quem
+precisa patchear para não pagar provavelmente não é o cliente deste produto, e não vale
+transformar a ferramenta em algo que ninguém consegue auditar só por causa disso.

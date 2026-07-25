@@ -5,6 +5,53 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RTC Check: quais dos seus produtos o SEFAZ vai rejeitar em agosto</title>
 <meta name="description" content="Varre o acervo de XML de NF-e que você já tem no disco e lista os SKUs que serão rejeitados a partir de 03/08/2026. Roda local, nenhum arquivo sai da máquina.">
+<link rel="canonical" href="https://taynangt.github.io/rtc-check/">
+<meta name="author" content="RTC Check">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="keywords" content="NF-e, NFC-e, SEFAZ, Reforma Tributária, IBS, CBS, gIBSCBS, cClassTrib, NCM, GTIN, rejeição de nota fiscal, CRT 3">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RTC Check">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:url" content="https://taynangt.github.io/rtc-check/">
+<meta property="og:title" content="Descubra hoje quais dos seus produtos o SEFAZ vai rejeitar em agosto">
+<meta property="og:description" content="A partir de 03/08/2026 a NF-e de emitente CRT=3 sem IBS/CBS é rejeitada. O RTC Check varre o XML que você já tem no disco e devolve a lista de SKUs a corrigir. Roda local, sem upload.">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Descubra hoje quais dos seus produtos o SEFAZ vai rejeitar em agosto">
+<meta name="twitter:description" content="Varredura local do seu acervo de NF-e: quais SKUs quebram no corte de 03/08/2026. Gratuito, sem cadastro, sem upload.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "RTC Check",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Windows, macOS, Linux",
+  "description": "Auditoria local de prontidão da NF-e para a Reforma Tributária (IBS/CBS). Varre o acervo de XML e lista os SKUs que serão rejeitados a partir de 03/08/2026.",
+  "url": "https://taynangt.github.io/rtc-check/",
+  "codeRepository": "https://github.com/TaynanGT/rtc-check",
+  "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+  "inLanguage": "pt-BR",
+  "softwareRequirements": "Python 3.11 ou superior",
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Comunidade",
+      "price": "0",
+      "priceCurrency": "BRL",
+      "description": "Varredura local ilimitada e relatório de texto, para sempre, sem cadastro."
+    },
+    {
+      "@type": "Offer",
+      "name": "Escritório",
+      "price": "390",
+      "priceCurrency": "BRL",
+      "description": "Exportação em JSON, CSV e HTML, portão de CI, quebra por CNPJ, comparativo entre execuções e atualização de regras no dia da NT. 14 dias de teste grátis."
+    }
+  ]
+}
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#fff;--fg:#18181b;--dim:#71717a;--line:#e4e4e7;--soft:#fafafa;
@@ -82,9 +129,12 @@ ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
 
   <div class="btns">
     <a class="btn" href="#comecar">Rodar no meu acervo</a>
+    <a class="btn sec" href="#precos">Planos</a>
     <a class="btn sec" href="#o-que-nao-e">O que ele não faz</a>
   </div>
-  <p class="nota">Gratuito e de código aberto. Sem cadastro, sem upload, sem conta.</p>
+  <p class="nota">A varredura é gratuita para sempre e de código aberto: sem cadastro,
+  sem upload, sem conta. Exportação e automação nos planos pagos, com
+  <a href="#precos">14 dias de teste grátis</a>.</p>
 </header>
 
 <section class="w">
@@ -142,19 +192,27 @@ primeira execução, que leva alguns segundos.</blockquote>
 <h2>O que ele verifica</h2>
 
 <table>
-<thead><tr><th>Código</th><th>Severidade</th><th>Verificação</th></tr></thead>
+<thead><tr><th>Código</th><th>Severidade</th><th>Verificação</th><th>Plano</th></tr></thead>
 <tbody>
 <tr><td><code>RTC001</code></td><td>bloqueio</td>
-  <td>Emitente CRT=3 com item sem o grupo <code>gIBSCBS</code></td></tr>
+  <td>Emitente CRT=3 com item sem o grupo <code>gIBSCBS</code></td>
+  <td class="ok">gratuito</td></tr>
 <tr><td><code>RTC002</code></td><td>bloqueio</td>
-  <td><code>gIBSCBS</code> presente, mas sem <code>cClassTrib</code></td></tr>
+  <td><code>gIBSCBS</code> presente, mas sem <code>cClassTrib</code></td>
+  <td class="ok">gratuito</td></tr>
 <tr><td><code>NCM001</code></td><td>bloqueio</td>
-  <td>NCM ausente ou fora do formato de 8 dígitos</td></tr>
+  <td>NCM ausente ou fora do formato de 8 dígitos</td>
+  <td class="no">pago</td></tr>
 <tr><td><code>GTIN001</code></td><td>alerta</td>
   <td>Dígito verificador GS1 inválido ou malformado. <code>cEAN</code> vazio
-  só alerta a partir do layout 4.00</td></tr>
+  só alerta a partir do layout 4.00</td>
+  <td class="no">pago</td></tr>
 </tbody>
 </table>
+
+<p>As duas regras do corte de agosto são as gratuitas, de propósito: elas respondem
+à pergunta que tem prazo. <code>NCM001</code> e <code>GTIN001</code> são higiene de
+cadastro, valem o ano inteiro e não têm data marcada.</p>
 
 <p>Emitente do Simples Nacional (CRT=1 e 2) <strong>não</strong> gera bloqueio: a
 transição deles segue regra própria e não cai no corte de agosto. Apontar bloqueio
@@ -197,6 +255,12 @@ rtc-check ./pasta-com-xmls</code></pre>
 
 <pre><code>uvx --from git+https://github.com/TaynanGT/rtc-check rtc-check ./pasta-com-xmls</code></pre>
 
+<p>Isso é o plano gratuito, e já responde se você tem bloqueio e em quantos SKUs.
+Os comandos abaixo fazem parte dos planos pagos. Para experimentar todos por 14
+dias, sem cadastro e sem cartão:</p>
+
+<pre><code>rtc-check --iniciar-teste</code></pre>
+
 <p>Relatório em HTML, para mandar ao contador ou à diretoria:</p>
 
 <pre><code>rtc-check ./xmls --formato html --saida prontidao.html</code></pre>
@@ -205,9 +269,16 @@ rtc-check ./pasta-com-xmls</code></pre>
 
 <pre><code>rtc-check ./xmls --formato csv --saida skus.csv</code></pre>
 
-<p>E dentro de um pipeline, travando o build se aparecer bloqueio:</p>
+<p>Dentro de um pipeline, travando o build se aparecer bloqueio:</p>
 
 <pre><code>rtc-check ./xmls --falhar-em-bloqueio</code></pre>
+
+<p>E, na semana seguinte, o que o time de fato corrigiu:</p>
+
+<pre><code>rtc-check ./xmls --comparar prontidao-da-semana-passada.json</code></pre>
+
+<p class="nota">Para ver o que está liberado na sua instalação:
+<code>rtc-check --plano</code></p>
 </section>
 
 <section class="w">
@@ -221,8 +292,8 @@ rtc-check ./pasta-com-xmls</code></pre>
 <tbody>
 <tr><td>Tempo total</td><td class="destaque">1,43 s</td></tr>
 <tr><td>Pico de memória</td><td class="destaque">6 MB</td></tr>
-<tr><td>Testes automatizados</td><td class="destaque">41 passando</td></tr>
-<tr><td>Cobertura</td><td class="destaque">96%</td></tr>
+<tr><td>Testes automatizados</td><td class="destaque">95 passando</td></tr>
+<tr><td>Cobertura</td><td class="destaque">94%</td></tr>
 </tbody>
 </table>
 
@@ -231,29 +302,55 @@ ou a memória saírem da ordem de grandeza. Você pode reproduzir com
 <code>pytest -s</code>.</p>
 </section>
 
-<section class="w">
+<section class="w" id="precos">
 <h2>Preço</h2>
 
 <table>
 <thead><tr><th></th><th>Comunidade</th><th>Escritório</th></tr></thead>
 <tbody>
-<tr><td>Preço</td><td><strong>R$ 0</strong></td><td><strong>R$ 390/mês</strong></td></tr>
+<tr><td>Preço</td><td><strong>R$ 0, para sempre</strong></td>
+  <td><strong>R$ 390/mês</strong></td></tr>
 <tr><td>Varredura local ilimitada</td><td class="ok">sim</td><td class="ok">sim</td></tr>
-<tr><td>Todos os formatos de saída</td><td class="ok">sim</td><td class="ok">sim</td></tr>
-<tr><td>Atualização de regras</td><td class="no">via GitHub</td>
-  <td class="ok">no dia da NT</td></tr>
+<tr><td>Regras do corte (<code>RTC001</code>, <code>RTC002</code>)</td>
+  <td class="ok">sim</td><td class="ok">sim</td></tr>
+<tr><td>Contagem de bloqueios e SKUs</td><td class="ok">sim</td><td class="ok">sim</td></tr>
+<tr><td>Lista detalhada de SKUs</td><td class="no">5 primeiros</td>
+  <td class="ok">completa</td></tr>
+<tr><td>Regras de cadastro (<code>NCM001</code>, <code>GTIN001</code>)</td>
+  <td class="no">não</td><td class="ok">sim</td></tr>
+<tr><td>Saída em JSON, CSV e HTML</td><td class="no">não</td><td class="ok">sim</td></tr>
+<tr><td>Gravar relatório em arquivo</td><td class="no">não</td><td class="ok">sim</td></tr>
+<tr><td>Travar o build no CI</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Vários CNPJ num relatório</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Comparativo entre execuções</td><td class="no">não</td><td class="ok">sim</td></tr>
+<tr><td>Atualização de regras</td><td class="no">via GitHub</td>
+  <td class="ok">no dia da NT</td></tr>
 <tr><td>Suporte</td><td class="no">issues públicas</td><td class="ok">e-mail, 1 dia útil</td></tr>
 </tbody>
 </table>
 
-<p>O plano gratuito não é isca: ele resolve o problema inteiro para quem tem um CNPJ
-e sabe rodar um comando. O que se paga é tempo: regra atualizada no dia em que a
-nota técnica sai, em vez de você acompanhando o portal do SEFAZ.</p>
+<p>Precisa embarcar o RTC Check num produto fechado ou oferecê-lo como serviço? Isso é
+o plano <strong>Plataforma</strong>, sob consulta, e é o único que inclui licença de
+redistribuição.</p>
+
+<p>Teste a coluna da direita inteira por 14 dias. Sem cadastro, sem cartão, sem rede:
+o comando grava um arquivo local e pronto.</p>
+
+<pre><code>rtc-check --iniciar-teste</code></pre>
+
+<p>O plano gratuito não é isca. Ele responde inteira a pergunta que trouxe você até
+aqui, que é <em>"eu vou ter nota rejeitada em agosto, e em quantos produtos?"</em>, e
+continua respondendo depois que o corte passar. O que se paga é o trabalho que vem
+depois da resposta: entregar a lista para quem corrige, travar o pipeline, acompanhar
+a fila andar e receber a regra atualizada no dia em que a NT sai.</p>
 
 <p>A NT 2025.002 já passou de trinta revisões. Uma varredura é foto; a obrigação
 é filme.</p>
+
+<blockquote>O código é aberto, então a trava dos recursos pagos está lá no repositório
+e dá para removê-la. Isso é conhecido e não vai mudar: fechar o código custaria a
+única coisa que faz alguém apontar uma pasta de notas fiscais para este programa, que
+é conseguir ler o que ele faz. A assinatura não vende acesso ao binário.</blockquote>
 </section>
 
 <footer class="w">
@@ -261,6 +358,10 @@ nota técnica sai, em vez de você acompanhando o portal do SEFAZ.</p>
   comercial, está liberado.</p>
   <p>Ferramenta independente, sem vínculo com a SEFAZ, a Receita Federal ou
   qualquer órgão público. Não substitui orientação do seu contador.</p>
+  <p><a href="https://github.com/TaynanGT/rtc-check">Código no GitHub</a> ·
+  <a href="https://github.com/TaynanGT/rtc-check/blob/main/docs/planos.md">Planos e
+  licença</a> ·
+  <a href="https://github.com/TaynanGT/rtc-check/blob/main/README.en.md">English</a></p>
 </footer>
 
 <script>

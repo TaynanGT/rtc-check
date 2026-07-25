@@ -3,6 +3,33 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.2.0] / 2026-07-25
+
+Edições. A varredura e o relatório de texto continuam gratuitos e sem cadastro
+para qualquer pessoa; exportação e automação passam a fazer parte dos planos
+pagos, com 14 dias de teste grátis liberados por um comando local.
+
+### Adicionado
+- Módulo `edicao`: planos Comunidade, Teste grátis, Escritório e Plataforma,
+  chave de licença assinada (HMAC-SHA256) e catálogo de recursos por plano.
+- `--iniciar-teste`: libera 14 dias de todos os recursos, sem cadastro nem rede.
+- `--licenca CHAVE`: ativa e guarda a licença em `~/.config/rtc-check/`.
+- `--plano`: mostra a edição em uso e o que está liberado.
+- `--por-cnpj`: quebra o resultado por emitente, em texto, JSON e HTML.
+- `--comparar relatorio.json`: diferença entre duas varreduras, com SKUs novos,
+  corrigidos e pendentes.
+- Variáveis `RTC_CHECK_LICENCA`, `RTC_CHECK_HOME` e `RTC_CHECK_CHAVE_VERIFICACAO`.
+- Código de saída 3 quando o recurso pedido está fora do plano em uso.
+- README em inglês (`README.en.md`) e `docs/planos.md`.
+
+### Alterado
+- Regras `NCM001` e `GTIN001` passam a fazer parte dos planos pagos. `RTC001` e
+  `RTC002`, que são o corte de agosto em si, seguem no plano gratuito.
+- O relatório de texto gratuito detalha os 5 primeiros SKUs bloqueados; a
+  contagem total continua completa e correta.
+- Chave inválida ou vencida não derruba a execução: cai para o plano Comunidade
+  com aviso, porque a varredura importa mais do que a cobrança.
+
 ## [0.1.1] / 2026-07-25
 
 ### Corrigido
