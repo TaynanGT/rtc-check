@@ -91,10 +91,15 @@ rtc-check ./xmls --falhar-em-bloqueio
 | `RTC001` | bloqueio | Emitente CRT=3 com item sem o grupo `gIBSCBS` |
 | `RTC002` | bloqueio | Grupo `gIBSCBS` presente, mas sem `cClassTrib` |
 | `NCM001` | bloqueio | NCM ausente ou fora do formato de 8 dígitos |
-| `GTIN001` | alerta | GTIN com dígito verificador inválido, ausente ou malformado |
+| `GTIN001` | alerta | GTIN com dígito verificador inválido ou malformado. `cEAN` vazio só alerta em layout 4.00 ou superior |
 
 Notas de emitentes no Simples Nacional (CRT=1 e 2) não geram bloqueio de RTC. A transição
 delas segue regra própria e não cai no corte de agosto.
+
+O `cEAN` vazio é tratado conforme a versão do layout da nota. O literal `SEM GTIN` só
+existe a partir do 4.00 (NT 2016.002): em notas antigas, no 2.00 ou 3.xx, campo vazio
+era a forma correta de declarar produto sem código de barras, e cobrar o literal ali
+seria falso positivo.
 
 ## O que ele *não* é
 

@@ -151,7 +151,8 @@ primeira execução, que leva alguns segundos.</blockquote>
 <tr><td><code>NCM001</code></td><td>bloqueio</td>
   <td>NCM ausente ou fora do formato de 8 dígitos</td></tr>
 <tr><td><code>GTIN001</code></td><td>alerta</td>
-  <td>Dígito verificador GS1 inválido, ausente ou malformado</td></tr>
+  <td>Dígito verificador GS1 inválido ou malformado. <code>cEAN</code> vazio
+  só alerta a partir do layout 4.00</td></tr>
 </tbody>
 </table>
 
@@ -159,6 +160,12 @@ primeira execução, que leva alguns segundos.</blockquote>
 transição deles segue regra própria e não cai no corte de agosto. Apontar bloqueio
 onde não existe é pior que não apontar nada. Um relatório com falso positivo é um
 relatório que ninguém lê até o fim.</p>
+
+<p>Pelo mesmo motivo, o <code>cEAN</code> vazio é avaliado conforme a versão do
+layout da nota. O literal <code>SEM GTIN</code> só nasceu no 4.00: numa nota de
+2015 o campo vazio era o jeito certo de dizer que o produto não tem código de
+barras. Essa regra foi corrigida depois de rodar contra NF-e reais e ver a
+ferramenta acusar exatamente isso.</p>
 </section>
 
 <section class="w" id="o-que-nao-e">

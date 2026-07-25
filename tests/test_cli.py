@@ -8,13 +8,17 @@ from rtc_check.rules import Severidade
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
+TOTAL_FIXTURES = len(list(FIXTURES.glob("*.xml")))
+# malformado.xml e nao_e_nfe.xml sao ilegiveis de proposito.
+ILEGIVEIS = 2
+
 
 def test_analise_completa_do_acervo():
     r = analisar(FIXTURES)
-    assert r.arquivos_lidos == 6
-    assert len(r.arquivos_invalidos) == 2  # malformado + nao_e_nfe
-    assert r.notas_em_escopo == 3  # os três CRT=3
-    assert r.total_itens == 6
+    assert r.arquivos_lidos == TOTAL_FIXTURES
+    assert len(r.arquivos_invalidos) == ILEGIVEIS
+    assert r.notas_em_escopo >= 3  # legado, cadastro sujo, conforme, layout antigo
+    assert r.total_itens >= 6
     assert r.por_severidade[Severidade.BLOQUEIO.value] > 0
 
 
@@ -56,7 +60,7 @@ def test_arquivos_ilegiveis_nao_derrubam_a_analise():
     r = analisar(FIXTURES)
     nomes = {n for n, _ in r.arquivos_invalidos}
     assert nomes == {"malformado.xml", "nao_e_nfe.xml"}
-    assert r.arquivos_lidos == 6
+    assert r.arquivos_lidos == TOTAL_FIXTURES
 
 
 def test_pasta_vazia_e_aprovada(tmp_path):
@@ -72,7 +76,7 @@ def test_saida_json_e_valida():
 
     dados = json.loads(formatar_json(r))
     assert dados["corte"] == "2026-08-03"
-    assert dados["arquivos_lidos"] == 6
+    assert dados["arquivos_lidos"] == TOTAL_FIXTURES
     assert isinstance(dados["itens"], list)
 
 

@@ -91,11 +91,28 @@ def avaliar_item(nota: NotaFiscal, item: Item) -> list[Achado]:
             )
         )
 
-    valido, motivo = gtin.validar(item.cean)
-    if not valido:
-        achados.append(
-            _achado(Severidade.ALERTA, "GTIN001", motivo, nota, item)
-        )
+    if gtin.esta_vazio(item.cean):
+        # Antes do layout 4.00 nao existia o literal "SEM GTIN": cEAN vazio era
+        # a forma correta de declarar produto sem codigo de barras. Cobrar o
+        # literal numa nota antiga e falso positivo, e falso positivo derruba a
+        # confianca no relatorio inteiro.
+        if nota.exige_literal_sem_gtin:
+            achados.append(
+                _achado(
+                    Severidade.ALERTA,
+                    "GTIN001",
+                    "cEAN vazio. No layout 4.00, produto sem código de barras "
+                    "precisa do literal 'SEM GTIN'.",
+                    nota,
+                    item,
+                )
+            )
+    else:
+        valido, motivo = gtin.validar(item.cean)
+        if not valido:
+            achados.append(
+                _achado(Severidade.ALERTA, "GTIN001", motivo, nota, item)
+            )
 
     return achados
 

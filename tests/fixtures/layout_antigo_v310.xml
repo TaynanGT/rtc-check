@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Nota em layout 3.10, anterior a 4.00. Aqui cEAN vazio era a forma correta de
+  declarar produto sem código de barras: o literal "SEM GTIN" só nasceu no 4.00
+  (NT 2016.002). Cobrar o literal nesta nota é falso positivo.
+
+  Estrutura conferida contra NF-e reais publicadas em nfephp-org/nfephp, que é
+  onde esse falso positivo apareceu.
+-->
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="3.10">
+  <NFe>
+    <infNFe Id="NFe35150300822602000124550010009923461099234656" versao="3.10">
+      <ide>
+        <cUF>35</cUF>
+        <natOp>VENDA DE MERCADORIA</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>992346</nNF>
+        <dhEmi>2015-03-18T10:22:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+      </ide>
+      <emit>
+        <CNPJ>00822602000124</CNPJ>
+        <xNome>DISTRIBUIDORA ANTIGA LTDA</xNome>
+        <CRT>3</CRT>
+      </emit>
+      <det nItem="1">
+        <prod>
+          <cProd>ANT-001</cProd>
+          <cEAN></cEAN>
+          <xProd>TINTA ACRILICA BRANCO 3,6L</xProd>
+          <NCM>32091010</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>12.0000</qCom>
+          <vUnCom>89.9000</vUnCom>
+          <vProd>1078.80</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <vICMS>194.18</vICMS>
+            </ICMS00>
+          </ICMS>
+        </imposto>
+      </det>
+      <det nItem="2">
+        <prod>
+          <cProd>ANT-002</cProd>
+          <cEAN>7891234567890</cEAN>
+          <xProd>ROLO DE LA 23CM</xProd>
+          <NCM>96032100</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>30.0000</qCom>
+          <vUnCom>14.5000</vUnCom>
+          <vProd>435.00</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <vICMS>78.30</vICMS>
+            </ICMS00>
+          </ICMS>
+        </imposto>
+      </det>
+    </infNFe>
+  </NFe>
+</nfeProc>

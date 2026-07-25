@@ -22,8 +22,19 @@ def digito_verificador(digitos: str) -> int:
     return (10 - total % 10) % 10
 
 
+def esta_vazio(valor: str | None) -> bool:
+    """cEAN ausente ou em branco. Legítimo antes do layout 4.00."""
+    return valor is None or not valor.strip()
+
+
 def validar(valor: str | None) -> tuple[bool, str]:
-    """Retorna ``(valido, motivo)``. Motivo fica vazio quando válido."""
+    """Retorna ``(valido, motivo)``. Motivo fica vazio quando válido.
+
+    Não decide sobre cEAN vazio: isso depende da versão do layout e é tratado
+    em :mod:`rtc_check.rules`.
+    """
+    # A checagem explicita de None fica aqui, e nao delegada a esta_vazio(),
+    # porque o mypy nao estreita o tipo atraves de outra funcao.
     if valor is None or not valor.strip():
         return False, "cEAN ausente (informe o GTIN ou o literal 'SEM GTIN')"
 

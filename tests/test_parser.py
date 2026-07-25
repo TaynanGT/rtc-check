@@ -6,6 +6,9 @@ from rtc_check.parser import XmlInvalido, ler_nota, varrer_pasta
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
+# Contado da pasta, nao chumbado: fixture nova nao deve quebrar teste alheio.
+TOTAL_FIXTURES = len(list(FIXTURES.glob("*.xml")))
+
 
 def test_le_nota_legado():
     nota = ler_nota(FIXTURES / "legado_crt3.xml")
@@ -57,7 +60,7 @@ def test_xml_que_nao_e_nfe_levanta():
 
 def test_varredura_e_ordenada_e_deterministica():
     encontrados = varrer_pasta(FIXTURES)
-    assert len(encontrados) == 6
+    assert len(encontrados) == TOTAL_FIXTURES
     assert encontrados == sorted(encontrados)
     assert varrer_pasta(FIXTURES) == encontrados
 

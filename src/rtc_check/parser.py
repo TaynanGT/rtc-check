@@ -19,6 +19,11 @@ TAG_CLASS_TRIB = "cClassTrib"
 
 CRT_REGIME_NORMAL = "3"
 
+# O literal "SEM GTIN" para produto sem codigo de barras so existe a partir do
+# layout 4.00 (NT 2016.002). Em 2.00 e 3.xx, cEAN vazio era a forma correta de
+# dizer a mesma coisa, entao cobrar o literal ali e falso positivo.
+LAYOUT_COM_SEM_GTIN = "4.00"
+
 
 class XmlInvalido(Exception):
     """XML ilegível ou que não é uma NF-e."""
@@ -40,6 +45,7 @@ class Item:
 class NotaFiscal:
     arquivo: Path
     chave: str
+    versao: str
     modelo: str
     numero: str
     emissao: str
@@ -52,6 +58,11 @@ class NotaFiscal:
     def em_escopo_agosto(self) -> bool:
         """Emitentes CRT=3 (Regime Normal) passam a ser rejeitados em 03/08/2026."""
         return self.crt == CRT_REGIME_NORMAL
+
+    @property
+    def exige_literal_sem_gtin(self) -> bool:
+        """Só o layout 4.00 em diante conhece o literal ``SEM GTIN``."""
+        return self.versao >= LAYOUT_COM_SEM_GTIN
 
 
 def _texto(elemento: ElementTree.Element, caminho: str) -> str:
@@ -85,6 +96,7 @@ def ler_nota(caminho: Path) -> NotaFiscal:
     nota = NotaFiscal(
         arquivo=caminho,
         chave=chave,
+        versao=inf.get("versao", ""),
         modelo=_texto(ide, "nfe:mod"),
         numero=_texto(ide, "nfe:nNF"),
         emissao=_texto(ide, "nfe:dhEmi") or _texto(ide, "nfe:dEmi"),
