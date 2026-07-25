@@ -4,16 +4,25 @@
 [![Licença: AGPL v3](https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%20a%203.14-blue.svg)](pyproject.toml)
 
-**[Página do projeto](https://taynangt.github.io/rtc-check/)**
+**[Página do projeto](https://taynangt.github.io/rtc-check/)** · **[Planos](#planos)** ·
+**[English](README.en.md)**
 
-**Descubra hoje quais dos seus produtos o SEFAZ vai rejeitar em 3 de agosto.**
+**Descubra hoje quais produtos mantêm um padrão de XML com risco de rejeição
+a partir de 3 de agosto.**
 
-A partir de **03/08/2026**, a NF-e emitida por empresa no Regime Normal (CRT=3) sem os
-campos de IBS e CBS passa a ser rejeitada. Nota rejeitada é mercadoria parada na doca.
+A partir de **03/08/2026**, a UB12-10 passa a rejeitar a NF-e de empresa no
+Regime Normal (CRT=3) sem o grupo `IBSCBS`, quando a regra for aplicável.
 
 O problema prático não é entender a regra. É saber **quais dos seus milhares de produtos
 estão fora**. O RTC Check varre o acervo de XML que você já tem no disco e devolve a lista
 de SKUs que precisam de ação, agrupada por produto e ordenada por impacto.
+
+## Referência normativa da análise
+
+Esta versão registra em todo relatório as referências usadas: **Nota Técnica
+2025.002-RTC v1.50** para as regras e **Informe Técnico 2025.002 v1.60** para a
+tabela CST/cClassTrib, com corte monitorado em 03/08/2026 para CRT=3. As fontes e
+o processo de atualização estão em [docs/normativa-rtc.md](docs/normativa-rtc.md).
 
 ```
   RTC Check | prontidão para a Reforma Tributária
@@ -37,19 +46,28 @@ Nenhum XML sai do seu computador. Sem upload, sem conta, sem servidor, sem telem
 Zero dependências além da biblioteca padrão do Python. Dá para auditar o que ele faz em
 uma tarde, e é por isso que o código é aberto.
 
+A varredura e o relatório acima são **gratuitos para sempre e sem cadastro**: qualquer
+pessoa com um CNPJ e um terminal identifica padrões do acervo com risco de rejeição.
+Exportar, automatizar e comparar execuções fazem parte dos planos pagos, com
+[14 dias de teste grátis](#planos) liberados por um comando local.
+
 ## Instalação
 
-Ainda não está no PyPI ([falta um passo que só o dono da conta faz](docs/publicar-no-pypi.md)). Instale direto do repositório:
+Ainda não está no PyPI ([falta um passo que só o dono da conta faz](docs/publicar-no-pypi.md)).
 
 ```bash
-pip install git+https://github.com/TaynanGT/rtc-check
+pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git"
 ```
 
 Ou rode sem instalar nada de forma permanente:
 
 ```bash
-uvx --from git+https://github.com/TaynanGT/rtc-check rtc-check ./xmls
+uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
+
+Em produção, prefira fixar uma versão a acompanhar a `main`: acrescente a tag da
+release à URL, como em `...rtc-check.git@v0.1.1`. As tags disponíveis estão em
+[releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.14.
 
@@ -57,6 +75,13 @@ Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.
 
 ```bash
 rtc-check ./pasta-com-xmls
+```
+
+É isso que o plano gratuito faz, e é o suficiente para saber onde você está. Os
+comandos abaixo fazem parte dos planos pagos; para experimentar todos por 14 dias:
+
+```bash
+rtc-check --iniciar-teste
 ```
 
 Relatório em HTML para mandar ao contador ou à diretoria:
@@ -77,24 +102,88 @@ Dentro de um pipeline, falhando o build se houver bloqueio:
 rtc-check ./xmls --falhar-em-bloqueio
 ```
 
-| Opção | O que faz |
-|---|---|
-| `-f, --formato` | `texto` (padrão), `json`, `csv`, `html` |
-| `-o, --saida` | grava em arquivo em vez da tela |
-| `--sem-recursao` | não entra em subpastas |
-| `--falhar-em-bloqueio` | sai com código 1 se houver bloqueios |
+Quantos bloqueios cada empresa do grupo tem:
+
+```bash
+rtc-check ./xmls --por-cnpj
+```
+
+E, depois que o time mexeu no cadastro, o que de fato andou:
+
+```bash
+rtc-check ./xmls --comparar prontidao-da-semana-passada.json
+```
+
+| Opção | O que faz | Plano |
+|---|---|---|
+| `-f, --formato` | `texto` (padrão), `json`, `csv`, `html` | pago, exceto `texto` |
+| `-o, --saida` | grava em arquivo em vez da tela | pago |
+| `--sem-recursao` | não entra em subpastas | gratuito |
+| `--falhar-em-bloqueio` | sai com código 1 se houver bloqueios | pago |
+| `--por-cnpj` | quebra o resultado por emitente | pago |
+| `--comparar` | diferença para um relatório JSON anterior | pago |
+| `--iniciar-teste` | libera 14 dias de teste nesta máquina | gratuito |
+| `--licenca` | ativa uma chave | gratuito |
+| `--plano` | mostra a edição em uso e o que está liberado | gratuito |
+
+Códigos de saída: `0` tudo certo, `1` há bloqueio (com `--falhar-em-bloqueio`),
+`2` erro de uso, `3` recurso fora do plano em uso.
+
+## Planos
+
+| | Comunidade | Escritório | Plataforma |
+|---|---|---|---|
+| **Preço** | R$ 0, para sempre | R$ 390/mês | sob consulta |
+| Varredura local ilimitada | sim | sim | sim |
+| Regras do corte (`RTC001` a `RTC005`) | sim | sim | sim |
+| Contagem de bloqueios e SKUs | sim | sim | sim |
+| Lista completa de SKUs | 5 primeiros | completa | completa |
+| Regras de cadastro (`NCM001`, `GTIN001`) | não | sim | sim |
+| Exportar JSON, CSV e HTML | não | sim | sim |
+| Gravar em arquivo, portão de CI | não | sim | sim |
+| Quebra por CNPJ, comparativo | não | sim | sim |
+| Atualização de regras | via GitHub | pacote assinado, no dia da NT | idem |
+| Suporte | issues públicas | e-mail, 1 dia útil | contrato |
+| Licença para redistribuir | não | não | sim |
+
+O teste grátis de 14 dias libera tudo da coluna Escritório, sem cadastro, sem cartão
+e sem rede: `rtc-check --iniciar-teste` grava um arquivo local e pronto. Detalhes de
+ativação, variáveis de ambiente e emissão de chaves em [docs/planos.md](docs/planos.md).
+
+O plano gratuito não é isca. Ele responde inteira a pergunta que fez você chegar aqui,
+que é *"meu padrão atual tem risco de rejeição em agosto?"*. O que se paga é o
+trabalho depois da resposta: exportar para quem vai corrigir, travar o pipeline,
+acompanhar a fila semana a semana e receber a regra atualizada no dia em que a NT sai.
+
+## Vários emitentes sem colisão de SKU
+
+O agrupamento usa documento do emitente + SKU, então códigos iguais de empresas
+diferentes nunca são consolidados. O detalhamento por CNPJ no relatório está
+disponível no plano Escritório com `--por-cnpj`.
 
 ## O que ele verifica
 
-| Código | Severidade | Verificação |
-|---|---|---|
-| `RTC001` | bloqueio | Emitente CRT=3 com item sem o grupo `gIBSCBS` |
-| `RTC002` | bloqueio | Grupo `gIBSCBS` presente, mas sem `cClassTrib` |
-| `NCM001` | bloqueio | NCM ausente ou fora do formato de 8 dígitos |
-| `GTIN001` | alerta | GTIN com dígito verificador inválido ou malformado. `cEAN` vazio só alerta em layout 4.00 ou superior |
+| Código | Severidade | Verificação | Plano |
+|---|---|---|---|
+| `RTC001` | bloqueio | Grupo pai `IBSCBS` ausente quando exigido pela UB12-10 | gratuito |
+| `RTC002` | bloqueio | `IBSCBS` presente, mas sem `cClassTrib` | gratuito |
+| `RTC003` | bloqueio | CST do IBS/CBS ausente ou inexistente na tabela oficial | gratuito |
+| `RTC004` | bloqueio | CST exige `gIBSCBS`, mas o grupo não foi informado | gratuito |
+| `RTC005` | bloqueio | CST proíbe `gIBSCBS`, mas o grupo foi informado | gratuito |
+| `NCM001` | bloqueio | NCM ausente ou fora do formato de 8 dígitos | pago |
+| `GTIN001` | alerta | GTIN com dígito verificador inválido ou malformado. `cEAN` vazio só alerta em layout 4.00 ou superior | pago |
+
+As cinco regras do corte de agosto são gratuitas, de propósito: elas respondem à
+pergunta que tem prazo. `NCM001` e `GTIN001` são higiene de cadastro, valem o ano
+inteiro e não têm data marcada.
 
 Notas de emitentes no Simples Nacional (CRT=1 e 2) não geram bloqueio de RTC. A transição
 delas segue regra própria e não cai no corte de agosto.
+
+A `RTC001` respeita as exceções oficiais para devolução/complementar que referencia
+NF-e anterior a 2026 e para `cProdANP` presente na tabela de combustíveis monofásicos.
+Como a entrada é um acervo histórico, “bloqueio” significa que o padrão encontrado
+causará rejeição se continuar numa emissão sujeita à regra após o corte.
 
 O `cEAN` vazio é tratado conforme a versão do layout da nota. O literal `SEM GTIN` só
 existe a partir do 4.00 (NT 2016.002): em notas antigas, no 2.00 ou 3.xx, campo vazio
@@ -103,8 +192,8 @@ seria falso positivo.
 
 ## O que ele *não* é
 
-Não é um validador de schema. O RTC Check confere **presença e formato** de campos usando
-tags do layout 4.00, estáveis e públicas desde 2018. Ele não substitui o
+Não é um validador de schema. O RTC Check confere **regras selecionadas de
+presença, formato e compatibilidade com o CST**. Ele não substitui o
 [validador oficial do SEFAZ-RS](https://dfe-portal.svrs.rs.gov.br/Cff/ValidadorRtcNfe),
 que é a fonte de verdade para conformidade estrutural, e valida uma nota por vez.
 
@@ -127,4 +216,12 @@ AGPL-3.0-or-later. Uso interno na sua empresa, incluindo comercial, está libera
 
 Se você quer embarcar o RTC Check num produto fechado ou oferecê-lo como serviço sem
 publicar suas modificações, existe licença comercial. Veja
-[COMMERCIAL.md](COMMERCIAL.md).
+[COMMERCIAL.md](COMMERCIAL.md) ou abra o
+[formulário comercial](https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md).
+
+Uma observação honesta sobre os planos: o código é aberto, então o gating dos recursos
+pagos está aqui no repositório e qualquer pessoa consegue removê-lo. Isso é conhecido e
+não vai mudar. O que a assinatura entrega não é acesso ao binário, é a regra atualizada
+no dia em que a nota técnica sai, o suporte com prazo e o direito de redistribuir. Quem
+precisa patchear para não pagar provavelmente não é o cliente deste produto, e não vale
+transformar a ferramenta em algo que ninguém consegue auditar só por causa disso.

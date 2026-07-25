@@ -44,8 +44,8 @@ que aconteceu na v0.1.0.
 ## Toda vez que for publicar
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
 
 O workflow então roda lint, tipos e testes, monta o wheel, confere que a versão da tag

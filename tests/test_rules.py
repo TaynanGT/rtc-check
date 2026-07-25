@@ -1,6 +1,7 @@
 from datetime import date
 from pathlib import Path
 
+from rtc_check.normativa import NORMATIVA_RTC
 from rtc_check.parser import ler_nota
 from rtc_check.rules import Severidade, avaliar_nota, dias_ate_corte
 
@@ -54,9 +55,17 @@ def test_achado_carrega_contexto_para_o_relatorio():
     assert a.descricao
     assert a.ncm
     assert a.arquivo == "legado_crt3.xml"
+    assert a.chave_sku == ("12345678000199", "SKU-1001", a.codigo)
 
 
 def test_dias_ate_corte():
     assert dias_ate_corte(date(2026, 7, 25)) == 9
     assert dias_ate_corte(date(2026, 8, 3)) == 0
     assert dias_ate_corte(date(2026, 8, 10)) == -7
+
+
+def test_referencia_normativa_e_auditavel():
+    assert NORMATIVA_RTC.rotulo == "Nota Técnica 2025.002-RTC v1.50"
+    assert NORMATIVA_RTC.tabela_versao == "1.60"
+    assert NORMATIVA_RTC.corte_obrigatoriedade == date(2026, 8, 3)
+    assert NORMATIVA_RTC.como_json()["fonte"].startswith("https://www.nfe.fazenda.gov.br/")
