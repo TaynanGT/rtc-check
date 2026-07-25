@@ -19,18 +19,23 @@ def analisar(pasta: Path, recursivo: bool = True) -> Resumo:
     achados = []
 
     for caminho in varrer_pasta(pasta, recursivo):
+        try:
+            arquivo_relativo = caminho.relative_to(pasta).as_posix()
+        except ValueError:
+            arquivo_relativo = caminho.name
         resumo.arquivos_lidos += 1
         try:
             nota = ler_nota(caminho)
         except XmlInvalido as erro:
-            resumo.arquivos_invalidos.append((caminho.name, str(erro)))
+            resumo.arquivos_invalidos.append((arquivo_relativo, str(erro)))
             continue
 
+        resumo.registrar_emitente(nota.emitente_cnpj, nota.emitente_nome)
         if nota.em_escopo_agosto:
             resumo.notas_em_escopo += 1
         resumo.total_itens += len(nota.itens)
 
-        for achado in avaliar_nota(nota):
+        for achado in avaliar_nota(nota, arquivo_relativo):
             achados.append(achado)
             resumo.por_severidade[achado.severidade.value] += 1
 
@@ -42,8 +47,8 @@ def construir_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="rtc-check",
         description=(
-            "Varre um acervo de XMLs de NF-e e aponta quais produtos serão "
-            "rejeitados pelo SEFAZ a partir de 03/08/2026 (Reforma Tributária). "
+            "Varre um acervo de XMLs de NF-e e aponta riscos de rejeição ligados "
+            "à Reforma Tributária a partir de 03/08/2026. "
             "Roda 100%% local: nenhum arquivo sai da máquina."
         ),
     )
@@ -71,6 +76,15 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     resumo = analisar(args.pasta, recursivo=not args.sem_recursao)
+
+    if resumo.tem_multiplos_emitentes:
+        documentos = ", ".join(resumo.documentos_emitentes)
+        print(
+            "erro: o plano Comunidade aceita um emitente por execução. "
+            f"Foram encontrados: {documentos}. Separe os XMLs por emitente antes de rodar.",
+            file=sys.stderr,
+        )
+        return 2
 
     saida = {
         "texto": formatar_texto,

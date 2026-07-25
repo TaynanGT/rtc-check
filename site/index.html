@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RTC Check: quais dos seus produtos o SEFAZ vai rejeitar em agosto</title>
-<meta name="description" content="Varre o acervo de XML de NF-e que você já tem no disco e lista os SKUs que serão rejeitados a partir de 03/08/2026. Roda local, nenhum arquivo sai da máquina.">
+<title>RTC Check: encontre padrões com risco de rejeição em agosto</title>
+<meta name="description" content="Varre o acervo de XML de NF-e no disco e lista SKUs com risco de rejeição a partir de 03/08/2026 caso o padrão continue. Roda local.">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#fff;--fg:#18181b;--dim:#71717a;--line:#e4e4e7;--soft:#fafafa;
@@ -69,12 +69,12 @@ ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
     <div class="dias" id="dias">··</div>
     <div>
       <p><strong>3 de agosto de 2026.</strong></p>
-      <p>Data em que o SEFAZ passa a rejeitar NF-e de emitente no Regime Normal
-      (CRT=3) sem os campos de IBS e CBS.</p>
+      <p>Data em que a UB12-10 passa a rejeitar NF-e de emitente no Regime Normal
+      (CRT=3) sem o grupo IBSCBS, quando a regra for aplicável.</p>
     </div>
   </div>
 
-  <h1>Descubra hoje quais dos seus produtos vão ser rejeitados em agosto.</h1>
+  <h1>Descubra quais produtos mantêm um padrão com risco de rejeição em agosto.</h1>
 
   <p class="lead">Entender a regra é a parte fácil. O problema é saber quais dos
   seus milhares de SKUs estão fora, e isso está todo no XML que você já tem
@@ -83,6 +83,7 @@ ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
   <div class="btns">
     <a class="btn" href="#comecar">Rodar no meu acervo</a>
     <a class="btn sec" href="#o-que-nao-e">O que ele não faz</a>
+    <a class="btn sec" href="https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md">Quero o plano Escritório</a>
   </div>
   <p class="nota">Gratuito e de código aberto. Sem cadastro, sem upload, sem conta.</p>
 </header>
@@ -145,9 +146,15 @@ primeira execução, que leva alguns segundos.</blockquote>
 <thead><tr><th>Código</th><th>Severidade</th><th>Verificação</th></tr></thead>
 <tbody>
 <tr><td><code>RTC001</code></td><td>bloqueio</td>
-  <td>Emitente CRT=3 com item sem o grupo <code>gIBSCBS</code></td></tr>
+  <td>Grupo pai <code>IBSCBS</code> ausente quando exigido pela UB12-10</td></tr>
 <tr><td><code>RTC002</code></td><td>bloqueio</td>
-  <td><code>gIBSCBS</code> presente, mas sem <code>cClassTrib</code></td></tr>
+  <td><code>IBSCBS</code> presente, mas sem <code>cClassTrib</code></td></tr>
+<tr><td><code>RTC003</code></td><td>bloqueio</td>
+  <td>CST do IBS/CBS ausente ou inexistente na tabela oficial</td></tr>
+<tr><td><code>RTC004</code></td><td>bloqueio</td>
+  <td>CST exige <code>gIBSCBS</code>, mas o grupo não foi informado</td></tr>
+<tr><td><code>RTC005</code></td><td>bloqueio</td>
+  <td>CST proíbe <code>gIBSCBS</code>, mas o grupo foi informado</td></tr>
 <tr><td><code>NCM001</code></td><td>bloqueio</td>
   <td>NCM ausente ou fora do formato de 8 dígitos</td></tr>
 <tr><td><code>GTIN001</code></td><td>alerta</td>
@@ -179,23 +186,34 @@ do SEFAZ-RS</a> é a fonte de verdade para conformidade estrutural, e é gratuit
 quatro mil notas e não sabe por onde começar, ele não ajuda. O RTC Check varre o
 acervo inteiro e diz onde olhar. Depois de corrigir, confirme no oficial.</p>
 
-<p>Ele também confere <strong>presença e formato</strong> de campo, usando tags do
-layout 4.00 que são públicas e estáveis desde 2018. Não é uma reimplementação das
-regras de validação do SEFAZ, e prometer isso seria desonesto.</p>
+<p>Ele confere regras selecionadas de <strong>presença, formato e compatibilidade
+com o CST</strong>. Como a entrada é um acervo histórico, o achado significa risco
+caso o mesmo padrão de emissão continue após o corte. Não é uma reimplementação
+completa das regras de validação do SEFAZ.</p>
+
+<p>Todo relatório registra as referências aplicadas:
+<a href="https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=pD4YrecPV6s%3D">Nota Técnica 2025.002-RTC v1.50</a>
+e <a href="https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=jxTMMQeEVM8%3D">Informe Técnico 2025.002 v1.60</a>
+para a tabela CST/cClassTrib. Se a norma mudar, o relatório mostra qual fotografia
+regulatória foi usada.</p>
 </section>
 
 <section class="w" id="comecar">
 <h2>Começar</h2>
 
-<p>Precisa de Python 3.11 ou mais novo. Ainda não está no PyPI, então a
-instalação é direto do repositório:</p>
+<p>Precisa de Python 3.11 ou mais novo. Ainda não está no PyPI; use a release
+publicada, não a branch <code>main</code>:</p>
 
-<pre><code>pip install git+https://github.com/TaynanGT/rtc-check
+<pre><code>pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git@v0.1.2"
 rtc-check ./pasta-com-xmls</code></pre>
 
 <p>Ou sem instalar nada permanente:</p>
 
-<pre><code>uvx --from git+https://github.com/TaynanGT/rtc-check rtc-check ./pasta-com-xmls</code></pre>
+<pre><code>uvx --from git+https://github.com/TaynanGT/rtc-check.git@v0.1.2 rtc-check ./pasta-com-xmls</code></pre>
+
+<p>O plano Comunidade aceita um emitente por execução. Se a pasta tiver XMLs de mais
+de um CNPJ/CPF, o RTC Check para antes de gerar o relatório para não misturar SKUs
+iguais de empresas diferentes.</p>
 
 <p>Relatório em HTML, para mandar ao contador ou à diretoria:</p>
 
@@ -254,6 +272,8 @@ nota técnica sai, em vez de você acompanhando o portal do SEFAZ.</p>
 
 <p>A NT 2025.002 já passou de trinta revisões. Uma varredura é foto; a obrigação
 é filme.</p>
+
+<p><a class="btn" href="https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md">Falar sobre o plano Escritório</a></p>
 </section>
 
 <footer class="w">

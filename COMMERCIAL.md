@@ -44,5 +44,6 @@ número que importa é o seu, e ele sai da primeira varredura, que é gratuita.
 
 ## Contato
 
-Abra uma issue com a etiqueta `comercial`, ou escreva para o e-mail no perfil do
-mantenedor.
+Abra o [formulário do plano Escritório ou licença comercial](https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md).
+Ele é público: não inclua XML, CNPJ, chave de NF-e nem outros dados confidenciais. Para uma
+conversa privada, use o e-mail exibido no perfil do mantenedor.

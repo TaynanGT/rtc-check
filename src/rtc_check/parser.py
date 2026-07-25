@@ -13,10 +13,6 @@ from xml.etree import ElementTree
 
 NS = {"nfe": "http://www.portalfiscal.inf.br/nfe"}
 
-# Grupo criado pela NT 2025.002 (RTC) para detalhar IBS/CBS por item.
-TAG_GRUPO_RTC = "gIBSCBS"
-TAG_CLASS_TRIB = "cClassTrib"
-
 CRT_REGIME_NORMAL = "3"
 
 # O literal "SEM GTIN" para produto sem codigo de barras so existe a partir do
@@ -37,8 +33,20 @@ class Item:
     ncm: str
     cfop: str
     cean: str | None
-    tem_grupo_rtc: bool
-    tem_class_trib: bool
+    cprod_anp: str
+    tem_ibscbs: bool
+    cst_ibscbs: str
+    cclass_trib: str
+    tem_gibscbs: bool
+
+    @property
+    def tem_grupo_rtc(self) -> bool:
+        """Alias legado: antes da v0.1.2, o grupo RTC significava gIBSCBS."""
+        return self.tem_gibscbs
+
+    @property
+    def tem_class_trib(self) -> bool:
+        return bool(self.cclass_trib)
 
 
 @dataclass
@@ -52,6 +60,9 @@ class NotaFiscal:
     emitente_cnpj: str
     emitente_nome: str
     crt: str
+    finalidade: str
+    tipo_nota_debito: str
+    chaves_referenciadas: tuple[str, ...]
     itens: list[Item] = field(default_factory=list)
 
     @property
@@ -64,15 +75,22 @@ class NotaFiscal:
         """Só o layout 4.00 em diante conhece o literal ``SEM GTIN``."""
         return self.versao >= LAYOUT_COM_SEM_GTIN
 
+    @property
+    def referencia_nfe_anterior_2026(self) -> bool:
+        """Exceção 1 da UB12-10 para devolução/complementar."""
+        if self.finalidade not in {"2", "4"}:
+            return False
+        for chave in self.chaves_referenciadas:
+            if len(chave) == 44 and chave.isdigit():
+                ano = 2000 + int(chave[2:4])
+                if ano < 2026:
+                    return True
+        return False
+
 
 def _texto(elemento: ElementTree.Element, caminho: str) -> str:
     achado = elemento.find(caminho, NS)
     return achado.text.strip() if achado is not None and achado.text else ""
-
-
-def _tem_descendente(elemento: ElementTree.Element, nome_tag: str) -> bool:
-    alvo = f"{{{NS['nfe']}}}{nome_tag}"
-    return any(filho.tag == alvo for filho in elemento.iter())
 
 
 def ler_nota(caminho: Path) -> NotaFiscal:
@@ -81,6 +99,9 @@ def ler_nota(caminho: Path) -> NotaFiscal:
         arvore = ElementTree.parse(caminho)
     except ElementTree.ParseError as erro:
         raise XmlInvalido(f"XML malformado: {erro}") from erro
+    except OSError as erro:
+        motivo = erro.strerror or str(erro)
+        raise XmlInvalido(f"não foi possível ler o arquivo: {motivo}") from erro
 
     raiz = arvore.getroot()
     inf = raiz.find(".//nfe:infNFe", NS)
@@ -103,12 +124,20 @@ def ler_nota(caminho: Path) -> NotaFiscal:
         emitente_cnpj=_texto(emit, "nfe:CNPJ") or _texto(emit, "nfe:CPF"),
         emitente_nome=_texto(emit, "nfe:xNome"),
         crt=_texto(emit, "nfe:CRT"),
+        finalidade=_texto(ide, "nfe:finNFe"),
+        tipo_nota_debito=_texto(ide, "nfe:tpNFDebito"),
+        chaves_referenciadas=tuple(
+            texto
+            for ref in ide.findall("nfe:NFref/nfe:refNFe", NS)
+            if (texto := (ref.text or "").strip())
+        ),
     )
 
     for det in inf.findall("nfe:det", NS):
         prod = det.find("nfe:prod", NS)
         if prod is None:
             continue
+        ibscbs = det.find("nfe:imposto/nfe:IBSCBS", NS)
         nota.itens.append(
             Item(
                 numero=det.get("nItem", "?"),
@@ -117,8 +146,17 @@ def ler_nota(caminho: Path) -> NotaFiscal:
                 ncm=_texto(prod, "nfe:NCM"),
                 cfop=_texto(prod, "nfe:CFOP"),
                 cean=_texto(prod, "nfe:cEAN") or None,
-                tem_grupo_rtc=_tem_descendente(det, TAG_GRUPO_RTC),
-                tem_class_trib=_tem_descendente(det, TAG_CLASS_TRIB),
+                cprod_anp=_texto(prod, "nfe:comb/nfe:cProdANP"),
+                tem_ibscbs=ibscbs is not None,
+                cst_ibscbs=_texto(ibscbs, "nfe:CST") if ibscbs is not None else "",
+                cclass_trib=(
+                    _texto(ibscbs, "nfe:cClassTrib") if ibscbs is not None else ""
+                ),
+                tem_gibscbs=(
+                    ibscbs.find("nfe:gIBSCBS", NS) is not None
+                    if ibscbs is not None
+                    else False
+                ),
             )
         )
 

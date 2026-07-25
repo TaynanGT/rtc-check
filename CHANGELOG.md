@@ -3,6 +3,26 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.1.2] / 2026-07-25
+
+### Adicionado
+- Referências versionadas em todos os relatórios: Nota Técnica 2025.002-RTC v1.50
+  e tabela CST/cClassTrib do Informe Técnico 2025.002 v1.60.
+- Proteção para acervo multiemitente no plano Comunidade. A CLI identifica mais de um
+  CNPJ/CPF, não gera relatório e explica como separar o acervo.
+- Formulário público para plano Escritório e licença comercial, sem solicitar dados fiscais.
+- Metadados de homepage, repositório e changelog para a futura publicação no PyPI.
+
+### Corrigido
+- A agregação interna passa a incluir o documento do emitente, evitando colisão de SKU mesmo
+  para quem usa a API Python diretamente.
+- `RTC001` agora valida o grupo pai `IBSCBS` pela UB12-10 e respeita as exceções
+  de NF-e referenciada anterior a 2026 e combustíveis monofásicos.
+- Novas regras CST-aware: CST inexistente, `gIBSCBS` obrigatório e `gIBSCBS`
+  proibido, conforme UB13-10, UB13-20 e UB13-30.
+- Caminhos relativos preservam a identidade de XMLs homônimos em subpastas.
+- Erros de leitura e permissão viram arquivos ilegíveis sem interromper a varredura.
+
 ## [0.1.1] / 2026-07-25
 
 ### Corrigido

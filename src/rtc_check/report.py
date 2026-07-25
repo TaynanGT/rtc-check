@@ -15,6 +15,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
 
+from .normativa import NORMATIVA_RTC
 from .rules import Achado, Severidade, dias_ate_corte
 
 
@@ -23,6 +24,7 @@ class GrupoSku:
     sku: str
     descricao: str
     ncm: str
+    emitente_documento: str
     codigos: set[str] = field(default_factory=set)
     mensagens: dict[str, str] = field(default_factory=dict)
     severidade_max: Severidade = Severidade.INFO
@@ -38,6 +40,19 @@ class Resumo:
     total_itens: int = 0
     por_severidade: Counter[str] = field(default_factory=Counter)
     grupos: list[GrupoSku] = field(default_factory=list)
+    emitentes: dict[str, str] = field(default_factory=dict)
+
+    def registrar_emitente(self, documento: str, nome: str) -> None:
+        documento_normalizado = documento or "(documento ausente)"
+        self.emitentes.setdefault(documento_normalizado, nome)
+
+    @property
+    def documentos_emitentes(self) -> tuple[str, ...]:
+        return tuple(sorted(self.emitentes))
+
+    @property
+    def tem_multiplos_emitentes(self) -> bool:
+        return len(self.emitentes) > 1
 
     @property
     def skus_bloqueados(self) -> int:
@@ -52,12 +67,19 @@ _ORDEM = {Severidade.BLOQUEIO: 0, Severidade.ALERTA: 1, Severidade.INFO: 2}
 
 
 def agregar(achados: list[Achado]) -> list[GrupoSku]:
-    mapa: dict[str, GrupoSku] = {}
+    mapa: dict[tuple[str, str], GrupoSku] = {}
     for a in achados:
-        chave = a.sku or f"(sem código) {a.descricao[:30]}"
+        sku = a.sku or f"(sem código) {a.descricao[:30]}"
+        documento = a.emitente_documento or "(documento ausente)"
+        chave = (documento, sku)
         grupo = mapa.get(chave)
         if grupo is None:
-            grupo = GrupoSku(sku=chave, descricao=a.descricao, ncm=a.ncm)
+            grupo = GrupoSku(
+                sku=sku,
+                descricao=a.descricao,
+                ncm=a.ncm,
+                emitente_documento=documento,
+            )
             mapa[chave] = grupo
         grupo.codigos.add(a.codigo)
         grupo.mensagens.setdefault(a.codigo, a.mensagem)
@@ -74,11 +96,17 @@ def agregar(achados: list[Achado]) -> list[GrupoSku]:
 
 def formatar_texto(resumo: Resumo, hoje: date | None = None) -> str:
     dias = dias_ate_corte(hoje)
+    emitente = ", ".join(resumo.documentos_emitentes) or "(nenhum XML válido)"
     linhas = [
         "",
         "  RTC Check | prontidão para a Reforma Tributária",
         "  " + "-" * 52,
         f"  Corte da obrigatoriedade (CRT=3): 03/08/2026  ({dias} dias)",
+        f"  Referência normativa ........ {NORMATIVA_RTC.rotulo}",
+        "  Tabela CST/cClassTrib ....... "
+        f"{NORMATIVA_RTC.tabela_documento} v{NORMATIVA_RTC.tabela_versao}",
+        f"  Publicada em ................ {NORMATIVA_RTC.publicada_em:%d/%m/%Y}",
+        f"  Emitente .................... {emitente}",
         "",
         f"  XMLs lidos ............... {resumo.arquivos_lidos}",
         f"  Notas em escopo (CRT=3) .. {resumo.notas_em_escopo}",
@@ -100,7 +128,7 @@ def formatar_texto(resumo: Resumo, hoje: date | None = None) -> str:
 
     bloqueios = [g for g in resumo.grupos if g.severidade_max is Severidade.BLOQUEIO]
     if bloqueios:
-        linhas.append("  SKUs que serão rejeitados a partir de 03/08:")
+        linhas.append("  SKUs com risco de rejeição se o padrão continuar após 03/08:")
         linhas.append("")
         for g in bloqueios[:20]:
             linhas.append(f"    {g.sku}  ({g.ocorrencias}x em {len(g.arquivos)} nota(s))")
@@ -125,13 +153,18 @@ def formatar_texto(resumo: Resumo, hoje: date | None = None) -> str:
 def formatar_json(resumo: Resumo) -> str:
     return json.dumps(
         {
-            "corte": "2026-08-03",
+            "corte": NORMATIVA_RTC.corte_obrigatoriedade.isoformat(),
+            "normativa": NORMATIVA_RTC.como_json(),
             "arquivos_lidos": resumo.arquivos_lidos,
             "arquivos_invalidos": [
                 {"arquivo": n, "motivo": m} for n, m in resumo.arquivos_invalidos
             ],
             "notas_em_escopo": resumo.notas_em_escopo,
             "total_itens": resumo.total_itens,
+            "emitentes": [
+                {"documento": documento, "nome": resumo.emitentes[documento]}
+                for documento in resumo.documentos_emitentes
+            ],
             "bloqueios": resumo.por_severidade[Severidade.BLOQUEIO.value],
             "alertas": resumo.por_severidade[Severidade.ALERTA.value],
             "skus_a_corrigir": resumo.skus_bloqueados,
@@ -140,6 +173,7 @@ def formatar_json(resumo: Resumo) -> str:
                     "sku": g.sku,
                     "descricao": g.descricao,
                     "ncm": g.ncm,
+                    "emitente_documento": g.emitente_documento,
                     "severidade": g.severidade_max.value,
                     "codigos": sorted(g.codigos),
                     "mensagens": g.mensagens,
@@ -158,15 +192,40 @@ def formatar_csv(resumo: Resumo) -> str:
     buffer = io.StringIO()
     escritor = csv.writer(buffer, delimiter=";", lineterminator="\n")
     escritor.writerow(
-        ["sku", "descricao", "ncm", "severidade", "codigos", "ocorrencias",
-         "notas_afetadas", "mensagens"]
+        [
+            "sku",
+            "descricao",
+            "ncm",
+            "severidade",
+            "codigos",
+            "ocorrencias",
+            "notas_afetadas",
+            "mensagens",
+            "emitente_documento",
+            "normativa",
+            "fonte_normativa",
+            "tabela_normativa",
+            "fonte_tabela_normativa",
+        ]
     )
     for g in resumo.grupos:
-        escritor.writerow([
-            g.sku, g.descricao, g.ncm, g.severidade_max.value,
-            "|".join(sorted(g.codigos)), g.ocorrencias, len(g.arquivos),
-            " / ".join(g.mensagens[c] for c in sorted(g.codigos)),
-        ])
+        escritor.writerow(
+            [
+                g.sku,
+                g.descricao,
+                g.ncm,
+                g.severidade_max.value,
+                "|".join(sorted(g.codigos)),
+                g.ocorrencias,
+                len(g.arquivos),
+                " / ".join(g.mensagens[c] for c in sorted(g.codigos)),
+                g.emitente_documento,
+                NORMATIVA_RTC.rotulo,
+                NORMATIVA_RTC.fonte,
+                f"{NORMATIVA_RTC.tabela_documento} v{NORMATIVA_RTC.tabela_versao}",
+                NORMATIVA_RTC.fonte_tabela,
+            ]
+        )
     return buffer.getvalue()
 
 
@@ -202,6 +261,7 @@ def formatar_html(resumo: Resumo, hoje: date | None = None) -> str:
     dias = dias_ate_corte(hoje)
     b = resumo.por_severidade[Severidade.BLOQUEIO.value]
     a = resumo.por_severidade[Severidade.ALERTA.value]
+    emitente = e(", ".join(resumo.documentos_emitentes) or "(nenhum XML válido)")
 
     linhas = []
     for g in resumo.grupos:
@@ -241,7 +301,12 @@ def formatar_html(resumo: Resumo, hoje: date | None = None) -> str:
 <body><div class="wrap">
 <h1>Prontidão para a Reforma Tributária</h1>
 <p class="sub">Corte da obrigatoriedade para emitentes CRT=3:
-<strong>03/08/2026</strong>, faltam {dias} dias.</p>
+<strong>03/08/2026</strong>, faltam {dias} dias.<br>
+Referência: <a href="{e(NORMATIVA_RTC.fonte)}">{e(NORMATIVA_RTC.rotulo)}</a>,
+publicada em {NORMATIVA_RTC.publicada_em:%d/%m/%Y}.<br>
+Tabela CST/cClassTrib: <a href="{e(NORMATIVA_RTC.fonte_tabela)}">{
+    e(NORMATIVA_RTC.tabela_documento)
+} v{e(NORMATIVA_RTC.tabela_versao)}</a>.</p>
 <div class="cards">{cards}</div>
 <div class="tw"><table>
 <thead><tr><th>SKU</th><th>Produto / achados</th><th>NCM</th>
@@ -249,5 +314,5 @@ def formatar_html(resumo: Resumo, hoje: date | None = None) -> str:
 <tbody>{corpo}</tbody></table></div>
 <footer>Gerado localmente pelo RTC Check. Nenhum dado saiu desta máquina.<br>
 Conferência de estrutura; a fonte de verdade para conformidade de schema é o
-validador oficial do SEFAZ.</footer>
+validador oficial do SEFAZ. Emitente analisado: {emitente}.</footer>
 </div></body></html>"""

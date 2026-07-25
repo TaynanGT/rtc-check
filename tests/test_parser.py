@@ -23,7 +23,10 @@ def test_le_nota_legado():
 def test_detecta_grupo_rtc_em_nota_conforme():
     nota = ler_nota(FIXTURES / "conforme_crt3.xml")
     item = nota.itens[0]
+    assert item.tem_ibscbs
     assert item.tem_grupo_rtc
+    assert item.cst_ibscbs == "000"
+    assert item.cclass_trib == "000001"
     assert item.tem_class_trib
 
 
@@ -56,6 +59,11 @@ def test_xml_malformado_levanta():
 def test_xml_que_nao_e_nfe_levanta():
     with pytest.raises(XmlInvalido, match="infNFe"):
         ler_nota(FIXTURES / "nao_e_nfe.xml")
+
+
+def test_erro_de_leitura_vira_xml_invalido(tmp_path):
+    with pytest.raises(XmlInvalido, match="não foi possível ler"):
+        ler_nota(tmp_path / "arquivo_removido.xml")
 
 
 def test_varredura_e_ordenada_e_deterministica():

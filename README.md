@@ -6,7 +6,8 @@
 
 **[Página do projeto](https://taynangt.github.io/rtc-check/)**
 
-**Descubra hoje quais dos seus produtos o SEFAZ vai rejeitar em 3 de agosto.**
+**Descubra hoje quais produtos mantêm um padrão de XML com risco de rejeição
+a partir de 3 de agosto.**
 
 A partir de **03/08/2026**, a NF-e emitida por empresa no Regime Normal (CRT=3) sem os
 campos de IBS e CBS passa a ser rejeitada. Nota rejeitada é mercadoria parada na doca.
@@ -14,6 +15,13 @@ campos de IBS e CBS passa a ser rejeitada. Nota rejeitada é mercadoria parada n
 O problema prático não é entender a regra. É saber **quais dos seus milhares de produtos
 estão fora**. O RTC Check varre o acervo de XML que você já tem no disco e devolve a lista
 de SKUs que precisam de ação, agrupada por produto e ordenada por impacto.
+
+## Referência normativa da análise
+
+Esta versão registra em todo relatório as referências usadas: **Nota Técnica
+2025.002-RTC v1.50** para as regras e **Informe Técnico 2025.002 v1.60** para a
+tabela CST/cClassTrib, com corte monitorado em 03/08/2026 para CRT=3. As fontes e
+o processo de atualização estão em [docs/normativa-rtc.md](docs/normativa-rtc.md).
 
 ```
   RTC Check | prontidão para a Reforma Tributária
@@ -39,16 +47,17 @@ uma tarde, e é por isso que o código é aberto.
 
 ## Instalação
 
-Ainda não está no PyPI ([falta um passo que só o dono da conta faz](docs/publicar-no-pypi.md)). Instale direto do repositório:
+Ainda não está no PyPI ([falta um passo que só o dono da conta faz](docs/publicar-no-pypi.md)).
+Para uma instalação reproduzível, use a release publicada, nunca a branch `main`:
 
 ```bash
-pip install git+https://github.com/TaynanGT/rtc-check
+pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git@v0.1.2"
 ```
 
 Ou rode sem instalar nada de forma permanente:
 
 ```bash
-uvx --from git+https://github.com/TaynanGT/rtc-check rtc-check ./xmls
+uvx --from git+https://github.com/TaynanGT/rtc-check.git@v0.1.2 rtc-check ./xmls
 ```
 
 Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.14.
@@ -84,17 +93,34 @@ rtc-check ./xmls --falhar-em-bloqueio
 | `--sem-recursao` | não entra em subpastas |
 | `--falhar-em-bloqueio` | sai com código 1 se houver bloqueios |
 
+## Um emitente por execução
+
+O plano Comunidade aceita XMLs de um único emitente por execução. Se a pasta tiver mais de
+um CNPJ/CPF emitente, o programa para com código 2 **antes de gerar o relatório**. Isso evita
+misturar SKUs iguais de empresas diferentes. Separe os XMLs por emitente antes de rodar.
+
+Para vários emitentes em um relatório, atualização de regras e suporte, abra o
+[formulário do plano Escritório](https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md).
+
 ## O que ele verifica
 
 | Código | Severidade | Verificação |
 |---|---|---|
-| `RTC001` | bloqueio | Emitente CRT=3 com item sem o grupo `gIBSCBS` |
-| `RTC002` | bloqueio | Grupo `gIBSCBS` presente, mas sem `cClassTrib` |
+| `RTC001` | bloqueio | Grupo pai `IBSCBS` ausente quando exigido pela UB12-10 |
+| `RTC002` | bloqueio | `IBSCBS` presente, mas sem `cClassTrib` |
+| `RTC003` | bloqueio | CST do IBS/CBS ausente ou inexistente na tabela oficial |
+| `RTC004` | bloqueio | CST exige `gIBSCBS`, mas o grupo não foi informado |
+| `RTC005` | bloqueio | CST proíbe `gIBSCBS`, mas o grupo foi informado |
 | `NCM001` | bloqueio | NCM ausente ou fora do formato de 8 dígitos |
 | `GTIN001` | alerta | GTIN com dígito verificador inválido ou malformado. `cEAN` vazio só alerta em layout 4.00 ou superior |
 
 Notas de emitentes no Simples Nacional (CRT=1 e 2) não geram bloqueio de RTC. A transição
 delas segue regra própria e não cai no corte de agosto.
+
+A `RTC001` respeita as exceções oficiais para devolução/complementar que referencia
+NF-e anterior a 2026 e para `cProdANP` presente na tabela de combustíveis monofásicos.
+Como a entrada é um acervo histórico, “bloqueio” significa que o padrão encontrado
+causará rejeição se continuar numa emissão sujeita à regra após o corte.
 
 O `cEAN` vazio é tratado conforme a versão do layout da nota. O literal `SEM GTIN` só
 existe a partir do 4.00 (NT 2016.002): em notas antigas, no 2.00 ou 3.xx, campo vazio
@@ -103,8 +129,8 @@ seria falso positivo.
 
 ## O que ele *não* é
 
-Não é um validador de schema. O RTC Check confere **presença e formato** de campos usando
-tags do layout 4.00, estáveis e públicas desde 2018. Ele não substitui o
+Não é um validador de schema. O RTC Check confere **regras selecionadas de
+presença, formato e compatibilidade com o CST**. Ele não substitui o
 [validador oficial do SEFAZ-RS](https://dfe-portal.svrs.rs.gov.br/Cff/ValidadorRtcNfe),
 que é a fonte de verdade para conformidade estrutural, e valida uma nota por vez.
 
@@ -127,4 +153,5 @@ AGPL-3.0-or-later. Uso interno na sua empresa, incluindo comercial, está libera
 
 Se você quer embarcar o RTC Check num produto fechado ou oferecê-lo como serviço sem
 publicar suas modificações, existe licença comercial. Veja
-[COMMERCIAL.md](COMMERCIAL.md).
+[COMMERCIAL.md](COMMERCIAL.md) ou abra o
+[formulário comercial](https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md).
