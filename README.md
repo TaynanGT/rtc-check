@@ -39,17 +39,19 @@ uma tarde, e é por isso que o código é aberto.
 
 ## Instalação
 
-```bash
-pip install rtc-check
-```
-
-Ou, sem instalar nada de forma permanente:
+Ainda não está no PyPI. Instale direto do repositório:
 
 ```bash
-uvx rtc-check ./xmls
+pip install git+https://github.com/TaynanGT/rtc-check
 ```
 
-Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS.
+Ou rode sem instalar nada de forma permanente:
+
+```bash
+uvx --from git+https://github.com/TaynanGT/rtc-check rtc-check ./xmls
+```
+
+Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.14.
 
 ## Uso
 

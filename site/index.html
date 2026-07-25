@@ -180,14 +180,15 @@ regras de validação do SEFAZ, e prometer isso seria desonesto.</p>
 <section class="w" id="comecar">
 <h2>Começar</h2>
 
-<p>Se você tem Python 3.11 ou mais novo:</p>
+<p>Precisa de Python 3.11 ou mais novo. Ainda não está no PyPI, então a
+instalação é direto do repositório:</p>
 
-<pre><code>pip install rtc-check
+<pre><code>pip install git+https://github.com/TaynanGT/rtc-check
 rtc-check ./pasta-com-xmls</code></pre>
 
-<p>Sem instalar nada permanente:</p>
+<p>Ou sem instalar nada permanente:</p>
 
-<pre><code>uvx rtc-check ./pasta-com-xmls</code></pre>
+<pre><code>uvx --from git+https://github.com/TaynanGT/rtc-check rtc-check ./pasta-com-xmls</code></pre>
 
 <p>Relatório em HTML, para mandar ao contador ou à diretoria:</p>
 
