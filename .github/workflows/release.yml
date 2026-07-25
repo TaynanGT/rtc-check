@@ -53,10 +53,23 @@ jobs:
           name: pacotes
           path: dist/
 
-      - name: Anexar os pacotes ao release
+      # Cria o release se ainda nao existir. So fazer upload assume que alguem
+      # criou o release na mao antes de empurrar a tag, o que quebrou a v0.1.1
+      # com "release not found".
+      - name: Criar ou atualizar o release com os pacotes
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${GITHUB_REF_NAME}" dist/* --clobber
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "release $tag ja existe, anexando os pacotes"
+            gh release upload "$tag" dist/* --clobber
+          else
+            echo "criando release $tag"
+            gh release create "$tag" dist/* \
+              --title "RTC Check ${tag#v}" \
+              --notes-from-tag
+          fi
 
   pypi:
     needs: construir
