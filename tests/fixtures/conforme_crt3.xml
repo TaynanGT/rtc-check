@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe35240712345678000199550010000000021000000024" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <natOp>VENDA DE MERCADORIA</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>2</nNF>
+        <dhEmi>2026-07-20T14:02:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+      </ide>
+      <emit>
+        <CNPJ>12345678000199</CNPJ>
+        <xNome>METALURGICA HORIZONTE LTDA</xNome>
+        <CRT>3</CRT>
+      </emit>
+      <det nItem="1">
+        <prod>
+          <cProd>SKU-1001</cProd>
+          <cEAN>7891234567895</cEAN>
+          <xProd>CHAPA DE ACO GALVANIZADO 2MM</xProd>
+          <NCM>72104900</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>KG</uCom>
+          <qCom>150.0000</qCom>
+          <vUnCom>12.5000</vUnCom>
+          <vProd>1875.00</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <vICMS>337.50</vICMS>
+            </ICMS00>
+          </ICMS>
+          <IBSCBS>
+            <CST>000</CST>
+            <cClassTrib>000001</cClassTrib>
+            <gIBSCBS>
+              <vBC>1875.00</vBC>
+              <gIBSUF>
+                <pIBSUF>0.1000</pIBSUF>
+                <vIBSUF>1.88</vIBSUF>
+              </gIBSUF>
+              <gCBS>
+                <pCBS>0.9000</pCBS>
+                <vCBS>16.88</vCBS>
+              </gCBS>
+            </gIBSCBS>
+          </IBSCBS>
+        </imposto>
+      </det>
+    </infNFe>
+  </NFe>
+</nfeProc>

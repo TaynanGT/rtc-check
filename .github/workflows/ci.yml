@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Instalar dependências
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Tipos
+        run: mypy
+
+      - name: Testes
+        run: pytest --cov=rtc_check --cov-report=term-missing --cov-fail-under=90
+
+  instalacao-limpa:
+    name: Instalação limpa a partir do wheel
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Construir o pacote
+        run: uv build
+
+      - name: Instalar só o wheel, sem as dependências de dev
+        run: |
+          uv venv limpo
+          uv pip install --python limpo (Get-ChildItem dist/*.whl).FullName
+        shell: pwsh
+
+      - name: Rodar o binário instalado
+        run: |
+          limpo/Scripts/rtc-check.exe --version
+          limpo/Scripts/rtc-check.exe tests/fixtures --falhar-em-bloqueio
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Confirmar que o exit code sinaliza bloqueio
+        run: |
+          limpo/Scripts/rtc-check.exe tests/fixtures --falhar-em-bloqueio
+          if ($LASTEXITCODE -ne 1) { throw "esperado exit 1, veio $LASTEXITCODE" }
+        shell: pwsh

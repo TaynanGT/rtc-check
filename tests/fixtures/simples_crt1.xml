@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe><infNFe Id="NFe35240798765432000188550010000000031000000031" versao="4.00">
+    <ide><cUF>35</cUF><mod>55</mod><serie>1</serie><nNF>3</nNF>
+      <dhEmi>2026-07-18T11:00:00-03:00</dhEmi><tpNF>1</tpNF></ide>
+    <emit><CNPJ>98765432000188</CNPJ><xNome>PAPELARIA CENTRAL ME</xNome><CRT>1</CRT></emit>
+    <det nItem="1"><prod>
+      <cProd>PAP-010</cProd><cEAN>7891234567895</cEAN>
+      <xProd>RESMA PAPEL A4 75G</xProd><NCM>48025590</NCM><CFOP>5102</CFOP>
+      <uCom>UN</uCom><qCom>20.0000</qCom><vUnCom>24.9000</vUnCom><vProd>498.00</vProd>
+    </prod><imposto><ICMSSN102><orig>0</orig><CSOSN>102</CSOSN></ICMSSN102></imposto></det>
+  </infNFe></NFe>
+</nfeProc>

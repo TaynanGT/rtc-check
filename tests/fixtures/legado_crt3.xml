@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe35240712345678000199550010000000011000000017" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <natOp>VENDA DE MERCADORIA</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>1</nNF>
+        <dhEmi>2026-07-10T09:15:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+      </ide>
+      <emit>
+        <CNPJ>12345678000199</CNPJ>
+        <xNome>METALURGICA HORIZONTE LTDA</xNome>
+        <CRT>3</CRT>
+      </emit>
+      <det nItem="1">
+        <prod>
+          <cProd>SKU-1001</cProd>
+          <cEAN>7891234567895</cEAN>
+          <xProd>CHAPA DE ACO GALVANIZADO 2MM</xProd>
+          <NCM>72104900</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>KG</uCom>
+          <qCom>150.0000</qCom>
+          <vUnCom>12.5000</vUnCom>
+          <vProd>1875.00</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <vICMS>337.50</vICMS>
+            </ICMS00>
+          </ICMS>
+        </imposto>
+      </det>
+      <det nItem="2">
+        <prod>
+          <cProd>SKU-2002</cProd>
+          <cEAN>SEM GTIN</cEAN>
+          <xProd>PERFIL U DOBRADO SOB MEDIDA</xProd>
+          <NCM>73084000</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>40.0000</qCom>
+          <vUnCom>89.9000</vUnCom>
+          <vProd>3596.00</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <vICMS>647.28</vICMS>
+            </ICMS00>
+          </ICMS>
+        </imposto>
+      </det>
+    </infNFe>
+  </NFe>
+</nfeProc>

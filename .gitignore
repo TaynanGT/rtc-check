@@ -1,0 +1,17 @@
+.venv/
+limpo/
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+# Relatórios gerados e, principalmente, XML de cliente: nunca versionar.
+*.html
+!site/index.html
+xmls/
+acervo/

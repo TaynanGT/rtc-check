@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe><infNFe Id="NFe35240712345678000199550010000000041000000048" versao="4.00">
+    <ide><cUF>35</cUF><mod>55</mod><serie>1</serie><nNF>4</nNF>
+      <dhEmi>2026-07-22T16:40:00-03:00</dhEmi><tpNF>1</tpNF></ide>
+    <emit><CNPJ>12345678000199</CNPJ><xNome>METALURGICA HORIZONTE LTDA</xNome><CRT>3</CRT></emit>
+    <det nItem="1"><prod>
+      <cProd>SKU-3003</cProd><cEAN>7891234567890</cEAN>
+      <xProd>ELETRODO REVESTIDO 2,5MM</xProd><NCM>8311</NCM><CFOP>5102</CFOP>
+      <uCom>KG</uCom><qCom>10.0000</qCom><vUnCom>32.0000</vUnCom><vProd>320.00</vProd>
+    </prod><imposto><ICMS><ICMS00><orig>0</orig><CST>00</CST></ICMS00></ICMS></imposto></det>
+    <det nItem="2"><prod>
+      <cProd>SKU-4004</cProd><cEAN></cEAN>
+      <xProd>DISCO DE CORTE 7 POLEGADAS</xProd><NCM>68042210</NCM><CFOP>5102</CFOP>
+      <uCom>UN</uCom><qCom>50.0000</qCom><vUnCom>8.9000</vUnCom><vProd>445.00</vProd>
+    </prod><imposto><ICMS><ICMS00><orig>0</orig><CST>00</CST></ICMS00></ICMS></imposto></det>
+  </infNFe></NFe>
+</nfeProc>
