@@ -1,5 +1,8 @@
 .venv/
 limpo/
+.limpo/
+# Diretório de config do smoke test do CI: licença e teste grátis são locais.
+config-do-ci/
 dist/
 build/
 *.egg-info/
