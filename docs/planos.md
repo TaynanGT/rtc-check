@@ -9,7 +9,7 @@ agosto, nada disso é necessário: `rtc-check ./xmls` responde de graça e para 
 | Edição | Como se chega nela |
 |---|---|
 | **Comunidade** | padrão, sem configurar nada |
-| **Teste grátis** | `rtc-check --iniciar-teste`, 14 dias, uma vez por máquina |
+| **Teste grátis** | `rtc-check --iniciar-teste`, 14 dias por diretório de configuração |
 | **Escritório** | chave de licença |
 | **Plataforma** | chave de licença, acrescenta o direito de redistribuir |
 
@@ -24,7 +24,7 @@ Rode `rtc-check --plano` para ver a lista na sua instalação. Em resumo:
 |---|---|---|
 | Varredura local ilimitada | sim | sim |
 | Relatório de texto, contagens completas | sim | sim |
-| Regras `RTC001` a `RTC005` | sim | sim |
+| Regras `RTC001` a `RTC006` | sim | sim |
 | Lista detalhada de SKUs | 5 primeiros | completa |
 | Regras `NCM001` e `GTIN001` | não | sim |
 | `--formato json`, `csv`, `html` | não | sim |
@@ -46,13 +46,14 @@ rtc-check --iniciar-teste
 Grava `teste.json` no diretório de configuração com a data de início e a de vencimento.
 Não há cadastro, e-mail, cartão nem chamada de rede: o teste é uma decisão local.
 
-Uma vez por máquina. Depois de vencer, a instalação volta para o plano Comunidade com um
-aviso, e um novo `--iniciar-teste` é recusado.
+Uma vez por diretório de configuração. Depois de vencer, a instalação volta para o plano
+Comunidade com um aviso, e um novo `--iniciar-teste` é recusado. Sem conta nem rede,
+apagar esse diretório reinicia o estado; o teste é uma cortesia local, não DRM.
 
 ## Ativar uma chave
 
 ```bash
-rtc-check --licenca RTC1-XXXXXXXX-YYYYYYYY
+rtc-check --licenca RTC2.carga.assinatura
 ```
 
 Confere a assinatura e o vencimento e guarda a chave no diretório de configuração. As
@@ -61,7 +62,7 @@ próximas execuções não precisam mais do argumento.
 Para usar a chave só numa execução, passe junto do comando:
 
 ```bash
-rtc-check ./xmls --licenca RTC1-... --formato csv --saida skus.csv
+rtc-check ./xmls --licenca RTC2.carga.assinatura --formato csv --saida skus.csv
 ```
 
 Em CI, prefira a variável de ambiente e um secret do runner:
@@ -92,7 +93,8 @@ instalação ao plano Comunidade.
 |---|---|
 | `RTC_CHECK_LICENCA` | chave de licença, útil em CI e contêiner |
 | `RTC_CHECK_HOME` | força o diretório de configuração (testes, imagens efêmeras) |
-| `RTC_CHECK_CHAVE_VERIFICACAO` | segredo usado para assinar e conferir as chaves |
+| `RTC_CHECK_CHAVE_PUBLICA` | substitui a chave pública Ed25519 de verificação |
+| `RTC_CHECK_CHAVE_PRIVADA` | caminho do PEM Ed25519, usado somente para emitir chaves |
 
 ## Emitir chaves (para quem vende)
 
@@ -103,10 +105,10 @@ from rtc_check.edicao import Plano, gerar_chave
 print(gerar_chave(Plano.ESCRITORIO, date(2027, 7, 31), "Loja do Zé Ltda"))
 ```
 
-A chave carrega plano, vencimento e titular em base32, assinados com HMAC-SHA256. O
-segredo padrão é público, porque o repositório é público: quem distribui build oficial
-define `RTC_CHECK_CHAVE_VERIFICACAO` no ambiente de build, e aí chaves forjadas com o
-segredo público não abrem a instalação oficial.
+A chave carrega plano, vencimento e titular em JSON compacto, assinado com Ed25519.
+Antes de emitir, defina `RTC_CHECK_CHAVE_PRIVADA` para o caminho de um PEM Ed25519 que
+fique fora do repositório. A distribuição contém só a chave pública correspondente, por
+isso consegue verificar uma licença sem ganhar capacidade de fabricar outra.
 
 ## Por que o gating é honesto sobre si mesmo
 

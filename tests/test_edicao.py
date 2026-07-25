@@ -26,8 +26,8 @@ def test_chave_valida_devolve_plano_e_titular():
 def test_chave_adulterada_e_recusada():
     chave = _chave()
     # troca o último caractere da assinatura
-    adulterada = chave[:-1] + ("A" if chave[-1] != "A" else "B")
-    with pytest.raises(ed.LicencaInvalida, match="assinatura"):
+    adulterada = chave[:-2] + ("A" if chave[-2] != "A" else "B") + chave[-1]
+    with pytest.raises(ed.LicencaInvalida, match="corrompida"):
         ed.validar_chave(adulterada, hoje=HOJE)
 
 
@@ -35,8 +35,8 @@ def test_carga_reescrita_nao_passa_sem_assinatura_nova():
     """Trocar o plano dentro da chave invalida a assinatura."""
     comunidade = _chave(plano=ed.Plano.COMUNIDADE)
     plataforma = _chave(plano=ed.Plano.PLATAFORMA)
-    corpo = plataforma.split("-")[1]
-    forjada = f"{ed.PREFIXO_CHAVE}-{corpo}-{comunidade.split('-')[2]}"
+    corpo = plataforma.split(".")[1]
+    forjada = f"{ed.PREFIXO_CHAVE}.{corpo}.{comunidade.split('.')[2]}"
     with pytest.raises(ed.LicencaInvalida):
         ed.validar_chave(forjada, hoje=HOJE)
 
@@ -46,10 +46,17 @@ def test_chave_vencida_e_recusada():
         ed.validar_chave(_chave(expira=HOJE - timedelta(days=1)), hoje=HOJE)
 
 
-def test_chave_com_outro_segredo_nao_abre_a_instalacao(monkeypatch):
-    """Quem publica define o próprio segredo; chave do segredo público não vale."""
+def test_chave_com_outra_chave_publica_nao_abre_a_instalacao(monkeypatch):
+    """Só a chave pública correspondente confere a assinatura Ed25519."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
     chave_publica = _chave()
-    monkeypatch.setenv("RTC_CHECK_CHAVE_VERIFICACAO", "segredo-do-mantenedor")
+    outra = Ed25519PrivateKey.generate().public_key().public_bytes(
+        serialization.Encoding.Raw,
+        serialization.PublicFormat.Raw,
+    )
+    monkeypatch.setenv("RTC_CHECK_CHAVE_PUBLICA", ed._b64_codificar(outra))
     with pytest.raises(ed.LicencaInvalida):
         ed.validar_chave(chave_publica, hoje=HOJE)
 
@@ -99,7 +106,7 @@ def test_teste_gratis_libera_o_mesmo_que_escritorio():
 
 
 def test_regras_de_cadastro_so_no_plano_pago():
-    regras_rtc = {"RTC001", "RTC002", "RTC003", "RTC004", "RTC005"}
+    regras_rtc = {"RTC001", "RTC002", "RTC003", "RTC004", "RTC005", "RTC006"}
     assert set(ed.Edicao().regras_ativas) == regras_rtc
     pago = ed.Edicao(plano=ed.Plano.ESCRITORIO).regras_ativas
     assert regras_rtc | {"NCM001", "GTIN001"} == set(pago)

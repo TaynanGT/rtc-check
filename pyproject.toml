@@ -1,6 +1,6 @@
 [project]
 name = "rtc-check"
-version = "0.2.0"
+version = "0.2.1"
 description = "Auditoria local de prontidão da NF-e para a Reforma Tributária (IBS/CBS)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -35,7 +35,7 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: XML",
     "Topic :: Utilities",
 ]
-dependencies = []
+dependencies = ["cryptography>=46,<47"]
 
 [project.urls]
 Homepage = "https://taynangt.github.io/rtc-check/"

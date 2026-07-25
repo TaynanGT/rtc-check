@@ -82,7 +82,7 @@ jobs:
       - name: Rodar o binário instalado e conferir o exit code
         shell: bash
         # Diretório de config próprio: o smoke test não pode ler nem gastar
-        # licença de quem roda, e o teste grátis é uma vez por máquina.
+        # licença de quem roda, e o teste grátis é local ao diretório.
         env:
           RTC_CHECK_HOME: config-do-ci
         run: |

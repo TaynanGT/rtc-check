@@ -10,6 +10,7 @@ from . import gtin
 from .normativa import NORMATIVA_RTC
 from .parser import Item, NotaFiscal
 from .tabelas_rtc import (
+    CCLASSTRIB_NFE,
     CPROD_ANP_MONOFASICOS,
     CSTS_EXIGEM_GIBSCBS,
     CSTS_IBSCBS,
@@ -62,7 +63,7 @@ def _achado(
     )
 
 
-# A edição em uso decide quais regras rodam. As regras RTC001-RTC005 tratam o
+# A edição em uso decide quais regras rodam. As regras RTC001-RTC006 tratam o
 # corte da RTC e ficam gratuitas; NCM001 e GTIN001 são higiene de cadastro.
 TODAS_AS_REGRAS = frozenset(
     {
@@ -71,6 +72,7 @@ TODAS_AS_REGRAS = frozenset(
         "RTC003",
         "RTC004",
         "RTC005",
+        "RTC006",
         "NCM001",
         "GTIN001",
     }
@@ -134,7 +136,19 @@ def avaliar_item(
                         arquivo,
                     )
                 )
-            elif (
+            if "RTC006" in ativas and item.cclass_trib not in CCLASSTRIB_NFE:
+                achados.append(
+                    _achado(
+                        Severidade.BLOQUEIO,
+                        "RTC006",
+                        f"cClassTrib '{item.cclass_trib}' não é vigente para NF-e "
+                        "na tabela oficial v1.60 do IT 2025.002.",
+                        nota,
+                        item,
+                        arquivo,
+                    )
+                )
+            if (
                 "RTC004" in ativas
                 and item.cst_ibscbs in CSTS_EXIGEM_GIBSCBS
                 and not item.tem_gibscbs
@@ -151,7 +165,7 @@ def avaliar_item(
                         arquivo,
                     )
                 )
-            elif (
+            if (
                 "RTC005" in ativas
                 and item.cst_ibscbs in CSTS_PROIBEM_GIBSCBS
                 and item.tem_gibscbs

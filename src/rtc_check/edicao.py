@@ -18,26 +18,28 @@ from __future__ import annotations
 
 import base64
 import binascii
-import hmac
 import json
 import os
 import sys
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from enum import StrEnum
-from hashlib import sha256
 from pathlib import Path
 
-PREFIXO_CHAVE = "RTC1"
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PrivateKey,
+    Ed25519PublicKey,
+)
+
+PREFIXO_CHAVE = "RTC2"
 DIAS_DE_TESTE = 14
 URL_PLANOS = "https://taynangt.github.io/rtc-check/#precos"
 
-# Chave usada para assinar e conferir as licenças. O valor padrão é público
-# porque o repositório é público. Quem emite licenças de verdade define
-# RTC_CHECK_CHAVE_VERIFICACAO no ambiente do build e distribui os binários com
-# o segredo próprio, de modo que uma chave forjada com o padrão não abra a
-# instalação oficial.
-CHAVE_PADRAO = "rtc-check-chave-publica-v1"
+# Chave pública Ed25519 do emissor oficial. Ela pode estar no programa: só a
+# chave privada, mantida fora do repositório, consegue emitir uma licença.
+CHAVE_PUBLICA_PADRAO = "_N26nweHMOt1wkfAMGO_mZmPnVqB0IuqfnA7TOVhRpY"
 
 
 class Plano(StrEnum):
@@ -112,7 +114,7 @@ DESCRICAO_DO_RECURSO: dict[Recurso, str] = {
 # As regras RTC tratam o corte de agosto e ficam no plano gratuito: é o que faz
 # a ferramenta valer para todo mundo. NCM e GTIN são higiene de cadastro.
 REGRAS_GRATUITAS = frozenset(
-    {"RTC001", "RTC002", "RTC003", "RTC004", "RTC005"}
+    {"RTC001", "RTC002", "RTC003", "RTC004", "RTC005", "RTC006"}
 )
 REGRAS_POR_RECURSO: dict[Recurso, frozenset[str]] = {
     Recurso.REGRA_NCM: frozenset({"NCM001"}),
@@ -129,11 +131,44 @@ class LicencaInvalida(Exception):
 
 
 class TesteIndisponivel(Exception):
-    """O teste grátis já foi usado nesta máquina."""
+    """O teste grátis já foi usado neste diretório de configuração."""
 
 
-def _chave_de_verificacao() -> bytes:
-    return os.environ.get("RTC_CHECK_CHAVE_VERIFICACAO", CHAVE_PADRAO).encode()
+def _b64_codificar(valor: bytes) -> str:
+    return base64.urlsafe_b64encode(valor).decode().rstrip("=")
+
+
+def _b64_decodificar(valor: str) -> bytes:
+    try:
+        decodificado = base64.urlsafe_b64decode(valor + "=" * (-len(valor) % 4))
+    except (binascii.Error, ValueError) as erro:
+        raise LicencaInvalida("codificação da chave inválida") from erro
+    if _b64_codificar(decodificado) != valor:
+        raise LicencaInvalida("codificação da chave inválida")
+    return decodificado
+
+
+def _chave_publica() -> Ed25519PublicKey:
+    texto = os.environ.get("RTC_CHECK_CHAVE_PUBLICA", CHAVE_PUBLICA_PADRAO)
+    try:
+        return Ed25519PublicKey.from_public_bytes(_b64_decodificar(texto))
+    except (LicencaInvalida, ValueError) as erro:
+        raise LicencaInvalida("chave pública de licença inválida") from erro
+
+
+def _chave_privada(caminho: str | None = None) -> Ed25519PrivateKey:
+    origem = caminho or os.environ.get("RTC_CHECK_CHAVE_PRIVADA")
+    if not origem:
+        raise ValueError(
+            "para emitir licença, defina RTC_CHECK_CHAVE_PRIVADA com o caminho do PEM"
+        )
+    try:
+        chave = serialization.load_pem_private_key(Path(origem).read_bytes(), password=None)
+    except (OSError, ValueError, TypeError) as erro:
+        raise ValueError("não foi possível carregar a chave privada de licença") from erro
+    if not isinstance(chave, Ed25519PrivateKey):
+        raise ValueError("a chave privada de licença precisa ser Ed25519")
+    return chave
 
 
 def diretorio_de_config() -> Path:
@@ -156,40 +191,41 @@ def _arquivo_de_teste() -> Path:
     return diretorio_de_config() / "teste.json"
 
 
-def _assinar(carga: str) -> str:
-    digest = hmac.new(_chave_de_verificacao(), carga.encode(), sha256).hexdigest()
-    return digest[:16].upper()
-
-
-def gerar_chave(plano: Plano, expira_em: date, titular: str) -> str:
-    """Emite uma chave de licença. Usado por quem vende, e pelos testes."""
-    if "|" in titular:
-        raise ValueError("titular não pode conter '|'")
-    carga = f"{plano.value}|{expira_em.isoformat()}|{titular}"
-    corpo = base64.b32encode(carga.encode()).decode().rstrip("=")
-    return f"{PREFIXO_CHAVE}-{corpo}-{_assinar(carga)}"
+def gerar_chave(
+    plano: Plano,
+    expira_em: date,
+    titular: str,
+    caminho_chave_privada: str | None = None,
+) -> str:
+    """Emite uma licença Ed25519; a chave privada nunca faz parte do pacote."""
+    carga = json.dumps(
+        {"expira_em": expira_em.isoformat(), "plano": plano.value, "titular": titular},
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode()
+    assinatura = _chave_privada(caminho_chave_privada).sign(carga)
+    return f"{PREFIXO_CHAVE}.{_b64_codificar(carga)}.{_b64_codificar(assinatura)}"
 
 
 def _decodificar(chave: str) -> tuple[Plano, date, str]:
-    partes = chave.strip().split("-")
+    partes = chave.strip().split(".")
     if len(partes) != 3 or partes[0] != PREFIXO_CHAVE:
         raise LicencaInvalida("formato de chave não reconhecido")
 
     _, corpo, assinatura = partes
-    preenchimento = "=" * (-len(corpo) % 8)
     try:
-        carga = base64.b32decode(corpo + preenchimento).decode()
-    except (binascii.Error, UnicodeDecodeError) as erro:
+        carga = _b64_decodificar(corpo)
+        _chave_publica().verify(_b64_decodificar(assinatura), carga)
+        dados = json.loads(carga.decode())
+    except (InvalidSignature, LicencaInvalida, UnicodeDecodeError, json.JSONDecodeError) as erro:
         raise LicencaInvalida("chave corrompida") from erro
 
-    if not hmac.compare_digest(_assinar(carga), assinatura.upper()):
-        raise LicencaInvalida("assinatura não confere")
-
     try:
-        nome_do_plano, vencimento, titular = carga.split("|", 2)
-        plano = Plano(nome_do_plano)
-        expira_em = date.fromisoformat(vencimento)
-    except ValueError as erro:
+        plano = Plano(str(dados["plano"]))
+        expira_em = date.fromisoformat(str(dados["expira_em"]))
+        titular = str(dados["titular"])
+    except (KeyError, ValueError) as erro:
         raise LicencaInvalida("conteúdo da chave inválido") from erro
 
     return plano, expira_em, titular
@@ -265,7 +301,7 @@ def _ler_teste(hoje: date) -> tuple[Edicao | None, str]:
 
 
 def iniciar_teste(hoje: date | None = None) -> Edicao:
-    """Libera os 14 dias de teste. Só funciona uma vez por máquina."""
+    """Libera os 14 dias de teste uma vez por diretório de configuração."""
     hoje = hoje or date.today()
     arquivo = _arquivo_de_teste()
     if arquivo.exists():
@@ -275,7 +311,7 @@ def iniciar_teste(hoje: date | None = None) -> Edicao:
                 f"o teste grátis já está ativo até {edicao.expira_em:%d/%m/%Y}"
             )
         raise TesteIndisponivel(
-            f"o teste grátis desta máquina já foi usado. Planos: {URL_PLANOS}"
+            f"o teste grátis deste diretório de configuração já foi usado. Planos: {URL_PLANOS}"
         )
 
     expira_em = hoje + timedelta(days=DIAS_DE_TESTE)
@@ -355,7 +391,7 @@ def como_liberar(recurso: Recurso) -> str:
     """Mensagem mostrada quando alguém pede um recurso que o plano não cobre."""
     caminhos = [
         (f"teste grátis por {DIAS_DE_TESTE} dias:", "rtc-check --iniciar-teste"),
-        ("já tem uma chave:", "rtc-check --licenca RTC1-..."),
+        ("já tem uma chave:", "rtc-check --licenca RTC2...."),
         ("planos e preços:", URL_PLANOS),
     ]
     largura = max(len(rotulo) for rotulo, _ in caminhos)

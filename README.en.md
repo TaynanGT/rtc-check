@@ -40,9 +40,9 @@ work, grouped by product and sorted by impact.
 
 ## Runs on your machine. Full stop.
 
-No XML leaves your computer. No upload, no account, no server, no telemetry. Zero
-dependencies beyond the Python standard library — the program never opens a socket, and
-you can verify that in an afternoon. That is why the code is open.
+No XML leaves your computer. No upload, no account, no server, no telemetry. Apart from
+the audited cryptography library used to verify paid-plan licenses, the runtime is standard
+library only; the program never opens a socket. That is why the code is open.
 
 The scan and the text report above are **free forever, no sign-up**. Exporting,
 automating and comparing runs are part of the paid plans, with a
@@ -61,7 +61,7 @@ uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
 
 In production, pin a version instead of tracking `main`: append the release tag to
-the URL, as in `...rtc-check.git@v0.1.1`. Available tags are listed under
+the URL, as in `...rtc-check.git@v0.2.1`. Available tags are listed under
 [releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requires Python 3.11+. Tested on Windows, Linux and macOS, from 3.11 to 3.14.
@@ -87,7 +87,7 @@ error, `3` the requested feature is not in the current plan.
 |---|---|---|---|
 | **Price** | R$ 0, forever | R$ 390/month | contact us |
 | Unlimited local scanning | yes | yes | yes |
-| Cut-off rules (`RTC001` to `RTC005`) | yes | yes | yes |
+| Cut-off rules (`RTC001` to `RTC006`) | yes | yes | yes |
 | Blocker and SKU counts | yes | yes | yes |
 | Full SKU list | first 5 | full | full |
 | Product-record rules (`NCM001`, `GTIN001`) | no | yes | yes |
@@ -111,6 +111,7 @@ for is the work that comes after the answer.
 | `RTC003` | blocker | IBS/CBS CST missing or absent from the official table | free |
 | `RTC004` | blocker | CST requires `gIBSCBS`, but the group is missing | free |
 | `RTC005` | blocker | CST forbids `gIBSCBS`, but the group is present | free |
+| `RTC006` | blocker | `cClassTrib` is not current for NF-e in the official table | free |
 | `NCM001` | blocker | NCM missing or not 8 digits | paid |
 | `GTIN001` | warning | invalid GS1 check digit or malformed GTIN | paid |
 

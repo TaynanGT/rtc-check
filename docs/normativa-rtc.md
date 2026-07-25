@@ -4,7 +4,7 @@ Cada relatório do RTC Check registra a referência normativa usada na análise.
 Isso permite explicar, meses depois, **qual fotografia regulatória** gerou cada
 fila de trabalho.
 
-## Referência da versão 0.2.0
+## Referência da versão 0.2.1
 
 | Campo | Valor |
 |---|---|
@@ -16,10 +16,15 @@ fila de trabalho.
 | Tabela CST/cClassTrib | Informe Técnico 2025.002 v1.60, publicado em 23/06/2026 |
 | Fonte da tabela | [IT oficial](https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=jxTMMQeEVM8%3D) |
 
-As regras `RTC001` a `RTC005` implementam a UB12-10, a cardinalidade de
+As regras `RTC001` a `RTC006` implementam a UB12-10, a cardinalidade de
 `CST`/`cClassTrib` no layout e as UB13-10, UB13-20 e UB13-30. A UB12-10 considera
 as exceções de devolução/complementar que referencia NF-e anterior a 2026 e de
 `cProdANP` presente na tabela oficial de combustíveis monofásicos.
+
+`RTC006` consulta a fotografia local dos 96 códigos `cClassTrib` vigentes para
+NF-e (modelo 55) na data da tabela. A ferramenta ainda não valida grupos adicionais
+da UB13, como `gIBSCBSMono` e `gTransfCred`; eles permanecem fora do escopo desta
+triagem e devem ser confirmados no validador oficial.
 
 ## Como a regra é atualizada
 

@@ -3,6 +3,19 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.2.1] / 2026-07-25
+
+### Corrigido
+- Licenças agora usam assinatura Ed25519: o pacote contém apenas a chave pública;
+  a chave privada de emissão fica fora do repositório e da distribuição.
+- `RTC006` valida o `cClassTrib` vigente para NF-e contra a fotografia oficial
+  do IT 2025.002 v1.60, em vez de aceitar qualquer código não vazio.
+- O teste grátis é descrito corretamente como único por diretório de configuração;
+  sem conta ou rede não existe como garantir unicidade por máquina.
+
+### Alterado
+- Adicionada a dependência `cryptography` para verificar assinaturas Ed25519.
+
 ## [0.2.0] / 2026-07-25
 
 Edições. A varredura e o relatório de texto continuam gratuitos e sem cadastro

@@ -5,6 +5,7 @@ import pytest
 from rtc_check.parser import ler_nota
 from rtc_check.rules import avaliar_nota
 from rtc_check.tabelas_rtc import (
+    CCLASSTRIB_NFE,
     CSTS_EXIGEM_GIBSCBS,
     CSTS_IBSCBS,
     CSTS_PROIBEM_GIBSCBS,
@@ -120,6 +121,12 @@ def test_ub13_10_rejeita_cst_ausente_ou_inexistente(tmp_path):
 def test_layout_exige_cclass_trib_no_pai(tmp_path):
     codigos = _avaliar(tmp_path, cclass=None)
     assert "RTC002" in codigos
+
+
+def test_cclass_trib_precisa_existir_na_tabela_e_ser_da_nfe(tmp_path):
+    assert "RTC006" in _avaliar(tmp_path, cclass="000999")
+    assert "RTC006" not in _avaliar(tmp_path, cclass="000001")
+    assert "000001" in CCLASSTRIB_NFE
 
 
 def test_ub13_30_excecao_perda_em_estoque(tmp_path):
