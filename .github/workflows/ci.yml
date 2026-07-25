@@ -81,6 +81,10 @@ jobs:
 
       - name: Rodar o binário instalado e conferir o exit code
         shell: bash
+        # Diretório de config próprio: o smoke test não pode ler nem gastar
+        # licença de quem roda, e o teste grátis é uma vez por máquina.
+        env:
+          RTC_CHECK_HOME: config-do-ci
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             BIN=.limpo/Scripts/rtc-check.exe
@@ -88,21 +92,32 @@ jobs:
             BIN=.limpo/bin/rtc-check
           fi
 
+          conferir() {  # conferir <esperado> <descrição> <args...>
+            esperado=$1; descricao=$2; shift 2
+            set +e
+            "$BIN" "$@" > /dev/null
+            codigo=$?
+            set -e
+            [ "$codigo" -eq "$esperado" ] \
+              || { echo "$descricao: esperado exit $esperado, veio $codigo"; exit 1; }
+          }
+
           "$BIN" --version
 
+          # Plano Comunidade, recém-instalado: a varredura funciona para todo
+          # mundo, e o que é pago avisa em vez de rodar pela metade.
+          conferir 0 "varredura gratuita" tests/fixtures
+          conferir 3 "portão de CI sem plano" tests/fixtures --falhar-em-bloqueio
+          conferir 3 "exportação sem plano" tests/fixtures --formato csv
+
+          # Com o teste grátis liberado, o portão de CI passa a valer.
+          "$BIN" --iniciar-teste > /dev/null
+
           # Acervo com bloqueio conhecido: precisa sair 1.
-          set +e
-          "$BIN" tests/fixtures --falhar-em-bloqueio > /dev/null
-          codigo=$?
-          set -e
-          [ "$codigo" -eq 1 ] || { echo "esperado exit 1 com bloqueio, veio $codigo"; exit 1; }
+          conferir 1 "acervo com bloqueio" tests/fixtures --falhar-em-bloqueio
 
           # Pasta vazia: precisa sair 0.
           mkdir -p vazia
-          set +e
-          "$BIN" vazia --falhar-em-bloqueio > /dev/null
-          codigo=$?
-          set -e
-          [ "$codigo" -eq 0 ] || { echo "esperado exit 0 sem bloqueio, veio $codigo"; exit 1; }
+          conferir 0 "acervo limpo" vazia --falhar-em-bloqueio
 
-          echo "exit codes corretos nos dois cenários"
+          echo "exit codes corretos nos cinco cenários"

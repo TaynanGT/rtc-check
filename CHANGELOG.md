@@ -3,19 +3,40 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
-## [0.1.2] / 2026-07-25
+## [0.2.0] / 2026-07-25
+
+Edições. A varredura e o relatório de texto continuam gratuitos e sem cadastro
+para qualquer pessoa; exportação e automação passam a fazer parte dos planos
+pagos, com 14 dias de teste grátis liberados por um comando local.
 
 ### Adicionado
-- Referências versionadas em todos os relatórios: Nota Técnica 2025.002-RTC v1.50
+- Módulo `edicao`: planos Comunidade, Teste grátis, Escritório e Plataforma,
+  chave de licença assinada (HMAC-SHA256) e catálogo de recursos por plano.
+- `--iniciar-teste`: libera 14 dias de todos os recursos, sem cadastro nem rede.
+- `--licenca CHAVE`: ativa e guarda a licença em `~/.config/rtc-check/`.
+- `--plano`: mostra a edição em uso e o que está liberado.
+- `--por-cnpj`: quebra o resultado por emitente, em texto, JSON e HTML.
+- `--comparar relatorio.json`: diferença entre duas varreduras, com SKUs novos,
+  corrigidos e pendentes.
+- Variáveis `RTC_CHECK_LICENCA`, `RTC_CHECK_HOME` e `RTC_CHECK_CHAVE_VERIFICACAO`.
+- Código de saída 3 quando o recurso pedido está fora do plano em uso.
+- README em inglês (`README.en.md`) e `docs/planos.md`.
+- Referências versionadas nos relatórios: Nota Técnica 2025.002-RTC v1.50
   e tabela CST/cClassTrib do Informe Técnico 2025.002 v1.60.
-- Proteção para acervo multiemitente no plano Comunidade. A CLI identifica mais de um
-  CNPJ/CPF, não gera relatório e explica como separar o acervo.
-- Formulário público para plano Escritório e licença comercial, sem solicitar dados fiscais.
-- Metadados de homepage, repositório e changelog para a futura publicação no PyPI.
+- Formulário público para plano Escritório e licença comercial, sem solicitar
+  dados fiscais.
+
+### Alterado
+- Regras `NCM001` e `GTIN001` passam a fazer parte dos planos pagos. `RTC001` a
+  `RTC005`, que tratam o corte de agosto, seguem no plano gratuito.
+- O relatório de texto gratuito detalha os 5 primeiros SKUs bloqueados; a
+  contagem total continua completa e correta.
+- Chave inválida ou vencida não derruba a execução: cai para o plano Comunidade
+  com aviso, porque a varredura importa mais do que a cobrança.
 
 ### Corrigido
-- A agregação interna passa a incluir o documento do emitente, evitando colisão de SKU mesmo
-  para quem usa a API Python diretamente.
+- A agregação passa a incluir o documento do emitente, evitando colisão de SKU
+  entre empresas.
 - `RTC001` agora valida o grupo pai `IBSCBS` pela UB12-10 e respeita as exceções
   de NF-e referenciada anterior a 2026 e combustíveis monofásicos.
 - Novas regras CST-aware: CST inexistente, `gIBSCBS` obrigatório e `gIBSCBS`

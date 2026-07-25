@@ -41,7 +41,7 @@ class Item:
 
     @property
     def tem_grupo_rtc(self) -> bool:
-        """Alias legado: antes da v0.1.2, o grupo RTC significava gIBSCBS."""
+        """Alias legado: antes da v0.2.0, o grupo RTC significava gIBSCBS."""
         return self.tem_gibscbs
 
     @property

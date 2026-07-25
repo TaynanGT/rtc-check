@@ -3,7 +3,7 @@ from datetime import date
 from pathlib import Path
 
 from rtc_check.cli import analisar, main
-from rtc_check.report import formatar_html, formatar_texto
+from rtc_check.report import comparar, formatar_html, formatar_json, formatar_texto
 from rtc_check.rules import Severidade
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -134,14 +134,14 @@ def test_texto_mostra_contagem_regressiva():
     assert "Nota Técnica 2025.002-RTC v1.50" in saida
 
 
-def test_main_grava_arquivo(tmp_path, capsys):
+def test_main_grava_arquivo(tmp_path, capsys, licenciado):
     destino = tmp_path / "r.html"
     assert main([str(_acervo_emitente_unico(tmp_path)), "-f", "html", "-o", str(destino)]) == 0
     assert destino.exists()
     assert destino.read_text(encoding="utf-8").startswith("<!doctype html>")
 
 
-def test_main_falha_em_bloqueio_quando_pedido(tmp_path, capsys):
+def test_main_falha_em_bloqueio_quando_pedido(tmp_path, capsys, licenciado):
     pasta = _acervo_emitente_unico(tmp_path)
     assert main([str(pasta), "--falhar-em-bloqueio"]) == 1
     assert main([str(pasta)]) == 0
@@ -174,15 +174,21 @@ def test_acervo_multi_emitente_nao_mistura_skus_iguais(tmp_path):
     assert len(resumo.grupos) == 2
 
 
-def test_main_recusa_acervo_multi_emitente(tmp_path, capsys):
-    (tmp_path / "emitente_a.xml").write_text(
+def test_comparativo_multi_emitente_nao_colapsa_sku_igual(tmp_path):
+    antes = tmp_path / "antes"
+    depois = tmp_path / "depois"
+    antes.mkdir()
+    depois.mkdir()
+    for documento in ("11111111000111", "22222222000122"):
+        (antes / f"{documento}.xml").write_text(
+            _nota_crt3("SKU-X", documento=documento), encoding="utf-8"
+        )
+    (depois / "emitente_a.xml").write_text(
         _nota_crt3("SKU-X", documento="11111111000111"), encoding="utf-8"
     )
-    (tmp_path / "emitente_b.xml").write_text(
-        _nota_crt3("SKU-X", documento="22222222000122"), encoding="utf-8"
-    )
 
-    assert main([str(tmp_path)]) == 2
-    erro = capsys.readouterr().err
-    assert "um emitente por execução" in erro
-    assert "11111111000111" in erro
+    anterior = json.loads(formatar_json(analisar(antes)))
+    resultado = comparar(analisar(depois), anterior, "antes.json")
+
+    assert resultado.corrigidos == ["22222222000122::SKU-X"]
+    assert resultado.persistentes == ["11111111000111::SKU-X"]

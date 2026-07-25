@@ -33,6 +33,20 @@ class GrupoSku:
 
 
 @dataclass
+class ResumoEmitente:
+    """Recorte por CNPJ emitente, para quem audita mais de uma empresa."""
+
+    cnpj: str
+    nome: str = ""
+    notas: int = 0
+    notas_em_escopo: int = 0
+    itens: int = 0
+    bloqueios: int = 0
+    alertas: int = 0
+    skus: set[str] = field(default_factory=set)
+
+
+@dataclass
 class Resumo:
     arquivos_lidos: int = 0
     arquivos_invalidos: list[tuple[str, str]] = field(default_factory=list)
@@ -40,11 +54,14 @@ class Resumo:
     total_itens: int = 0
     por_severidade: Counter[str] = field(default_factory=Counter)
     grupos: list[GrupoSku] = field(default_factory=list)
-    emitentes: dict[str, str] = field(default_factory=dict)
+    emitentes: dict[str, ResumoEmitente] = field(default_factory=dict)
 
-    def registrar_emitente(self, documento: str, nome: str) -> None:
+    def registrar_emitente(self, documento: str, nome: str) -> ResumoEmitente:
         documento_normalizado = documento or "(documento ausente)"
-        self.emitentes.setdefault(documento_normalizado, nome)
+        return self.emitentes.setdefault(
+            documento_normalizado,
+            ResumoEmitente(cnpj=documento_normalizado, nome=nome),
+        )
 
     @property
     def documentos_emitentes(self) -> tuple[str, ...]:
@@ -61,6 +78,83 @@ class Resumo:
     @property
     def aprovado(self) -> bool:
         return self.por_severidade[Severidade.BLOQUEIO.value] == 0
+
+    @property
+    def emitentes_ordenados(self) -> list[ResumoEmitente]:
+        return sorted(
+            self.emitentes.values(), key=lambda e: (-e.bloqueios, -e.notas, e.cnpj)
+        )
+
+
+@dataclass
+class Comparativo:
+    """Diferença entre uma varredura anterior e a atual."""
+
+    referencia: str
+    bloqueios_antes: int = 0
+    bloqueios_agora: int = 0
+    novos: list[str] = field(default_factory=list)
+    corrigidos: list[str] = field(default_factory=list)
+    persistentes: list[str] = field(default_factory=list)
+
+    @property
+    def saldo(self) -> int:
+        """Quanto o número de SKUs bloqueados andou. Negativo é progresso."""
+        return len(self.novos) - len(self.corrigidos)
+
+
+class RelatorioAnteriorInvalido(Exception):
+    """O arquivo passado em --comparar não é um relatório JSON do RTC Check."""
+
+
+def _skus_bloqueados(resumo: Resumo, por_emitente: bool) -> set[str]:
+    return {
+        (
+            f"{g.emitente_documento}::{g.sku}"
+            if por_emitente
+            else g.sku
+        )
+        for g in resumo.grupos
+        if g.severidade_max is Severidade.BLOQUEIO
+    }
+
+
+def comparar(resumo: Resumo, anterior: object, referencia: str) -> Comparativo:
+    """Compara a varredura atual com um relatório JSON gerado antes."""
+    if not isinstance(anterior, dict) or not isinstance(anterior.get("itens"), list):
+        raise RelatorioAnteriorInvalido(
+            "esperado um relatório gerado com --formato json"
+        )
+
+    itens_anteriores = [
+        item
+        for item in anterior["itens"]
+        if isinstance(item, dict)
+        and item.get("severidade") == Severidade.BLOQUEIO.value
+    ]
+    # Relatórios anteriores à v0.2.0 não registravam o emitente por item. Para
+    # eles, preserve a comparação legada por SKU; nos novos, a identidade é
+    # emitente + SKU para não esconder correções ou regressões entre empresas.
+    por_emitente = all(item.get("emitente_documento") for item in itens_anteriores)
+    antes = {
+        (
+            f"{item['emitente_documento']}::{item.get('sku')}"
+            if por_emitente
+            else str(item.get("sku"))
+        )
+        for item in itens_anteriores
+    }
+    agora = _skus_bloqueados(resumo, por_emitente)
+
+    bloqueios_antes = anterior.get("bloqueios", 0)
+    return Comparativo(
+        referencia=referencia,
+        bloqueios_antes=bloqueios_antes if isinstance(bloqueios_antes, int) else 0,
+        bloqueios_agora=resumo.por_severidade[Severidade.BLOQUEIO.value],
+        novos=sorted(agora - antes),
+        corrigidos=sorted(antes - agora),
+        persistentes=sorted(agora & antes),
+    )
 
 
 _ORDEM = {Severidade.BLOQUEIO: 0, Severidade.ALERTA: 1, Severidade.INFO: 2}
@@ -94,7 +188,49 @@ def agregar(achados: list[Achado]) -> list[GrupoSku]:
     )
 
 
-def formatar_texto(resumo: Resumo, hoje: date | None = None) -> str:
+def _linhas_por_emitente(resumo: Resumo) -> list[str]:
+    linhas = ["  Por emitente:", ""]
+    for e in resumo.emitentes_ordenados:
+        rotulo = f"{e.cnpj}  {e.nome[:36]}".strip()
+        linhas.append(f"    {rotulo}")
+        linhas.append(
+            f"      {e.notas} nota(s), {e.itens} item(ns), "
+            f"{e.bloqueios} bloqueio(s), {len(e.skus)} SKU(s) a corrigir"
+        )
+    linhas.append("")
+    return linhas
+
+
+def _linhas_do_comparativo(comp: Comparativo) -> list[str]:
+    seta = "+" if comp.saldo > 0 else ""
+    linhas = [
+        f"  Comparativo com {comp.referencia}:",
+        "",
+        f"    Bloqueios ........ {comp.bloqueios_antes} -> {comp.bloqueios_agora}",
+        f"    SKUs corrigidos .. {len(comp.corrigidos)}",
+        f"    SKUs novos ....... {len(comp.novos)}",
+        f"    SKUs pendentes ... {len(comp.persistentes)}",
+        f"    Saldo de SKUs .... {seta}{comp.saldo}",
+        "",
+    ]
+    if comp.novos:
+        linhas.append("    Apareceram desde a última varredura:")
+        linhas.extend(f"      + {sku}" for sku in comp.novos[:10])
+        if len(comp.novos) > 10:
+            linhas.append(f"      ... e mais {len(comp.novos) - 10}")
+        linhas.append("")
+    return linhas
+
+
+def formatar_texto(
+    resumo: Resumo,
+    hoje: date | None = None,
+    *,
+    limite: int = 20,
+    rodape: str = "",
+    por_cnpj: bool = False,
+    comparativo: Comparativo | None = None,
+) -> str:
     dias = dias_ate_corte(hoje)
     emitente = ", ".join(resumo.documentos_emitentes) or "(nenhum XML válido)"
     linhas = [
@@ -126,19 +262,22 @@ def formatar_texto(resumo: Resumo, hoje: date | None = None) -> str:
             linhas.append(f"    ... e mais {len(resumo.arquivos_invalidos) - 5}")
         linhas.append("")
 
+    if por_cnpj and resumo.emitentes:
+        linhas.extend(_linhas_por_emitente(resumo))
+
     bloqueios = [g for g in resumo.grupos if g.severidade_max is Severidade.BLOQUEIO]
     if bloqueios:
         linhas.append("  SKUs com risco de rejeição se o padrão continuar após 03/08:")
         linhas.append("")
-        for g in bloqueios[:20]:
+        for g in bloqueios[:limite]:
             linhas.append(f"    {g.sku}  ({g.ocorrencias}x em {len(g.arquivos)} nota(s))")
             linhas.append(f"      {g.descricao[:64]}")
             for codigo in sorted(g.codigos):
                 linhas.append(f"      [{codigo}] {g.mensagens[codigo]}")
             linhas.append("")
-        if len(bloqueios) > 20:
+        if len(bloqueios) > limite:
             linhas.append(
-                f"    ... e mais {len(bloqueios) - 20} SKU(s). "
+                f"    ... e mais {len(bloqueios) - limite} SKU(s). "
                 "Veja o relatório completo."
             )
             linhas.append("")
@@ -147,10 +286,48 @@ def formatar_texto(resumo: Resumo, hoje: date | None = None) -> str:
         linhas.append("  Nenhum bloqueio encontrado neste acervo.")
         linhas.append("")
 
+    if comparativo is not None:
+        linhas.extend(_linhas_do_comparativo(comparativo))
+
+    if rodape:
+        linhas.append(rodape.rstrip("\n"))
+        linhas.append("")
+
     return "\n".join(linhas)
 
 
-def formatar_json(resumo: Resumo) -> str:
+def formatar_json(
+    resumo: Resumo,
+    *,
+    por_cnpj: bool = False,
+    comparativo: Comparativo | None = None,
+) -> str:
+    extras: dict[str, object] = {}
+    if por_cnpj:
+        extras["emitentes"] = [
+            {
+                "cnpj": e.cnpj,
+                "nome": e.nome,
+                "notas": e.notas,
+                "notas_em_escopo": e.notas_em_escopo,
+                "itens": e.itens,
+                "bloqueios": e.bloqueios,
+                "alertas": e.alertas,
+                "skus_a_corrigir": len(e.skus),
+            }
+            for e in resumo.emitentes_ordenados
+        ]
+    if comparativo is not None:
+        extras["comparativo"] = {
+            "referencia": comparativo.referencia,
+            "bloqueios_antes": comparativo.bloqueios_antes,
+            "bloqueios_agora": comparativo.bloqueios_agora,
+            "skus_novos": comparativo.novos,
+            "skus_corrigidos": comparativo.corrigidos,
+            "skus_pendentes": comparativo.persistentes,
+            "saldo": comparativo.saldo,
+        }
+
     return json.dumps(
         {
             "corte": NORMATIVA_RTC.corte_obrigatoriedade.isoformat(),
@@ -162,7 +339,10 @@ def formatar_json(resumo: Resumo) -> str:
             "notas_em_escopo": resumo.notas_em_escopo,
             "total_itens": resumo.total_itens,
             "emitentes": [
-                {"documento": documento, "nome": resumo.emitentes[documento]}
+                {
+                    "documento": documento,
+                    "nome": resumo.emitentes[documento].nome,
+                }
                 for documento in resumo.documentos_emitentes
             ],
             "bloqueios": resumo.por_severidade[Severidade.BLOQUEIO.value],
@@ -182,6 +362,7 @@ def formatar_json(resumo: Resumo) -> str:
                 }
                 for g in resumo.grupos
             ],
+            **extras,
         },
         ensure_ascii=False,
         indent=2,
@@ -233,6 +414,8 @@ _CSS = """
 *{box-sizing:border-box}body{margin:0;padding:2rem 1.5rem;font:15px/1.6 -apple-system,
 "Segoe UI",system-ui,sans-serif;color:#18181b;background:#fafafa}
 .wrap{max-width:1000px;margin:0 auto}h1{font-size:1.5rem;margin:0 0 .25rem}
+h2{font-size:1.15rem;margin:2rem 0 .75rem;font-weight:640}
+ul{margin:.25rem 0 1rem 1.1rem;font-size:.875rem}
 .sub{color:#71717a;margin:0 0 2rem;font-size:.9rem}
 .cards{display:grid;gap:.75rem;margin-bottom:2rem;
 grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
@@ -256,7 +439,49 @@ footer{margin-top:2rem;color:#a1a1aa;font-size:.8rem}
 """
 
 
-def formatar_html(resumo: Resumo, hoje: date | None = None) -> str:
+def _bloco_emitentes_html(resumo: Resumo) -> str:
+    e = html.escape
+    if not resumo.emitentes:
+        return ""
+    linhas = "".join(
+        f"<tr><td><code>{e(em.cnpj)}</code></td><td>{e(em.nome[:60])}</td>"
+        f"<td>{em.notas}</td><td>{em.itens}</td><td>{em.bloqueios}</td>"
+        f"<td>{len(em.skus)}</td></tr>"
+        for em in resumo.emitentes_ordenados
+    )
+    return (
+        '<h2>Por emitente</h2><div class="tw"><table><thead><tr><th>CNPJ</th>'
+        "<th>Emitente</th><th>Notas</th><th>Itens</th><th>Bloqueios</th>"
+        f"<th>SKUs a corrigir</th></tr></thead><tbody>{linhas}</tbody></table></div>"
+    )
+
+
+def _bloco_comparativo_html(comp: Comparativo) -> str:
+    e = html.escape
+    novos = "".join(f"<li><code>{e(sku)}</code></li>" for sku in comp.novos[:20])
+    lista = f"<p>Apareceram desde a última varredura:</p><ul>{novos}</ul>" if novos else ""
+    return (
+        f"<h2>Comparativo com {e(comp.referencia)}</h2>"
+        f'<div class="cards">'
+        f'<div class="card"><div class="n">{comp.bloqueios_antes}</div>'
+        f'<div class="l">Bloqueios antes</div></div>'
+        f'<div class="card"><div class="n">{comp.bloqueios_agora}</div>'
+        f'<div class="l">Bloqueios agora</div></div>'
+        f'<div class="card ok"><div class="n">{len(comp.corrigidos)}</div>'
+        f'<div class="l">SKUs corrigidos</div></div>'
+        f'<div class="card {"bad" if comp.novos else "ok"}"><div class="n">'
+        f'{len(comp.novos)}</div><div class="l">SKUs novos</div></div>'
+        f"</div>{lista}"
+    )
+
+
+def formatar_html(
+    resumo: Resumo,
+    hoje: date | None = None,
+    *,
+    por_cnpj: bool = False,
+    comparativo: Comparativo | None = None,
+) -> str:
     e = html.escape
     dias = dias_ate_corte(hoje)
     b = resumo.por_severidade[Severidade.BLOQUEIO.value]
@@ -294,6 +519,12 @@ def formatar_html(resumo: Resumo, hoje: date | None = None) -> str:
         for classe, valor, rotulo in cartoes
     )
 
+    secoes = ""
+    if por_cnpj:
+        secoes += _bloco_emitentes_html(resumo)
+    if comparativo is not None:
+        secoes += _bloco_comparativo_html(comparativo)
+
     return f"""<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -308,6 +539,7 @@ Tabela CST/cClassTrib: <a href="{e(NORMATIVA_RTC.fonte_tabela)}">{
     e(NORMATIVA_RTC.tabela_documento)
 } v{e(NORMATIVA_RTC.tabela_versao)}</a>.</p>
 <div class="cards">{cards}</div>
+{secoes}
 <div class="tw"><table>
 <thead><tr><th>SKU</th><th>Produto / achados</th><th>NCM</th>
 <th>Severidade</th><th>Ocorrências</th><th>Notas</th></tr></thead>

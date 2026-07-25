@@ -1,8 +1,4 @@
-"""Regras de prontidão para o corte de 03/08/2026 (NT 2025.002 - RTC).
-
-Cada regra devolve achados por item. O foco é responder uma pergunta só:
-*quais SKUs precisam de ação antes da data?*
-"""
+"""Regras de prontidão para o corte de 03/08/2026 (NT 2025.002-RTC)."""
 
 from __future__ import annotations
 
@@ -25,8 +21,8 @@ CORTE_OBRIGATORIEDADE = NORMATIVA_RTC.corte_obrigatoriedade
 
 
 class Severidade(StrEnum):
-    BLOQUEIO = "bloqueio"  # rejeita a nota depois do corte
-    ALERTA = "alerta"  # não rejeita, mas gera risco fiscal
+    BLOQUEIO = "bloqueio"
+    ALERTA = "alerta"
     INFO = "info"
 
 
@@ -66,9 +62,28 @@ def _achado(
     )
 
 
+# A edição em uso decide quais regras rodam. As regras RTC001-RTC005 tratam o
+# corte da RTC e ficam gratuitas; NCM001 e GTIN001 são higiene de cadastro.
+TODAS_AS_REGRAS = frozenset(
+    {
+        "RTC001",
+        "RTC002",
+        "RTC003",
+        "RTC004",
+        "RTC005",
+        "NCM001",
+        "GTIN001",
+    }
+)
+
+
 def avaliar_item(
-    nota: NotaFiscal, item: Item, arquivo: str | None = None
+    nota: NotaFiscal,
+    item: Item,
+    regras: frozenset[str] | None = None,
+    arquivo: str | None = None,
 ) -> list[Achado]:
+    ativas = TODAS_AS_REGRAS if regras is None else regras
     achados: list[Achado] = []
 
     if nota.em_escopo_agosto:
@@ -76,7 +91,11 @@ def avaliar_item(
             nota.referencia_nfe_anterior_2026
             or item.cprod_anp in CPROD_ANP_MONOFASICOS
         )
-        if not item.tem_ibscbs and not excecao_ub12:
+        if (
+            "RTC001" in ativas
+            and not item.tem_ibscbs
+            and not excecao_ub12
+        ):
             achados.append(
                 _achado(
                     Severidade.BLOQUEIO,
@@ -90,7 +109,7 @@ def avaliar_item(
                 )
             )
         elif item.tem_ibscbs:
-            if not item.tem_class_trib:
+            if "RTC002" in ativas and not item.tem_class_trib:
                 achados.append(
                     _achado(
                         Severidade.BLOQUEIO,
@@ -102,7 +121,7 @@ def avaliar_item(
                         arquivo,
                     )
                 )
-            if item.cst_ibscbs not in CSTS_IBSCBS:
+            if "RTC003" in ativas and item.cst_ibscbs not in CSTS_IBSCBS:
                 valor = item.cst_ibscbs or "(vazio)"
                 achados.append(
                     _achado(
@@ -116,7 +135,8 @@ def avaliar_item(
                     )
                 )
             elif (
-                item.cst_ibscbs in CSTS_EXIGEM_GIBSCBS
+                "RTC004" in ativas
+                and item.cst_ibscbs in CSTS_EXIGEM_GIBSCBS
                 and not item.tem_gibscbs
                 and nota.tipo_nota_debito != "07"
             ):
@@ -132,7 +152,9 @@ def avaliar_item(
                     )
                 )
             elif (
-                item.cst_ibscbs in CSTS_PROIBEM_GIBSCBS and item.tem_gibscbs
+                "RTC005" in ativas
+                and item.cst_ibscbs in CSTS_PROIBEM_GIBSCBS
+                and item.tem_gibscbs
             ):
                 achados.append(
                     _achado(
@@ -146,7 +168,9 @@ def avaliar_item(
                     )
                 )
 
-    if not item.ncm or len(item.ncm) != 8 or not item.ncm.isdigit():
+    if "NCM001" in ativas and (
+        not item.ncm or len(item.ncm) != 8 or not item.ncm.isdigit()
+    ):
         achados.append(
             _achado(
                 Severidade.BLOQUEIO,
@@ -159,44 +183,45 @@ def avaliar_item(
             )
         )
 
-    if gtin.esta_vazio(item.cean):
-        # Antes do layout 4.00 nao existia o literal "SEM GTIN": cEAN vazio era
-        # a forma correta de declarar produto sem codigo de barras. Cobrar o
-        # literal numa nota antiga e falso positivo, e falso positivo derruba a
-        # confianca no relatorio inteiro.
-        if nota.exige_literal_sem_gtin:
-            achados.append(
-                _achado(
-                    Severidade.ALERTA,
-                    "GTIN001",
-                    "cEAN vazio. No layout 4.00, produto sem código de barras "
-                    "precisa do literal 'SEM GTIN'.",
-                    nota,
-                    item,
-                    arquivo,
+    if "GTIN001" in ativas:
+        if gtin.esta_vazio(item.cean):
+            if nota.exige_literal_sem_gtin:
+                achados.append(
+                    _achado(
+                        Severidade.ALERTA,
+                        "GTIN001",
+                        "cEAN vazio. No layout 4.00, produto sem código de barras "
+                        "precisa do literal 'SEM GTIN'.",
+                        nota,
+                        item,
+                        arquivo,
+                    )
                 )
-            )
-    else:
-        valido, motivo = gtin.validar(item.cean)
-        if not valido:
-            achados.append(
-                _achado(
-                    Severidade.ALERTA,
-                    "GTIN001",
-                    motivo,
-                    nota,
-                    item,
-                    arquivo,
+        else:
+            valido, motivo = gtin.validar(item.cean)
+            if not valido:
+                achados.append(
+                    _achado(
+                        Severidade.ALERTA,
+                        "GTIN001",
+                        motivo,
+                        nota,
+                        item,
+                        arquivo,
+                    )
                 )
-            )
 
     return achados
 
 
-def avaliar_nota(nota: NotaFiscal, arquivo: str | None = None) -> list[Achado]:
+def avaliar_nota(
+    nota: NotaFiscal,
+    regras: frozenset[str] | None = None,
+    arquivo: str | None = None,
+) -> list[Achado]:
     achados: list[Achado] = []
     for item in nota.itens:
-        achados.extend(avaliar_item(nota, item, arquivo))
+        achados.extend(avaliar_item(nota, item, regras, arquivo))
     return achados
 
 
