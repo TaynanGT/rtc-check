@@ -39,7 +39,7 @@ uma tarde, e é por isso que o código é aberto.
 
 ## Instalação
 
-Ainda não está no PyPI. Instale direto do repositório:
+Ainda não está no PyPI ([falta um passo que só o dono da conta faz](docs/publicar-no-pypi.md)). Instale direto do repositório:
 
 ```bash
 pip install git+https://github.com/TaynanGT/rtc-check
