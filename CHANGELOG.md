@@ -3,7 +3,11 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
-## Não lançado
+## [0.4.0] / 2026-07-26
+
+Da resposta ao recebimento: esta versão liga o checkout de verdade. Assinar o
+plano Escritório agora é um clique, com Pix, cartão ou boleto pelo Mercado
+Pago, e a licença chega por e-mail minutos após a aprovação.
 
 ### Adicionado
 - Integração de pagamentos com Mercado Pago: cliente mínimo da API

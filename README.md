@@ -79,7 +79,7 @@ uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
 
 Em produção, prefira fixar uma versão a acompanhar a `main`: acrescente a tag da
-release à URL, como em `...rtc-check.git@v0.3.1`. As tags disponíveis estão em
+release à URL, como em `...rtc-check.git@v0.4.0`. As tags disponíveis estão em
 [releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.14.
@@ -172,13 +172,16 @@ Códigos de saída: `0` tudo certo, `1` há bloqueio (com `--falhar-em-bloqueio`
 | Suporte | issues públicas | e-mail, 1 dia útil | contrato |
 | Licença para redistribuir | não | não | sim |
 
+**[Assinar o Escritório agora](https://rtc-check-vendas.onrender.com)** — Pix,
+cartão ou boleto pelo Mercado Pago; a chave de licença chega por e-mail minutos
+após a aprovação do pagamento.
+
 O teste grátis de 14 dias libera tudo da coluna Escritório, sem cadastro, sem cartão
 e sem rede: `rtc-check --iniciar-teste` grava um arquivo local e pronto. Detalhes de
-ativação, variáveis de ambiente e emissão de chaves em [docs/planos.md](docs/planos.md).
-O recebimento dos pagamentos usa o Mercado Pago; a implementação e o roteiro de
-ativação estão em [docs/mercadopago.md](docs/mercadopago.md).
+ativação, variáveis de ambiente e emissão de chaves em [docs/planos.md](docs/planos.md);
+a integração de pagamentos está documentada em [docs/mercadopago.md](docs/mercadopago.md).
 
-O plano gratuito não é isca. Ele responde inteira a pergunta que fez você chegar aqui,
+O plano gratuito não é isca. Ele responde por inteiro à pergunta que fez você chegar aqui,
 que é *"meu padrão atual tem risco de rejeição em agosto?"*. O que se paga é o
 trabalho depois da resposta: exportar para quem vai corrigir, travar o pipeline,
 acompanhar a fila semana a semana e receber atualizações priorizadas depois da revisão
