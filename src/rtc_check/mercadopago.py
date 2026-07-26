@@ -66,7 +66,8 @@ def _requisitar(metodo: str, caminho: str, corpo: dict[str, Any] | None = None) 
         },
     )
     try:
-        with urllib.request.urlopen(requisicao, timeout=30) as resposta:  # noqa: S310
+        # A URL é sempre API_MERCADO_PAGO (constante HTTPS) + caminho interno.
+        with urllib.request.urlopen(requisicao, timeout=30) as resposta:  # nosec B310
             carga = json.loads(resposta.read().decode())
     except urllib.error.HTTPError as erro:
         raise ErroMercadoPago(

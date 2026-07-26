@@ -357,7 +357,8 @@ def processar_pagamento(
         )
         return ResultadoDaVenda(PAGAMENTO_RECUSADO, motivo)
 
-    assert plano is not None
+    if plano is None:  # impossível após a validação acima; explícito para tipos
+        raise mp.ErroMercadoPago("plano ausente após validação do pagamento")
     expira_em = (hoje or date.today()) + timedelta(days=plano.dias_de_licenca)
     chave = gerar_chave(Plano.ESCRITORIO, expira_em, email)
     registrar_venda(
@@ -712,7 +713,10 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
 
 
 def executar(config: ConfigVendas, porta: int) -> int:
-    servidor = ThreadingHTTPServer(("0.0.0.0", porta), _handler(config))
+    # Servidor público atrás do proxy TLS da hospedagem. Vazio = todas as
+    # interfaces; RTC_CHECK_VENDAS_BIND restringe quando houver motivo.
+    endereco = os.environ.get("RTC_CHECK_VENDAS_BIND", "")
+    servidor = ThreadingHTTPServer((endereco, porta), _handler(config))
     print(f"RTC Check Vendas escutando na porta {servidor.server_port}")
     print(f"Checkout público: {config.url_publica} — Ctrl+C para encerrar.")
     try:
