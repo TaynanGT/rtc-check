@@ -30,7 +30,7 @@ from . import __version__
 from . import edicao as ed
 from .checkout import PRECO_ANUAL_BR, PRECO_MENSAL_BR
 from .checkout import carregar as carregar_checkout
-from .cli import analisar
+from .cli import AnaliseCancelada, analisar
 from .normativa import NORMATIVA_RTC
 from .report import Resumo, formatar_csv, formatar_html, formatar_json
 from .rules import Severidade
@@ -56,9 +56,26 @@ class RelatorioEmMemoria:
 
 
 @dataclass
+class AnaliseEmAndamento:
+    """Estado mínimo de uma análise assíncrona, sempre mantido apenas em memória."""
+
+    identificador: str
+    cancelar: threading.Event = field(default_factory=threading.Event, repr=False)
+    etapa: str = "preparando"
+    mensagem: str = "Preparando o lote localmente."
+    processados: int = 0
+    total: int = 0
+    resultado_id: str | None = None
+    erro: str | None = None
+    concluida: bool = False
+    criado_em: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
 class EstadoApp:
     token: str = field(default_factory=lambda: secrets.token_urlsafe(32))
     relatorios: dict[str, RelatorioEmMemoria] = field(default_factory=dict)
+    analises: dict[str, AnaliseEmAndamento] = field(default_factory=dict)
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def guardar(self, resumo: Resumo, edicao_atual: ed.Edicao, *, demo: bool) -> str:
@@ -76,6 +93,52 @@ class EstadoApp:
                 )
                 self.relatorios.pop(mais_antigo, None)
         return identificador
+
+    def iniciar_analise(self) -> AnaliseEmAndamento:
+        analise = AnaliseEmAndamento(identificador=secrets.token_urlsafe(18))
+        with self._lock:
+            self.analises[analise.identificador] = analise
+            if len(self.analises) > 20:
+                mais_antiga = min(self.analises, key=lambda chave: self.analises[chave].criado_em)
+                self.analises.pop(mais_antiga, None)
+        return analise
+
+    def obter_analise(self, identificador: str) -> AnaliseEmAndamento | None:
+        with self._lock:
+            return self.analises.get(identificador)
+
+    def cancelar_analise(self, identificador: str) -> AnaliseEmAndamento | None:
+        analise = self.obter_analise(identificador)
+        if analise and not analise.concluida:
+            analise.cancelar.set()
+            analise.mensagem = "Cancelamento solicitado; descartando o lote local."
+        return analise
+
+    def cancelar_todas(self) -> None:
+        with self._lock:
+            for analise in self.analises.values():
+                analise.cancelar.set()
+
+
+def _serializar_andamento(analise: AnaliseEmAndamento, estado: EstadoApp) -> dict[str, Any]:
+    dados: dict[str, Any] = {
+        "id": analise.identificador,
+        "etapa": analise.etapa,
+        "mensagem": analise.mensagem,
+        "processados": analise.processados,
+        "total": analise.total,
+        "concluida": analise.concluida,
+        "cancelamento_solicitado": analise.cancelar.is_set(),
+    }
+    if analise.erro:
+        dados["erro"] = analise.erro
+    if analise.resultado_id:
+        salvo = estado.relatorios.get(analise.resultado_id)
+        if salvo:
+            dados["resultado"] = _serializar_resultado(
+                salvo.resumo, salvo.edicao, analise.resultado_id, demo=salvo.demo
+            )
+    return dados
 
 
 def _pontuacao(resumo: Resumo) -> int:
@@ -422,6 +485,22 @@ def _handler(estado: EstadoApp) -> type[BaseHTTPRequestHandler]:
                 if self._exigir_token():
                     self._json(_status())
                 return
+            if caminho.startswith("/api/analises/"):
+                partes = caminho.strip("/").split("/")
+                if len(partes) != 3:
+                    self._json({"erro": "consulta de análise inválida"}, HTTPStatus.NOT_FOUND)
+                    return
+                if not self._exigir_token():
+                    return
+                analise = estado.obter_analise(partes[2])
+                if analise is None:
+                    self._json(
+                        {"erro": "análise expirada; execute novamente"},
+                        HTTPStatus.NOT_FOUND,
+                    )
+                    return
+                self._json(_serializar_andamento(analise, estado))
+                return
             self._json({"erro": "recurso não encontrado"}, HTTPStatus.NOT_FOUND)
 
         def do_POST(self) -> None:  # noqa: N802
@@ -433,6 +512,8 @@ def _handler(estado: EstadoApp) -> type[BaseHTTPRequestHandler]:
                     self._analisar_demo()
                 elif caminho == "/api/analisar":
                     self._analisar_upload()
+                elif caminho.startswith("/api/analises/") and caminho.endswith("/cancelar"):
+                    self._cancelar_analise(caminho)
                 elif caminho == "/api/teste":
                     self._iniciar_teste()
                 elif caminho == "/api/licenca":
@@ -484,12 +565,60 @@ def _handler(estado: EstadoApp) -> type[BaseHTTPRequestHandler]:
             if not tipo.lower().startswith("multipart/form-data"):
                 raise EntradaInvalida("use o seletor de XML ou ZIP da interface")
             partes = _partes_multipart(tipo, self._corpo())
-            with tempfile.TemporaryDirectory(prefix="rtc-check-upload-") as pasta:
-                destino = Path(pasta)
-                _salvar_xmls_do_upload(partes, destino)
-                atual = ed.resolver()
-                resumo = analisar(destino, regras=atual.regras_ativas)
-            self._concluir_analise(resumo, atual, demo=False)
+            analise = estado.iniciar_analise()
+
+            def executar_em_segundo_plano() -> None:
+                try:
+                    with tempfile.TemporaryDirectory(prefix="rtc-check-upload-") as pasta:
+                        destino = Path(pasta)
+                        analise.etapa = "preparando"
+                        analise.mensagem = "Conferindo e preparando os XMLs neste PC."
+                        _salvar_xmls_do_upload(partes, destino)
+                        if analise.cancelar.is_set():
+                            raise AnaliseCancelada()
+                        analise.etapa = "analisando"
+                        analise.mensagem = "Lendo XMLs e agrupando produtos."
+                        atual = ed.resolver()
+
+                        def atualizar_progresso(processados: int, total: int) -> None:
+                            analise.processados = processados
+                            analise.total = total
+                            analise.mensagem = (
+                                f"Analisando XML {processados:,} de {total:,}."
+                                .replace(",", ".")
+                            )
+
+                        resumo = analisar(
+                            destino,
+                            regras=atual.regras_ativas,
+                            progresso=atualizar_progresso,
+                            cancelar=analise.cancelar.is_set,
+                        )
+                    analise.etapa = "finalizando"
+                    analise.mensagem = "Organizando a fila de correção."
+                    analise.resultado_id = estado.guardar(resumo, atual, demo=False)
+                    analise.concluida = True
+                except AnaliseCancelada:
+                    analise.etapa = "cancelada"
+                    analise.mensagem = "Análise cancelada. Os arquivos temporários foram apagados."
+                    analise.concluida = True
+                except (OSError, ValueError, EntradaInvalida) as erro:
+                    analise.etapa = "erro"
+                    analise.erro = f"não foi possível concluir: {erro}"
+                    analise.concluida = True
+
+            threading.Thread(target=executar_em_segundo_plano, daemon=True).start()
+            self._json(_serializar_andamento(analise, estado), HTTPStatus.ACCEPTED)
+
+        def _cancelar_analise(self, caminho: str) -> None:
+            partes = caminho.strip("/").split("/")
+            if len(partes) != 4:
+                raise EntradaInvalida("cancelamento de análise inválido")
+            analise = estado.cancelar_analise(partes[2])
+            if analise is None:
+                self._json({"erro": "análise expirada; execute novamente"}, HTTPStatus.NOT_FOUND)
+                return
+            self._json(_serializar_andamento(analise, estado))
 
         def _iniciar_teste(self) -> None:
             try:
@@ -518,6 +647,7 @@ def _handler(estado: EstadoApp) -> type[BaseHTTPRequestHandler]:
             )
 
         def _encerrar(self) -> None:
+            estado.cancelar_todas()
             self._json({"mensagem": "RTC Check encerrado com segurança."})
             threading.Thread(target=self.server.shutdown, daemon=True).start()
 

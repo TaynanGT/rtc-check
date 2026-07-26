@@ -6,6 +6,7 @@ let currentResult = null;
 let currentFilter = "todos";
 let currentSearch = "";
 let selectionTooLarge = false;
+let currentAnalysisId = null;
 const MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
 
 function setStep(step) {
@@ -47,6 +48,8 @@ function toast(message) {
 function setBusy(active, message = "Lendo XMLs e agrupando os produtos.") {
   $("#progress").classList.toggle("hidden", !active);
   $("#progress-message").textContent = message;
+  $("#cancel-analysis").classList.toggle("hidden", !active || !currentAnalysisId);
+  if (active && currentAnalysisId) $("#cancel-analysis").disabled = false;
   $("#analyze").disabled = active || !selectedFiles.length || selectionTooLarge;
   $("#demo").disabled = active;
   $("#hero-demo").disabled = active;
@@ -80,11 +83,11 @@ function renderStatus(status) {
       : "Licença ativa: análises e exportações liberadas.";
   } else if (status.em_teste) {
     $("#checkout-note").textContent =
-      `Teste ativo por mais ${status.dias_restantes} dia(s). A compra assistida abre um formulário público: não inclua XMLs nem dados fiscais.`;
+      `Teste ativo por mais ${status.dias_restantes} dia(s). A compra assistida abre a captação privada: não inclua XMLs nem dados fiscais.`;
   } else {
     $("#checkout-note").textContent = status.checkout.automatico
       ? `Checkout seguro por ${status.checkout.provedor}. O teste continua sem cartão.`
-      : "Compra assistida; não inclua dados fiscais no formulário público. O teste é local.";
+      : "Compra assistida por captação privada; não inclua dados fiscais. O teste é local.";
   }
   if (status.aviso) toast(status.aviso);
 }
@@ -230,6 +233,45 @@ async function analyze(path, options = {}) {
   }
 }
 
+function sleep(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+function renderProgress(status) {
+  $("#progress-message").textContent = status.mensagem;
+  $("#progress-count").textContent = status.total
+    ? `${status.processados.toLocaleString("pt-BR")} de ${status.total.toLocaleString("pt-BR")} XMLs analisados`
+    : "Preparação local em andamento.";
+}
+
+async function analyzeSelectedAsync(data, message) {
+  setBusy(true, message);
+  try {
+    const started = await api("/api/analisar", {method: "POST", body: data});
+    currentAnalysisId = started.id;
+    setBusy(true, started.mensagem);
+    while (currentAnalysisId === started.id) {
+      const status = await api(`/api/analises/${started.id}`);
+      renderProgress(status);
+      if (!status.concluida) {
+        await sleep(350);
+        continue;
+      }
+      currentAnalysisId = null;
+      if (status.resultado) {
+        renderResult(status.resultado);
+        return;
+      }
+      throw new Error(status.erro || status.mensagem || "A análise não foi concluída.");
+    }
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    currentAnalysisId = null;
+    setBusy(false);
+  }
+}
+
 function formatBytes(bytes) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toLocaleString("pt-BR", {maximumFractionDigits: 1})} MB`;
@@ -297,7 +339,7 @@ function analyzeSelected(message = `Processando ${selectedFiles.length} arquivo(
   }
   const data = new FormData();
   selectedFiles.forEach((file) => data.append("arquivos", file, file.name));
-  return analyze("/api/analisar", {method: "POST", body: data, message});
+  return analyzeSelectedAsync(data, message);
 }
 
 async function exportResult(format) {
@@ -335,6 +377,18 @@ $("#selection-clear").addEventListener("click", () => {
   $("#folder-files").value = "";
   updateSelection([], {preserveResult: true});
   toast(currentResult ? "Seleção limpa; o resultado atual foi preservado." : "Seleção limpa.");
+});
+$("#cancel-analysis").addEventListener("click", async () => {
+  if (!currentAnalysisId) return;
+  try {
+    const status = await api(`/api/analises/${currentAnalysisId}/cancelar`, {
+      method: "POST", body: "{}",
+    });
+    renderProgress(status);
+    $("#cancel-analysis").disabled = true;
+  } catch (error) {
+    toast(error.message);
+  }
 });
 const dropzone = $("#dropzone");
 ["dragenter", "dragover"].forEach((name) => dropzone.addEventListener(name, (event) => {

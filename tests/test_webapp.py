@@ -1,5 +1,6 @@
 import json
 import threading
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -76,6 +77,17 @@ def _request(
         return resposta.status, resposta.headers, resposta.read()
 
 
+def _aguardar_analise(base: str, identificador: str) -> dict[str, object]:
+    for _ in range(50):
+        status, _, body = _request(base, f"/api/analises/{identificador}")
+        assert status == 200
+        dados = json.loads(body)
+        if dados["concluida"]:
+            return dados
+        time.sleep(0.02)
+    pytest.fail("a análise local não terminou no prazo do teste")
+
+
 def test_pontuacao_e_acoes():
     vazio = Resumo()
     assert webapp._pontuacao(vazio) == 100
@@ -92,6 +104,13 @@ def test_pontuacao_e_acoes():
         "NCM001",
         "GTIN001",
     ]
+
+
+def test_analise_informa_progresso_do_lote():
+    eventos: list[tuple[int, int]] = []
+    resumo = analisar(FIXTURES, progresso=lambda atual, total: eventos.append((atual, total)))
+    assert eventos[-1] == (resumo.arquivos_lidos, resumo.arquivos_lidos)
+    assert len(eventos) == resumo.arquivos_lidos
 
 
 def test_serializacao_respeita_limite_gratuito():
@@ -196,6 +215,7 @@ def test_http_entrega_interface_status_e_seguranca(app_local):
     assert not dados["em_teste"]
     assert not dados["licenciado"]
     assert dados["checkout"]["preco_mensal"] == "R$ 149/mês"
+    assert dados["checkout"]["url"].endswith("/#contato")
 
     assert _request(
         base,
@@ -248,8 +268,12 @@ def test_http_upload_real_exige_novo_lote_quando_trial_muda_regras(app_local):
         body=corpo,
         headers={"Content-Type": tipo},
     )
-    assert status == 200
-    resultado = json.loads(body)
+    assert status == 202
+    andamento = json.loads(body)
+    assert andamento["etapa"] in {"preparando", "analisando"}
+    assert andamento["id"]
+    final = _aguardar_analise(base, andamento["id"])
+    resultado = final["resultado"]
     assert not resultado["demo"]
     assert resultado["arquivos_lidos"] == 1
 
@@ -283,6 +307,39 @@ def test_http_upload_real_exige_novo_lote_quando_trial_muda_regras(app_local):
         method="POST",
         body=b"{}",
     )[0] == 409
+
+
+def test_http_permite_cancelar_analise_local(app_local, monkeypatch):
+    base, _ = app_local
+
+    def analisar_lento(*args, progresso, cancelar, **kwargs):
+        progresso(0, 10)
+        while not cancelar():
+            time.sleep(0.01)
+        raise webapp.AnaliseCancelada()
+
+    monkeypatch.setattr(webapp, "analisar", analisar_lento)
+    tipo, corpo = _multipart([("nota.xml", b"<NFe/>")])
+    status, _, body = _request(
+        base,
+        "/api/analisar",
+        method="POST",
+        body=corpo,
+        headers={"Content-Type": tipo},
+    )
+    assert status == 202
+    identificador = json.loads(body)["id"]
+    status, _, body = _request(
+        base,
+        f"/api/analises/{identificador}/cancelar",
+        method="POST",
+        body=b"{}",
+    )
+    assert status == 200
+    assert json.loads(body)["cancelamento_solicitado"]
+    final = _aguardar_analise(base, identificador)
+    assert final["etapa"] == "cancelada"
+    assert "apagados" in final["mensagem"]
 
 
 def test_http_trata_erros_e_ativa_teste(app_local):

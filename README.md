@@ -93,7 +93,8 @@ rtc-check --app
 Na interface, selecione XMLs, ZIP ou uma pasta inteira em lotes de até 64 MB. A fila
 priorizada pode ser buscada por SKU, produto, NCM ou emitente e copiada diretamente
 para Excel, e-mail ou chamado do ERP. XMLs inválidos aparecem em um alerta separado.
-Ativar o teste ou uma licença libera e atualiza o diagnóstico sem perder o fluxo.
+Em lotes maiores, a interface mostra a etapa, a contagem de XMLs analisados e permite
+cancelar com descarte dos arquivos temporários. Ativar o teste ou uma licença libera e atualiza o diagnóstico sem perder o fluxo.
 Também é possível personalizar a marca e exportar CSV, JSON ou um relatório pronto
 para impressão/PDF. O botão **Encerrar** finaliza o servidor e remove os resultados em memória.
 
@@ -245,7 +246,7 @@ AGPL-3.0-or-later. Uso interno na sua empresa, incluindo comercial, está libera
 Se você quer embarcar o RTC Check num produto fechado ou oferecê-lo como serviço sem
 publicar suas modificações, existe licença comercial. Veja
 [COMMERCIAL.md](COMMERCIAL.md) ou abra o
-[formulário comercial](https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md).
+[captação comercial privada](https://taynangt.github.io/rtc-check/#contato).
 
 Uma observação honesta sobre os planos: o código é aberto, então o gating dos recursos
 pagos está aqui no repositório e qualquer pessoa consegue removê-lo. Isso é conhecido e

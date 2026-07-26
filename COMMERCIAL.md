@@ -81,9 +81,9 @@ após revisão técnica, suporte com prazo e direito de redistribuir.
 
 ## Contato
 
-Abra o [formulário do plano Escritório ou licença comercial](https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md).
-Ele é público: não inclua XML, CNPJ, chave de NF-e nem outros dados confidenciais. Para uma
-conversa privada, use o e-mail exibido no perfil do mantenedor.
+Use a [captação comercial privada](https://taynangt.github.io/rtc-check/#contato) para informar
+somente e-mail corporativo, perfil e interesse. Nunca envie XML, CNPJ, chave de NF-e,
+credenciais ou dados de pagamento.
 
 O checkout é modular e ainda não está ativo: `.env.example` reserva provedor, URL,
 chave de API e segredo de webhook sem comprometer dados no repositório. Até a conta do
