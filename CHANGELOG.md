@@ -3,6 +3,40 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.6.0] / 2026-07-26
+
+Auditoria de ponta a ponta com verificação adversarial: uma regra nova no
+motor fiscal, dois falsos negativos fechados e o portão de CI mais honesto.
+
+### Adicionado
+- **RTC007**: cClassTrib incompatível com o CST informado no item (na tabela
+  oficial, os 3 primeiros dígitos do cClassTrib são o próprio CST). Gratuita,
+  como as demais regras do corte.
+- GTIN001 passa a validar também o `cEANTrib` (unidade tributável), com as
+  mesmas exigências do `cEAN` conforme a NT 2017.001.
+- Contagem de notas sem CRT no relatório: regime indeterminado deixa de passar
+  em silêncio como "fora de escopo".
+
+### Corrigido
+- cClassTrib ausente gerava dois bloqueios para o mesmo defeito (RTC002 e
+  RTC006 com valor vazio); agora só o RTC002.
+- Literal 'sem gtin' em caixa errada era aceito, mas o schema 4.00 rejeita;
+  agora é apontado com mensagem específica.
+- CSV exportado por arquivo ganha BOM UTF-8 (o Excel pt-BR corrompia a
+  acentuação) e neutraliza injeção de fórmula vinda de XML de terceiros.
+- `--comparar` valida o arquivo antes da varredura (um typo não custa mais a
+  análise de um acervo inteiro) e diferencia arquivo ilegível de conteúdo que
+  não é um relatório.
+- `rtc-check PASTA --licenca CHAVE` agora grava a licença para as próximas
+  execuções, como o help promete.
+- Pasta sem nenhum XML deixou de produzir "Nenhum bloqueio encontrado":
+  o relatório avisa que nada foi analisado e `--falhar-em-bloqueio` sai com
+  código 2 em vez de passar verde.
+- Contagem de SKUs por emitente não colapsa mais produtos sem código num
+  único registro, alinhando o resumo global e o detalhamento por CNPJ.
+- Combinação `--formato csv` com `--por-cnpj`/`--comparar` avisa que esses
+  dados não aparecem no CSV.
+
 ## [0.5.1] / 2026-07-26
 
 ### Corrigido

@@ -44,7 +44,7 @@ def test_ncm_invalido_e_bloqueio():
 def test_gtin_invalido_e_alerta_nao_bloqueio():
     achados = avaliar_nota(ler_nota(FIXTURES / "cadastro_sujo_crt3.xml"))
     gtins = [a for a in achados if a.codigo == "GTIN001"]
-    assert len(gtins) == 2  # DV errado + cEAN vazio
+    assert len(gtins) == 3  # DV errado + cEAN e cEANTrib vazios do SKU-4004
     assert all(a.severidade is Severidade.ALERTA for a in gtins)
 
 

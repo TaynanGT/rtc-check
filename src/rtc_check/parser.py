@@ -46,6 +46,7 @@ class Item:
     ncm: str
     cfop: str
     cean: str | None
+    ceantrib: str | None
     cprod_anp: str
     tem_ibscbs: bool
     cst_ibscbs: str
@@ -82,6 +83,11 @@ class NotaFiscal:
     def em_escopo_agosto(self) -> bool:
         """Emitentes CRT=3 (Regime Normal) passam a ser rejeitados em 03/08/2026."""
         return self.crt == CRT_REGIME_NORMAL
+
+    @property
+    def crt_indeterminado(self) -> bool:
+        """CRT ausente: impossível saber se a nota entra no corte de 03/08."""
+        return not self.crt
 
     @property
     def exige_literal_sem_gtin(self) -> bool:
@@ -163,6 +169,7 @@ def ler_nota(caminho: Path) -> NotaFiscal:
                 ncm=_texto(prod, "nfe:NCM"),
                 cfop=_texto(prod, "nfe:CFOP"),
                 cean=_texto(prod, "nfe:cEAN") or None,
+                ceantrib=_texto(prod, "nfe:cEANTrib") or None,
                 cprod_anp=_texto(prod, "nfe:comb/nfe:cProdANP"),
                 tem_ibscbs=ibscbs is not None,
                 cst_ibscbs=_texto(ibscbs, "nfe:CST") if ibscbs is not None else "",

@@ -173,6 +173,10 @@ def _acao_por_codigo(codigo: str) -> str:
         "RTC004": "Inclua o grupo gIBSCBS exigido pelo CST informado.",
         "RTC005": "Remova gIBSCBS ou ajuste o CST incompatível.",
         "RTC006": "Revise o cClassTrib na tabela vigente para NF-e modelo 55.",
+        "RTC007": (
+            "Alinhe o cClassTrib ao CST do item: os 3 primeiros dígitos "
+            "do código devem ser o próprio CST."
+        ),
         "NCM001": "Corrija o NCM para oito dígitos antes de reenviar ao cadastro.",
         "GTIN001": "Corrija o GTIN ou use SEM GTIN quando o layout permitir.",
     }
@@ -187,8 +191,9 @@ def _ordenar_codigos(codigos: set[str]) -> list[str]:
         "RTC004": 3,
         "RTC005": 4,
         "RTC006": 5,
-        "NCM001": 6,
-        "GTIN001": 7,
+        "RTC007": 6,
+        "NCM001": 7,
+        "GTIN001": 8,
     }
     return sorted(codigos, key=lambda codigo: (prioridade.get(codigo, 99), codigo))
 
@@ -491,6 +496,7 @@ def _criar_demo(destino: Path) -> None:
 <ide><mod>55</mod><nNF>101</nNF><dhEmi>2026-07-20T09:15:00-03:00</dhEmi><tpNF>1</tpNF></ide>
 <emit><CNPJ>12345678000199</CNPJ><xNome>INDÚSTRIA DEMONSTRAÇÃO LTDA</xNome><CRT>3</CRT></emit>
 <det nItem="1"><prod><cProd>SKU-1001</cProd><cEAN>7891234567895</cEAN>
+<cEANTrib>7891234567895</cEANTrib>
 <xProd>CHAPA DE AÇO GALVANIZADO</xProd><NCM>72104900</NCM></prod>
 <imposto><ICMS><ICMS00><CST>00</CST></ICMS00></ICMS></imposto></det>
 <det nItem="2"><prod><cProd>SKU-2002</cProd><cEAN></cEAN>
@@ -502,7 +508,7 @@ def _criar_demo(destino: Path) -> None:
 <infNFe Id="NFe35260712345678000199550010000000021000000024" versao="4.00">
 <ide><mod>55</mod><nNF>102</nNF><dhEmi>2026-07-21T14:02:00-03:00</dhEmi><tpNF>1</tpNF></ide>
 <emit><CNPJ>12345678000199</CNPJ><xNome>INDÚSTRIA DEMONSTRAÇÃO LTDA</xNome><CRT>3</CRT></emit>
-<det nItem="1"><prod><cProd>SKU-3003</cProd><cEAN>SEM GTIN</cEAN>
+<det nItem="1"><prod><cProd>SKU-3003</cProd><cEAN>SEM GTIN</cEAN><cEANTrib>SEM GTIN</cEANTrib>
 <xProd>PRODUTO JÁ PARAMETRIZADO</xProd><NCM>72104900</NCM></prod><imposto>
 <IBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><gIBSCBS>
 <vBC>100.00</vBC><gIBSUF><pIBSUF>0.1</pIBSUF><vIBSUF>0.10</vIBSUF></gIBSUF>

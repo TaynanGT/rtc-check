@@ -8,7 +8,6 @@ from rtc_check import gtin
     [
         "7891234567895",  # GTIN-13 válido
         "SEM GTIN",
-        "sem gtin",  # normalizado para maiúsculas
         "  SEM GTIN  ",
     ],
 )
@@ -21,6 +20,7 @@ def test_aceita_validos(valor):
     ("valor", "trecho_do_motivo"),
     [
         ("7891234567890", "dígito verificador"),
+        ("sem gtin", "caixa errada"),
         ("789123456789X", "não numéricos"),
         ("12345", "dígitos"),
         ("", "ausente"),

@@ -126,6 +126,24 @@ def test_layout_exige_cclass_trib_no_pai(tmp_path):
 def test_cclass_trib_precisa_existir_na_tabela_e_ser_da_nfe(tmp_path):
     assert "RTC006" in _avaliar(tmp_path, cclass="000999")
     assert "RTC006" not in _avaliar(tmp_path, cclass="000001")
+
+
+def test_cclass_ausente_e_so_rtc002_sem_duplicar_rtc006(tmp_path):
+    codigos = _avaliar(tmp_path, cclass=None)
+    assert "RTC002" in codigos
+    assert "RTC006" not in codigos
+
+
+def test_cclass_incompativel_com_o_cst_dispara_rtc007(tmp_path):
+    # 000001 pertence ao CST 000; com CST 410 o par é incoerente.
+    codigos = _avaliar(tmp_path, cst="410", cclass="000001", incluir_gibscbs=False)
+    assert "RTC007" in codigos
+
+
+def test_cclass_coerente_com_o_cst_nao_dispara_rtc007(tmp_path):
+    assert "RTC007" not in _avaliar(tmp_path, cst="000", cclass="000001")
+    # Código inválido é problema do RTC006; RTC007 só compara pares válidos.
+    assert "RTC007" not in _avaliar(tmp_path, cclass="000999")
     assert "000001" in CCLASSTRIB_NFE
 
 

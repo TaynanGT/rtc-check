@@ -52,6 +52,7 @@ class Resumo:
     arquivos_lidos: int = 0
     arquivos_invalidos: list[tuple[str, str]] = field(default_factory=list)
     notas_em_escopo: int = 0
+    notas_sem_crt: int = 0
     total_itens: int = 0
     por_severidade: Counter[str] = field(default_factory=Counter)
     grupos: list[GrupoSku] = field(default_factory=list)
@@ -262,6 +263,14 @@ def formatar_texto(
         "",
         f"  XMLs lidos ............... {resumo.arquivos_lidos}",
         f"  Notas em escopo (CRT=3) .. {resumo.notas_em_escopo}",
+        *(
+            [
+                f"  Notas sem CRT ............ {resumo.notas_sem_crt}  "
+                "(regime indeterminado; regras RTC não aplicadas)"
+            ]
+            if resumo.notas_sem_crt
+            else []
+        ),
         f"  Itens analisados ......... {resumo.total_itens}",
         "",
         f"  Bloqueios ................ {resumo.por_severidade[Severidade.BLOQUEIO.value]}",
@@ -309,7 +318,13 @@ def formatar_texto(
             linhas.append("")
 
     if resumo.aprovado:
-        linhas.append("  Nenhum bloqueio encontrado neste acervo.")
+        if resumo.arquivos_lidos == 0:
+            linhas.append(
+                "  Nenhum arquivo .xml encontrado nesta pasta — nada foi analisado."
+            )
+            linhas.append("  Confira o caminho antes de concluir que está tudo certo.")
+        else:
+            linhas.append("  Nenhum bloqueio encontrado neste acervo.")
         linhas.append("")
 
     if comparativo is not None:
@@ -363,6 +378,7 @@ def formatar_json(
                 {"arquivo": n, "motivo": m} for n, m in resumo.arquivos_invalidos
             ],
             "notas_em_escopo": resumo.notas_em_escopo,
+            "notas_sem_crt": resumo.notas_sem_crt,
             "total_itens": resumo.total_itens,
             "emitentes": [
                 {
@@ -395,6 +411,13 @@ def formatar_json(
     )
 
 
+def _celula_segura(valor: str) -> str:
+    """Neutraliza injeção de fórmula: XMLs vêm de terceiros e vão para o Excel."""
+    if valor and valor[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + valor
+    return valor
+
+
 def formatar_csv(resumo: Resumo) -> str:
     buffer = io.StringIO()
     escritor = csv.writer(buffer, delimiter=";", lineterminator="\n")
@@ -418,15 +441,15 @@ def formatar_csv(resumo: Resumo) -> str:
     for g in resumo.grupos:
         escritor.writerow(
             [
-                g.sku,
-                g.descricao,
-                g.ncm,
+                _celula_segura(g.sku),
+                _celula_segura(g.descricao),
+                _celula_segura(g.ncm),
                 g.severidade_max.value,
                 "|".join(sorted(g.codigos)),
                 g.ocorrencias,
                 len(g.arquivos),
-                " / ".join(g.mensagens[c] for c in sorted(g.codigos)),
-                g.emitente_documento,
+                _celula_segura(" / ".join(g.mensagens[c] for c in sorted(g.codigos))),
+                _celula_segura(g.emitente_documento),
                 NORMATIVA_RTC.rotulo,
                 NORMATIVA_RTC.fonte,
                 f"{NORMATIVA_RTC.tabela_documento} v{NORMATIVA_RTC.tabela_versao}",

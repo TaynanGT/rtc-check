@@ -138,7 +138,7 @@ def test_comparativo_com_arquivo_que_nao_e_relatorio(tmp_path, licenciado, capsy
     ruim = tmp_path / "ruim.json"
     ruim.write_text('{"qualquer": "coisa"}', encoding="utf-8")
     assert main([str(_acervo(tmp_path)), "--comparar", str(ruim)]) == 2
-    assert "não consegui ler" in capsys.readouterr().err
+    assert "não parece um relatório do RTC Check" in capsys.readouterr().err
 
 
 def test_analisar_sem_filtro_de_regras_roda_tudo():
@@ -198,3 +198,43 @@ def test_ativar_licenca_invalida_falha(capsys):
 def test_sem_pasta_e_erro_de_uso(capsys):
     assert main([]) == 2
     assert "informe a pasta" in capsys.readouterr().err
+
+
+def test_csv_gravado_com_bom_para_o_excel(tmp_path, licenciado):
+    destino = tmp_path / "fila.csv"
+    assert main([str(_acervo(tmp_path)), "-f", "csv", "-o", str(destino)]) == 0
+    assert destino.read_bytes().startswith(b"\xef\xbb\xbf")
+
+
+def test_celula_de_formula_e_neutralizada():
+    from rtc_check.report import _celula_segura
+
+    assert _celula_segura('=HYPERLINK("http://x")').startswith("'")
+    assert _celula_segura("+55 11").startswith("'")
+    assert _celula_segura("CAFÉ TORRADO") == "CAFÉ TORRADO"
+
+
+def test_portao_de_ci_sem_nenhum_xml_falha_com_codigo_2(tmp_path, licenciado, capsys):
+    vazia = tmp_path / "sem-xmls"
+    vazia.mkdir()
+    assert main([str(vazia), "--falhar-em-bloqueio"]) == 2
+    assert "nenhum XML analisado" in capsys.readouterr().err
+
+
+def test_comparativo_com_arquivo_inexistente_falha_antes_da_varredura(
+    tmp_path, licenciado, capsys
+):
+    assert main([str(_acervo(tmp_path)), "--comparar", str(tmp_path / "x.json")]) == 2
+    assert "não consegui ler" in capsys.readouterr().err
+
+
+def test_licenca_junto_da_varredura_fica_gravada(tmp_path, capsys):
+    from datetime import date, timedelta
+
+    chave = ed.gerar_chave(
+        ed.Plano.ESCRITORIO, date.today() + timedelta(days=30), "Cliente CLI"
+    )
+    assert main([str(_acervo(tmp_path)), "--licenca", chave]) == 0
+    assert "ativada e gravada" in capsys.readouterr().err
+    # Sem argumento nenhum, a próxima execução já enxerga o plano pago.
+    assert ed.resolver().plano is ed.Plano.ESCRITORIO

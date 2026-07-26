@@ -38,9 +38,16 @@ def validar(valor: str | None) -> tuple[bool, str]:
     if valor is None or not valor.strip():
         return False, "cEAN ausente (informe o GTIN ou o literal 'SEM GTIN')"
 
-    valor = valor.strip().upper()
+    valor = valor.strip()
     if valor == SEM_GTIN:
         return True, ""
+    if valor.upper() == SEM_GTIN:
+        # O domínio do campo no layout 4.00 aceita somente o literal exato em
+        # maiúsculas; caixa errada seria rejeitada na validação de schema.
+        return False, (
+            f"'{valor}' com caixa errada: o layout 4.00 só aceita o literal "
+            "'SEM GTIN' em maiúsculas"
+        )
 
     if not valor.isdigit():
         return False, f"GTIN '{valor}' contém caracteres não numéricos"

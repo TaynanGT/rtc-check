@@ -120,7 +120,7 @@ DESCRICAO_DO_RECURSO: dict[Recurso, str] = {
 # As regras RTC tratam o corte de agosto e ficam no plano gratuito: é o que faz
 # a ferramenta valer para todo mundo. NCM e GTIN são higiene de cadastro.
 REGRAS_GRATUITAS = frozenset(
-    {"RTC001", "RTC002", "RTC003", "RTC004", "RTC005", "RTC006"}
+    {"RTC001", "RTC002", "RTC003", "RTC004", "RTC005", "RTC006", "RTC007"}
 )
 REGRAS_POR_RECURSO: dict[Recurso, frozenset[str]] = {
     Recurso.REGRA_NCM: frozenset({"NCM001"}),
