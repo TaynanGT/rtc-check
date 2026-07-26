@@ -8,9 +8,9 @@ RTC_CHECK_PAYMENT_PROVIDER=
 RTC_CHECK_CHECKOUT_URL=
 ```
 
-Sem configuração, o botão **Comprar licença** abre o formulário comercial do
-GitHub e informa que a compra é assistida. Com uma URL HTTPS, a interface mostra
-o nome do provedor e abre seu checkout hospedado.
+Sem configuração, o botão **Comprar licença** abre a captação privada da landing
+e informa que a compra é assistida. Com uma URL HTTPS e um host permitido, a
+interface mostra o nome do provedor e abre seu checkout hospedado.
 
 ## Contrato do provedor
 
@@ -30,3 +30,7 @@ Estados mínimos: `checkout_iniciado`, `pagamento_confirmado`,
 O checkout automático não está ativo enquanto o titular não escolher o provedor,
 verificar a conta e aceitar seus termos. Essa é uma ação externa e irreversível
 que não deve ser simulada no código.
+
+Defina também `RTC_CHECK_CHECKOUT_ALLOWED_HOSTS` com uma lista separada por
+vírgulas dos hosts exatos autorizados. Uma URL HTTPS cujo host não esteja nessa
+lista cai com segurança para a compra assistida.

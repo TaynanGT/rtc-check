@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from datetime import date
 from pathlib import Path
 
 from . import __version__
 from . import edicao as ed
+from .diagnostico import dados as dados_diagnostico
 from .parser import XmlInvalido, ler_nota, varrer_pasta
 from .report import (
     Comparativo,
@@ -36,6 +38,10 @@ RECURSO_DO_FORMATO = {
 # 2 erro de uso, 3 recurso fora do plano em uso.
 SAIDA_FORA_DO_PLANO = 3
 
+
+class AnaliseCancelada(Exception):
+    """Interrompe uma análise local solicitada pela interface visual."""
+
 RODAPE_COMUNIDADE = """
   Plano Comunidade. Estão liberados neste relatório: a varredura completa,
   a contagem de bloqueios e os primeiros SKUs da fila.
@@ -49,12 +55,20 @@ RODAPE_COMUNIDADE = """
 
 
 def analisar(
-    pasta: Path, recursivo: bool = True, regras: frozenset[str] | None = None
+    pasta: Path,
+    recursivo: bool = True,
+    regras: frozenset[str] | None = None,
+    progresso: Callable[[int, int], None] | None = None,
+    cancelar: Callable[[], bool] | None = None,
 ) -> Resumo:
     resumo = Resumo()
     achados = []
+    caminhos = list(varrer_pasta(pasta, recursivo))
+    total = len(caminhos)
 
-    for caminho in varrer_pasta(pasta, recursivo):
+    for indice, caminho in enumerate(caminhos, start=1):
+        if cancelar and cancelar():
+            raise AnaliseCancelada()
         try:
             arquivo_relativo = caminho.relative_to(pasta).as_posix()
         except ValueError:
@@ -64,6 +78,8 @@ def analisar(
             nota = ler_nota(caminho)
         except XmlInvalido as erro:
             resumo.arquivos_invalidos.append((arquivo_relativo, str(erro)))
+            if progresso:
+                progresso(indice, total)
             continue
 
         emitente = resumo.registrar_emitente(nota.emitente_cnpj, nota.emitente_nome)
@@ -85,6 +101,8 @@ def analisar(
                 emitente.skus.add(achado.sku)
             elif achado.severidade is Severidade.ALERTA:
                 emitente.alertas += 1
+        if progresso:
+            progresso(indice, total)
 
     resumo.grupos = agregar(achados)
     return resumo
@@ -153,6 +171,11 @@ def construir_parser() -> argparse.ArgumentParser:
         "--plano",
         action="store_true",
         help="mostra o plano em uso e o que está liberado",
+    )
+    p.add_argument(
+        "--diagnostico",
+        action="store_true",
+        help="mostra diagnóstico seguro para suporte, sem XMLs ou caminhos",
     )
 
     p.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
@@ -255,6 +278,9 @@ def main(argv: list[str] | None = None) -> int:
         return _ativar_licenca(args.licenca)
     if args.iniciar_teste:
         return _iniciar_teste()
+    if args.diagnostico:
+        print(json.dumps(dados_diagnostico(), ensure_ascii=False, indent=2))
+        return 0
 
     edicao = ed.resolver(args.licenca)
     if edicao.aviso:

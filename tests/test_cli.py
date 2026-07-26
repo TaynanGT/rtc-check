@@ -174,6 +174,16 @@ def test_main_recusa_porta_invalida(capsys):
     assert "entre 0 e 65535" in capsys.readouterr().err
 
 
+def test_main_diagnostico_nao_exibe_dados_fiscais(capsys):
+    assert main(["--diagnostico"]) == 0
+    saida = capsys.readouterr().out
+    dados = json.loads(saida)
+    assert dados["privacidade"]["telemetria"] is False
+    assert dados["privacidade"]["xmls_incluidos"] is False
+    assert "limites" in dados
+    assert "AppData" not in saida
+
+
 def test_main_caminho_e_arquivo_nao_pasta(tmp_path, capsys):
     arq = tmp_path / "a.xml"
     arq.write_text("<a/>", encoding="utf-8")

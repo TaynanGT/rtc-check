@@ -51,6 +51,9 @@ jobs:
       - name: Lint
         run: uv run ruff check .
 
+      - name: Validar JavaScript da interface
+        run: node --check src/rtc_check/web/app.js
+
       - name: Tipos
         run: uv run mypy
 
@@ -136,17 +139,52 @@ jobs:
 
           echo "exit codes corretos nos cinco cenários"
 
+  seguranca:
+    name: Segurança e dependências
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          python-version: "3.13"
+      - name: Análise estática de segurança
+        run: uvx --from bandit bandit -q -r src
+      - name: Auditoria de vulnerabilidades conhecidas
+        run: uvx pip-audit --strict
+
+  interface:
+    name: Interface real no Chromium
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          python-version: "3.13"
+      - name: Instalar aplicação e navegador
+        run: |
+          uv venv --python 3.13 --clear
+          uv pip install -e ".[dev,browser]"
+          uv run playwright install --with-deps chromium
+      - name: Testar fluxo visual
+        run: uv run pytest -m browser tests/test_browser.py
+      - name: Validar landing
+        run: uv run python scripts/validate_site.py
+
   ci-concluido:
     name: CI concluído
     if: always()
-    needs: [testes, instalacao-limpa]
+    needs: [testes, instalacao-limpa, seguranca, interface]
     runs-on: ubuntu-latest
     steps:
       - name: Confirmar todos os jobs
         env:
           TESTES: ${{ needs.testes.result }}
           INSTALACAO_LIMPA: ${{ needs.instalacao-limpa.result }}
+          SEGURANCA: ${{ needs.seguranca.result }}
+          INTERFACE: ${{ needs.interface.result }}
         run: |
           test "$TESTES" = success
           test "$INSTALACAO_LIMPA" = success
-          echo "matriz e instalação limpa aprovadas"
+          test "$SEGURANCA" = success
+          test "$INTERFACE" = success
+          echo "matriz, instalação limpa, segurança e interface aprovadas"
