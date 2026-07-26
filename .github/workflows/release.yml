@@ -12,8 +12,8 @@ jobs:
   construir:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.13"
 
@@ -37,7 +37,7 @@ jobs:
           echo "tag=$tag pacote=$pkg"
           [ "$tag" = "$pkg" ] || { echo "tag $tag diferente da versao $pkg"; exit 1; }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: pacotes
           path: dist/
@@ -47,8 +47,8 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: pacotes
           path: dist/
@@ -85,7 +85,7 @@ jobs:
     permissions:
       id-token: write # exigido pela publicacao confiavel (OIDC)
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: pacotes
           path: dist/
