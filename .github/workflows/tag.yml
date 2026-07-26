@@ -1,0 +1,36 @@
+name: Criar tag de release
+
+# Disparo manual (workflow_dispatch) que cria a tag vX.Y.Z na ponta da main,
+# depois de conferir que ela bate com a versão do pacote. A publicação em si
+# continua no release.yml: como a tag criada pelo GITHUB_TOKEN não dispara
+# outros workflows, rode em seguida o "Publicar release" apontando para a tag.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag no formato vX.Y.Z (precisa bater com a versão do pacote)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  criar-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Validar e criar a tag
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || { echo "tag inválida: $TAG"; exit 1; }
+          versao=$(grep -oP '__version__ = "\K[^"]+' src/rtc_check/__init__.py)
+          [ "v$versao" = "$TAG" ] \
+            || { echo "tag $TAG difere da versão do pacote ($versao)"; exit 1; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "RTC Check ${TAG#v} — mudanças detalhadas no CHANGELOG.md"
+          git push origin "refs/tags/$TAG"
