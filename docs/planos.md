@@ -16,6 +16,9 @@ agosto, nada disso é necessário: `rtc-check ./xmls` responde de graça e para 
 Teste grátis e Escritório liberam exatamente os mesmos recursos técnicos. O que a
 Plataforma acrescenta é contratual, não é código.
 
+O plano Escritório custa **R$ 149/mês** ou **R$ 1.490/ano**. Não há limite de
+XML, CNPJ ou usuário porque o processamento e o armazenamento são locais.
+
 ## O que cada plano libera
 
 Rode `rtc-check --plano` para ver a lista na sua instalação. Em resumo:
@@ -116,7 +119,7 @@ O RTC Check é AGPL. O código do `edicao.py` está no repositório e qualquer p
 consegue remover a verificação em dez minutos. Isso é conhecido e não vai mudar.
 
 A trava existe para deixar o limite do plano explícito e evitar compartilhamento casual
-de chave, não para ser DRM. O que a assinatura entrega é a regra atualizada no dia em que
-a NT sai, suporte com prazo e o direito de redistribuir — nada disso um patch local
+de chave, não para ser DRM. O que a assinatura entrega é a priorização de atualizações
+após revisão técnica, suporte com prazo e o direito de redistribuir — nada disso um patch local
 resolve. Fechar o código para proteger a cobrança custaria a única coisa que faz alguém
 confiar uma pasta de notas fiscais a este programa: dá para ler o que ele faz.

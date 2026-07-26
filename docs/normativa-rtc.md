@@ -4,7 +4,7 @@ Cada relatório do RTC Check registra a referência normativa usada na análise.
 Isso permite explicar, meses depois, **qual fotografia regulatória** gerou cada
 fila de trabalho.
 
-## Referência da versão 0.2.1
+## Referência da versão 0.3.0
 
 | Campo | Valor |
 |---|---|

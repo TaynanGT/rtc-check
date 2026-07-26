@@ -1,6 +1,6 @@
 [project]
 name = "rtc-check"
-version = "0.2.2"
+version = "0.3.0"
 description = "Auditoria local de prontidão da NF-e para a Reforma Tributária (IBS/CBS)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -50,6 +50,7 @@ Planos = "https://taynangt.github.io/rtc-check/#precos"
 
 [project.scripts]
 rtc-check = "rtc_check.cli:main"
+rtc-check-desktop = "rtc_check.webapp:main"
 
 [project.optional-dependencies]
 dev = [
@@ -59,6 +60,9 @@ dev = [
     "ruff>=0.6",
     "types-defusedxml>=0.7",
 ]
+build = [
+    "pyinstaller>=6.14,<7",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -66,6 +70,14 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/rtc_check"]
+
+[tool.hatch.build]
+include = [
+    "src/rtc_check/**/*.py",
+    "src/rtc_check/web/*.html",
+    "src/rtc_check/web/*.css",
+    "src/rtc_check/web/*.js",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

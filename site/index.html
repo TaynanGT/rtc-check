@@ -33,7 +33,7 @@
   "codeRepository": "https://github.com/TaynanGT/rtc-check",
   "license": "https://www.gnu.org/licenses/agpl-3.0.html",
   "inLanguage": "pt-BR",
-  "softwareRequirements": "Python 3.11 ou superior",
+  "softwareRequirements": "Aplicativo portátil para Windows ou Python 3.11+",
   "offers": [
     {
       "@type": "Offer",
@@ -45,9 +45,9 @@
     {
       "@type": "Offer",
       "name": "Escritório",
-      "price": "390",
+      "price": "149",
       "priceCurrency": "BRL",
-      "description": "Exportação em JSON, CSV e HTML, portão de CI, quebra por CNPJ, comparativo entre execuções e atualização de regras no dia da NT. 14 dias de teste grátis."
+      "description": "Exportação em JSON, CSV e HTML, portão de CI, quebra por CNPJ, comparativo entre execuções e atualizações normativas priorizadas. 14 dias de teste grátis."
     }
   ]
 }
@@ -128,7 +128,7 @@ ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
   guardado no disco.</p>
 
   <div class="btns">
-    <a class="btn" href="#comecar">Rodar no meu acervo</a>
+    <a class="btn" href="https://github.com/TaynanGT/rtc-check/releases/latest">Baixar para Windows</a>
     <a class="btn sec" href="#precos">Planos</a>
     <a class="btn sec" href="#o-que-nao-e">O que ele não faz</a>
     <a class="btn sec" href="https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md">Quero o plano Escritório</a>
@@ -139,10 +139,10 @@ ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
 </header>
 
 <section class="w">
-<h2>Um comando</h2>
+<h2>Um clique no Windows — ou um comando na automação</h2>
 
-<p>Aponte para a pasta onde estão seus XMLs. Ele lê, cruza e devolve a fila de
-trabalho:</p>
+<p>Abra o aplicativo, arraste XMLs ou um ZIP e veja o dashboard local. Para ERP,
+servidor ou CI, a mesma análise continua disponível pelo terminal:</p>
 
 <pre><code>$ rtc-check ./xmls
 
@@ -177,14 +177,14 @@ primeira execução, que leva alguns segundos.</blockquote>
     subir para o servidor de ninguém só para conferir um campo.</p>
   </div>
   <div>
-    <h3>Zero dependência</h3>
-    <p>Só a biblioteca padrão do Python. Nenhum pacote de terceiro no caminho
-    dos seus dados fiscais, nada para auditar além do próprio código.</p>
+    <h3>Dependências mínimas e auditadas</h3>
+    <p><code>defusedxml</code> protege o parser e <code>cryptography</code>
+    verifica licenças assinadas. O restante é Python e código aberto.</p>
   </div>
   <div>
-    <h3>Nenhuma conexão de rede</h3>
-    <p>O programa não abre socket. Você pode rodar com a máquina desconectada
-    e conferir isso no código, que é aberto justamente para isso.</p>
+    <h3>Nenhuma conexão externa</h3>
+    <p>A interface abre somente em <code>127.0.0.1</code>. Você pode rodar com a
+    máquina desconectada e conferir o fluxo no código.</p>
   </div>
 </div>
 </section>
@@ -262,7 +262,13 @@ regulatória foi usada.</p>
 <section class="w" id="comecar">
 <h2>Começar</h2>
 
-<p>Precisa de Python 3.11 ou mais novo. Ainda não está no PyPI:</p>
+<p><strong>Windows:</strong> baixe o ZIP da release, extraia e abra
+<code>RTC-Check.exe</code>. Não precisa instalar Python.</p>
+
+<p><a class="btn" href="https://github.com/TaynanGT/rtc-check/releases/latest">Baixar RTC Check Desktop</a></p>
+
+<p><strong>Terminal e automação:</strong> precisa de Python 3.11 ou mais novo.
+Ainda não está no PyPI:</p>
 
 <pre><code>pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git"
 rtc-check ./pasta-com-xmls</code></pre>
@@ -317,7 +323,7 @@ dias, sem cadastro e sem cartão:</p>
 <tbody>
 <tr><td>Tempo total</td><td class="destaque">1,43 s</td></tr>
 <tr><td>Pico de memória</td><td class="destaque">6 MB</td></tr>
-<tr><td>Testes automatizados</td><td class="destaque">125 passando</td></tr>
+<tr><td>Testes automatizados</td><td class="destaque">151 passando</td></tr>
 <tr><td>Cobertura</td><td class="destaque">94%</td></tr>
 </tbody>
 </table>
@@ -334,9 +340,9 @@ ou a memória saírem da ordem de grandeza. Você pode reproduzir com
 <thead><tr><th></th><th>Comunidade</th><th>Escritório</th></tr></thead>
 <tbody>
 <tr><td>Preço</td><td><strong>R$ 0, para sempre</strong></td>
-  <td><strong>R$ 390/mês</strong></td></tr>
+  <td><strong>R$ 149/mês</strong><br><span class="nota">ou R$ 1.490/ano</span></td></tr>
 <tr><td>Varredura local ilimitada</td><td class="ok">sim</td><td class="ok">sim</td></tr>
-<tr><td>Regras do corte (<code>RTC001</code> a <code>RTC005</code>)</td>
+<tr><td>Regras do corte (<code>RTC001</code> a <code>RTC006</code>)</td>
   <td class="ok">sim</td><td class="ok">sim</td></tr>
 <tr><td>Contagem de bloqueios e SKUs</td><td class="ok">sim</td><td class="ok">sim</td></tr>
 <tr><td>Lista detalhada de SKUs</td><td class="no">5 primeiros</td>
@@ -349,7 +355,7 @@ ou a memória saírem da ordem de grandeza. Você pode reproduzir com
 <tr><td>Detalhamento por CNPJ</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Comparativo entre execuções</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Atualização de regras</td><td class="no">via GitHub</td>
-  <td class="ok">no dia da NT</td></tr>
+  <td class="ok">prioritária e versionada</td></tr>
 <tr><td>Suporte</td><td class="no">issues públicas</td><td class="ok">e-mail, 1 dia útil</td></tr>
 </tbody>
 </table>
@@ -366,8 +372,8 @@ o comando grava um arquivo local e pronto.</p>
 <p>O plano gratuito não é isca. Ele responde inteira a pergunta que trouxe você até
 aqui, que é <em>"meu padrão atual tem risco de rejeição em agosto?"</em>. O que se
 paga é o trabalho que vem depois da resposta: entregar a lista para quem corrige,
-travar o pipeline, acompanhar a fila andar e receber a regra atualizada no dia em
-que a NT sai.</p>
+travar o pipeline, acompanhar a fila andar e receber atualizações priorizadas após
+a revisão técnica de cada NT.</p>
 
 <p>A NT 2025.002 já passou de trinta revisões. Uma varredura é foto; a obrigação
 é filme.</p>
@@ -377,7 +383,10 @@ e dá para removê-la. Isso é conhecido e não vai mudar: fechar o código cust
 única coisa que faz alguém apontar uma pasta de notas fiscais para este programa, que
 é conseguir ler o que ele faz. A assinatura não vende acesso ao binário.</blockquote>
 
-<p><a class="btn" href="https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md">Falar sobre o plano Escritório</a></p>
+<p><a class="btn" href="https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md">Começar compra assistida</a></p>
+<p class="nota">O checkout automático ainda depende da escolha e verificação da
+conta do provedor de pagamento. Até lá, o pedido é iniciado pelo formulário público;
+não inclua CNPJ, XML, chave fiscal ou outros dados confidenciais.</p>
 </section>
 
 <footer class="w">

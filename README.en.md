@@ -40,9 +40,10 @@ work, grouped by product and sorted by impact.
 
 ## Runs on your machine. Full stop.
 
-No XML leaves your computer. No upload, no account, no server, no telemetry. Apart from
-the audited cryptography library used to verify paid-plan licenses, the runtime is standard
-library only; the program never opens a socket. That is why the code is open.
+No XML leaves your computer. There is no account, external server, or telemetry.
+The visual app uses a temporary server restricted to `127.0.0.1`; browser uploads
+are processed on the same PC and removed after each analysis. `defusedxml` protects
+the parser and `cryptography` verifies signed licenses.
 
 The scan and the text report above are **free forever, no sign-up**. Exporting,
 automating and comparing runs are part of the paid plans, with a
@@ -61,7 +62,7 @@ uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
 
 In production, pin a version instead of tracking `main`: append the release tag to
-the URL, as in `...rtc-check.git@v0.2.1`. Available tags are listed under
+the URL, as in `...rtc-check.git@v0.3.0`. Available tags are listed under
 [releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requires Python 3.11+. Tested on Windows, Linux and macOS, from 3.11 to 3.14.
@@ -85,7 +86,7 @@ error, `3` the requested feature is not in the current plan.
 
 | | Community | Office | Platform |
 |---|---|---|---|
-| **Price** | R$ 0, forever | R$ 390/month | contact us |
+| **Price** | R$ 0, forever | R$ 149/month or R$ 1,490/year | contact us |
 | Unlimited local scanning | yes | yes | yes |
 | Cut-off rules (`RTC001` to `RTC006`) | yes | yes | yes |
 | Blocker and SKU counts | yes | yes | yes |

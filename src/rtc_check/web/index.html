@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="rtc-token" content="{{RTC_TOKEN}}">
+  <title>RTC Check Desktop</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230f766e'/%3E%3Cpath d='M19 45V18h15c8 0 13 4 13 11 0 5-3 8-7 10l8 6H37l-6-5h-3v5zm9-13h6c3 0 5-1 5-4s-2-4-5-4h-6z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="RTC Check — início">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span>RTC Check <small>Desktop</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="privacy-pill"><span class="pulse"></span> 100% local</span>
+      <button class="button ghost compact" id="settings-open" type="button">Personalizar</button>
+      <button class="button ghost compact" id="shutdown" type="button">Encerrar</button>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="hero" id="inicio">
+      <div class="hero-copy">
+        <p class="eyebrow">Prontidão fiscal sem expor seus documentos</p>
+        <h1>Descubra quais produtos podem travar a próxima NF-e.</h1>
+        <p class="hero-text">Arraste XMLs ou um ZIP. O RTC Check transforma milhares de
+          ocorrências numa fila clara de SKUs para corrigir — sem upload para nuvem,
+          sem cadastro e sem limite de CNPJ.</p>
+        <div class="trust-row" aria-label="Garantias do produto">
+          <span>✓ Nenhuma telemetria</span>
+          <span>✓ Arquivos apagados após a análise</span>
+          <span>✓ Código auditável</span>
+        </div>
+      </div>
+      <aside class="deadline-card" aria-label="Prazo monitorado">
+        <span>CRT 3 · Regime normal</span>
+        <strong>03 ago 2026</strong>
+        <p>Início monitorado da rejeição 1115 em produção</p>
+        <a href="https://dfe-portal.svrs.rs.gov.br/Cff/ValidadorRtcNfe"
+          target="_blank" rel="noreferrer">Abrir validador oficial ↗</a>
+      </aside>
+    </section>
+
+    <section class="workspace" aria-labelledby="analisar-title">
+      <div class="stepper" aria-label="Etapas">
+        <span class="active"><b>1</b> Selecionar</span>
+        <span><b>2</b> Analisar</span>
+        <span><b>3</b> Corrigir</span>
+      </div>
+      <div class="workspace-grid">
+        <div>
+          <p class="section-kicker">Comece por aqui</p>
+          <h2 id="analisar-title">Analise seus XMLs</h2>
+          <p class="muted">Selecione arquivos <strong>.xml</strong> ou um
+            <strong>.zip</strong>. O processamento acontece neste PC.</p>
+
+          <label class="dropzone" id="dropzone" for="files">
+            <input id="files" type="file" accept=".xml,.zip" multiple>
+            <span class="upload-icon" aria-hidden="true">⇧</span>
+            <strong>Arraste os arquivos aqui</strong>
+            <span>ou clique para selecionar XML/ZIP</span>
+            <small id="selection-label">Nenhum arquivo selecionado</small>
+          </label>
+          <input id="folder-files" class="visually-hidden" type="file"
+            accept=".xml" multiple webkitdirectory>
+          <button class="button text folder-button" id="folder-open" type="button">
+            Selecionar uma pasta inteira
+          </button>
+
+          <div class="primary-actions">
+            <button class="button primary" id="analyze" type="button" disabled>
+              Analisar agora
+            </button>
+            <button class="button secondary" id="demo" type="button">
+              Ver demonstração
+            </button>
+          </div>
+          <div class="local-proof">
+            <span aria-hidden="true">⌂</span>
+            <div><strong>Servidor local: 127.0.0.1</strong>
+              <small>Se fechar esta janela, seus resultados deixam de estar acessíveis.</small>
+            </div>
+          </div>
+        </div>
+
+        <aside class="plan-card" aria-labelledby="plan-title">
+          <p class="section-kicker">Sua instalação</p>
+          <h2 id="plan-title">Plano <span id="plan-name">carregando…</span></h2>
+          <div id="plan-details" class="plan-details" aria-live="polite"></div>
+          <button class="button primary full" id="trial" type="button">
+            Ativar 14 dias grátis
+          </button>
+          <a class="button secondary full hidden" id="checkout" target="_blank"
+             rel="noreferrer" aria-disabled="true">
+            Comprar licença
+          </a>
+          <button class="button text full" id="license-open" type="button">
+            Já tenho uma licença
+          </button>
+          <p class="fine" id="checkout-note">Sem cartão, conta ou chamada de rede. O teste é ativado localmente.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="progress" class="progress-panel hidden" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <div>
+        <strong>Conferindo os documentos…</strong>
+        <p id="progress-message">Lendo XMLs e agrupando os produtos.</p>
+      </div>
+      <div class="progress-track"><span></span></div>
+    </section>
+
+    <section id="results" class="results hidden" aria-labelledby="results-title">
+      <div class="results-head">
+        <div>
+          <p class="section-kicker">Diagnóstico concluído</p>
+          <h2 id="results-title">Sua fila de correção</h2>
+          <p class="muted" id="results-summary"></p>
+        </div>
+        <div class="score" id="score">
+          <strong>—</strong><span>prontidão</span>
+        </div>
+      </div>
+
+      <div class="metrics" id="metrics"></div>
+
+      <div class="toolbar">
+        <div class="filter-group" role="group" aria-label="Filtrar achados">
+          <button class="filter active" data-filter="todos" type="button">Todos</button>
+          <button class="filter" data-filter="bloqueio" type="button">Bloqueios</button>
+          <button class="filter" data-filter="alerta" type="button">Alertas</button>
+        </div>
+        <div class="export-group">
+          <button class="button ghost compact export" data-format="csv" type="button">CSV</button>
+          <button class="button ghost compact export" data-format="json" type="button">JSON</button>
+          <button class="button primary compact export" data-format="html" type="button">
+            Relatório / PDF
+          </button>
+        </div>
+      </div>
+
+      <div id="upgrade-note" class="upgrade-note hidden">
+        <div><strong>A análise completa terminou.</strong>
+          <span id="upgrade-message"></span></div>
+        <button class="button primary compact" id="upgrade-trial" type="button">
+          Liberar resultado completo
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Prioridade</th><th>SKU e produto</th><th>O que corrigir</th>
+              <th>Impacto</th><th>Emitente</th></tr>
+          </thead>
+          <tbody id="result-rows"></tbody>
+        </table>
+        <div class="empty hidden" id="empty-filter">
+          Nenhum item corresponde a este filtro.
+        </div>
+      </div>
+
+      <section class="next-actions">
+        <div>
+          <p class="section-kicker">Próximo passo recomendado</p>
+          <h3>Corrija o primeiro SKU e valide uma nota nova na SVRS.</h3>
+          <p>O histórico aponta padrões; a confirmação final deve ser feita no
+            validador oficial ou no ambiente de homologação do seu emissor.</p>
+        </div>
+        <a class="button secondary" target="_blank" rel="noreferrer"
+          href="https://dfe-portal.svrs.rs.gov.br/Cff/ValidadorRtcNfe">
+          Abrir validador oficial ↗
+        </a>
+      </section>
+    </section>
+
+    <section class="why-local" aria-labelledby="why-title">
+      <div>
+        <p class="section-kicker">Por que local?</p>
+        <h2 id="why-title">Documento fiscal não deveria viajar sem necessidade.</h2>
+      </div>
+      <div class="why-grid">
+        <article><span>01</span><h3>Privacidade verificável</h3>
+          <p>Nenhum XML é enviado, armazenado em nuvem ou usado para telemetria.</p></article>
+        <article><span>02</span><h3>Volume sem pedágio</h3>
+          <p>Processe acervos grandes sem franquia mensal por XML ou por CNPJ.</p></article>
+        <article><span>03</span><h3>Fila que vira trabalho</h3>
+          <p>Ocorrências repetidas viram uma linha por produto e emitente.</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>RTC Check <b id="version"></b></span>
+    <span>Triagem técnica local. Não substitui análise profissional nem o validador oficial.</span>
+  </footer>
+
+  <dialog id="settings-dialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-head">
+        <div><p class="section-kicker">Relatório white-label</p>
+          <h2>Personalizar entrega</h2></div>
+        <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+      </div>
+      <label>Nome do escritório ou empresa
+        <input id="brand-name" maxlength="60" value="RTC Check">
+      </label>
+      <label>Cor principal
+        <input id="brand-color" type="color" value="#0f766e">
+      </label>
+      <p class="fine">A personalização fica somente no armazenamento deste navegador.</p>
+      <button class="button primary full" id="settings-save" value="default">Salvar</button>
+    </form>
+  </dialog>
+
+  <dialog id="license-dialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-head">
+        <div><p class="section-kicker">Plano Escritório</p><h2>Ativar licença</h2></div>
+        <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+      </div>
+      <label>Chave recebida
+        <textarea id="license-key" rows="4" placeholder="RTC2.…"></textarea>
+      </label>
+      <p class="error-text hidden" id="license-error"></p>
+      <button class="button primary full" id="license-activate" value="default">
+        Validar e ativar
+      </button>
+    </form>
+  </dialog>
+
+  <div class="toast hidden" id="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

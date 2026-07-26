@@ -13,9 +13,18 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
+.playwright-cli/
+output/
+.env
+.env.*
+!.env.example
+credentials/
+*.pem
+*.key
 # Relatórios gerados e, principalmente, XML de cliente: nunca versionar.
 *.html
 !site/index.html
+!src/rtc_check/web/index.html
 xmls/
 acervo/
 

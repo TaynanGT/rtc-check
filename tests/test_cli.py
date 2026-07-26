@@ -133,6 +133,17 @@ def test_html_escapa_conteudo(tmp_path):
     assert "Nota Técnica 2025.002-RTC v1.50" in saida
 
 
+def test_html_aceita_marca_e_recusa_cor_invalida(tmp_path):
+    saida = formatar_html(
+        analisar(_acervo_emitente_unico(tmp_path)),
+        marca="<Escritório>",
+        cor="url(javascript:1)",
+    )
+    assert "&lt;Escritório&gt;" in saida
+    assert "--brand:#0f766e" in saida
+    assert "Imprimir / salvar em PDF" in saida
+
+
 def test_texto_mostra_contagem_regressiva():
     saida = formatar_texto(analisar(FIXTURES), hoje=date(2026, 7, 25))
     assert "9 dias" in saida
@@ -156,6 +167,11 @@ def test_main_falha_em_bloqueio_quando_pedido(tmp_path, capsys, licenciado):
 def test_main_pasta_inexistente(tmp_path, capsys):
     assert main([str(tmp_path / "nao_existe")]) == 2
     assert "não encontrada" in capsys.readouterr().err
+
+
+def test_main_recusa_porta_invalida(capsys):
+    assert main(["--app", "--porta", "70000"]) == 2
+    assert "entre 0 e 65535" in capsys.readouterr().err
 
 
 def test_main_caminho_e_arquivo_nao_pasta(tmp_path, capsys):

@@ -42,8 +42,25 @@ jobs:
           name: pacotes
           path: dist/
 
+  windows-desktop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          python-version: "3.13"
+
+      - name: Construir aplicativo portátil
+        shell: pwsh
+        run: .\scripts\Build-Windows.ps1
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: windows-desktop
+          path: dist/RTC-Check-Windows-*.zip
+
   github-release:
-    needs: construir
+    needs: [construir, windows-desktop]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -52,6 +69,10 @@ jobs:
         with:
           name: pacotes
           path: dist/
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: windows-desktop
+          path: dist-windows/
 
       # Cria o release se ainda nao existir. So fazer upload assume que alguem
       # criou o release na mao antes de empurrar a tag, o que quebrou a v0.1.1
@@ -63,10 +84,10 @@ jobs:
           tag="${GITHUB_REF_NAME}"
           if gh release view "$tag" > /dev/null 2>&1; then
             echo "release $tag ja existe, anexando os pacotes"
-            gh release upload "$tag" dist/* --clobber
+            gh release upload "$tag" dist/* dist-windows/* --clobber
           else
             echo "criando release $tag"
-            gh release create "$tag" dist/* \
+            gh release create "$tag" dist/* dist-windows/* \
               --title "RTC Check ${tag#v}" \
               --notes-from-tag
           fi

@@ -76,6 +76,17 @@ jobs:
       - name: Construir o pacote
         run: uv build
 
+      - name: Conferir que a interface visual entrou no wheel
+        shell: bash
+        run: >
+          uv run python -c "import zipfile,glob;
+          p=glob.glob('dist/*.whl')[0];
+          n=zipfile.ZipFile(p).namelist();
+          assert 'rtc_check/web/index.html' in n;
+          assert 'rtc_check/web/app.css' in n;
+          assert 'rtc_check/web/app.js' in n;
+          print('interface visual presente no wheel')"
+
       - name: Instalar só o wheel, sem as dependências de dev
         shell: bash
         run: |

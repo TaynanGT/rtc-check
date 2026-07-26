@@ -3,6 +3,24 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.3.0] / 2026-07-26
+
+### Adicionado
+- RTC Check Desktop: interface visual local com upload de XML/ZIP, demonstração,
+  dashboard de prontidão, filtros e orientação acionável por achado.
+- Relatórios white-label com marca, cor e botão para impressão/PDF.
+- Ativação de teste e licença dentro da interface.
+- Servidor restrito a `127.0.0.1`, token aleatório por sessão, CSP, limites de
+  upload/ZIP e remoção dos temporários após cada análise.
+- Build portátil para Windows com PyInstaller, checksum SHA-256 e publicação
+  automática na release.
+- Registro da evidência comercial e `.env.example` sem segredos para checkout modular.
+
+### Alterado
+- Plano Escritório reposicionado para R$ 149/mês ou R$ 1.490/ano, com volume
+  local ilimitado.
+- Versão elevada para 0.3.0 e novo comando `rtc-check --app`.
+
 ## [0.2.2] / 2026-07-25
 
 ### Corrigido
