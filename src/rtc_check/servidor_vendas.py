@@ -137,15 +137,23 @@ def garantir_chave_de_emissao(diretorio: Path) -> None:
     if os.environ.get("RTC_CHECK_CHAVE_PRIVADA"):
         return
     caminho = diretorio / "emissor-ed25519.pem"
-    pem_do_ambiente = _normalizar_pem(os.environ.get("RTC_CHECK_CHAVE_PRIVADA_PEM", ""))
+    bruto = os.environ.get("RTC_CHECK_CHAVE_PRIVADA_PEM", "")
+    pem_do_ambiente = _normalizar_pem(bruto)
     if pem_do_ambiente and not _pem_ed25519_valido(pem_do_ambiente):
-        # Placeholder ou valor truncado não pode virar a chave do emissor.
+        # Placeholder ou valor truncado não pode virar a chave do emissor. O
+        # diagnóstico ajuda o operador sem expor conteúdo além do marcador.
+        tem_marcador = "-----BEGIN PRIVATE KEY-----" in bruto
         print(
-            "RTC_CHECK_CHAVE_PRIVADA_PEM não contém um PEM Ed25519 válido; "
-            "ignorando e usando/gerando a chave local",
+            "RTC_CHECK_CHAVE_PRIVADA_PEM não contém um PEM Ed25519 válido "
+            f"(valor com {len(bruto.strip())} caracteres, marcador BEGIN "
+            f"{'presente' if tem_marcador else 'AUSENTE'}); ignorando e "
+            "usando/gerando a chave local",
             file=sys.stderr,
         )
         pem_do_ambiente = ""
+    os.environ["RTC_CHECK_ORIGEM_DA_CHAVE"] = (
+        "ambiente" if pem_do_ambiente else "disco-local"
+    )
     if pem_do_ambiente:
         diretorio.mkdir(parents=True, exist_ok=True)
         caminho.write_text(pem_do_ambiente + "\n", encoding="utf-8")
@@ -454,7 +462,16 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
             elif caminho == "/obrigado":
                 self._html(_PAGINA_OBRIGADO)
             elif caminho == "/saude":
-                self._json({"ok": True})
+                self._json(
+                    {
+                        "ok": True,
+                        # true = RTC_CHECK_CHAVE_PRIVADA_PEM válida: a chave
+                        # de emissão sobrevive a reinícios e deploys.
+                        "chave_fixada_no_ambiente": (
+                            os.environ.get("RTC_CHECK_ORIGEM_DA_CHAVE") == "ambiente"
+                        ),
+                    }
+                )
             elif caminho == "/chave-publica":
                 self._chave_publica()
             elif caminho.startswith("/comprar/"):

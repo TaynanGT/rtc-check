@@ -292,6 +292,7 @@ def test_pem_achatado_pelo_campo_de_ambiente_e_reconstruido(monkeypatch, tmp_pat
     monkeypatch.setenv("RTC_CHECK_CHAVE_PRIVADA_PEM", achatado)
     sv.garantir_chave_de_emissao(tmp_path / "dados")
     assert sv.chave_publica_do_emissor() == publica_original
+    assert os.environ["RTC_CHECK_ORIGEM_DA_CHAVE"] == "ambiente"
 
 
 def test_pem_invalido_no_ambiente_e_ignorado_com_aviso(monkeypatch, tmp_path, capsys):
@@ -299,10 +300,13 @@ def test_pem_invalido_no_ambiente_e_ignorado_com_aviso(monkeypatch, tmp_path, ca
     monkeypatch.setenv("RTC_CHECK_CHAVE_PRIVADA_PEM", "trocar-depois")
     dados = tmp_path / "dados"
     sv.garantir_chave_de_emissao(dados)
-    assert "não contém um PEM Ed25519 válido" in capsys.readouterr().err
+    aviso = capsys.readouterr().err
+    assert "não contém um PEM Ed25519 válido" in aviso
+    assert "marcador BEGIN AUSENTE" in aviso
     # Uma chave real foi gerada no lugar do placeholder.
     assert "BEGIN PRIVATE KEY" in (dados / "emissor-ed25519.pem").read_text()
     assert sv.chave_publica_do_emissor()
+    assert os.environ["RTC_CHECK_ORIGEM_DA_CHAVE"] == "disco-local"
 
 
 def test_pem_aparece_no_log_em_hospedagem_sem_disco(monkeypatch, tmp_path, capsys):
@@ -516,7 +520,9 @@ def test_pagina_de_obrigado_orienta_a_ativacao(servidor):
 
 def test_pagina_de_planos_e_saude(servidor):
     with urllib.request.urlopen(f"{servidor}/saude") as resposta:
-        assert json.loads(resposta.read().decode()) == {"ok": True}
+        saude = json.loads(resposta.read().decode())
+    assert saude["ok"] is True
+    assert saude["chave_fixada_no_ambiente"] is False
     with urllib.request.urlopen(f"{servidor}/") as resposta:
         pagina = resposta.read().decode()
     assert "/comprar/mensal" in pagina
