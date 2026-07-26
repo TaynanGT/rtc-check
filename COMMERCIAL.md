@@ -81,13 +81,15 @@ após revisão técnica, suporte com prazo e direito de redistribuir.
 
 ## Contato
 
-Abra o [formulário do plano Escritório ou licença comercial](https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md).
-Ele é público: não inclua XML, CNPJ, chave de NF-e nem outros dados confidenciais. Para uma
-conversa privada, use o e-mail exibido no perfil do mantenedor.
+Use a [captação comercial privada](https://taynangt.github.io/rtc-check/#contato) para informar
+somente e-mail corporativo, perfil e interesse. Nunca envie XML, CNPJ, chave de NF-e,
+credenciais ou dados de pagamento.
 
 O checkout com Mercado Pago está implementado e no ar
 ([docs/mercadopago.md](docs/mercadopago.md)): o servidor `rtc-check-vendas`, em
 <https://rtc-check-vendas.onrender.com>, cria o checkout hospedado (Pix, cartão ou
 boleto), valida o webhook assinado e emite a licença após o pagamento confirmado.
-`.env.example` reserva os nomes das credenciais sem comprometer dados no repositório;
-o formulário público continua disponível para quem preferir a compra assistida.
+Essa é a URL padrão da instalação; `RTC_CHECK_CHECKOUT_URL` (com
+`RTC_CHECK_CHECKOUT_ALLOWED_HOSTS`) pode apontar para outro checkout HTTPS.
+Nenhuma credencial fica no repositório, e o pacote local nunca precisa de
+credenciais de pagamento para ativar o teste.

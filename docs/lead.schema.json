@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RTC Check lead privado",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["email", "perfil", "plano"],
+  "properties": {
+    "email": {"type": "string", "format": "email", "maxLength": 254},
+    "empresa": {"type": "string", "maxLength": 80},
+    "perfil": {
+      "enum": ["Escritório contábil", "Time fiscal/financeiro", "ERP/parceiro de implantação"]
+    },
+    "plano": {"enum": ["Escritório", "Plataforma"]},
+    "novidades": {"enum": ["sim"]}
+  }
+}

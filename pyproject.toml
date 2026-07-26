@@ -1,6 +1,6 @@
 [project]
 name = "rtc-check"
-version = "0.4.0"
+version = "0.5.0"
 description = "Auditoria local de prontidão da NF-e para a Reforma Tributária (IBS/CBS)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -61,6 +61,9 @@ dev = [
     "ruff>=0.6",
     "types-defusedxml>=0.7",
 ]
+browser = [
+    "playwright>=1.54,<2",
+]
 build = [
     "pyinstaller>=6.14,<7",
 ]
@@ -82,7 +85,11 @@ include = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-q --strict-markers"
+markers = [
+    "browser: smoke tests reais da interface com Chromium",
+]
 
 [tool.ruff]
 line-length = 100

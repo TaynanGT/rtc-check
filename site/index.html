@@ -107,6 +107,9 @@ font-size:.85rem;color:var(--dim)}
 footer a{color:var(--dim)}
 ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
 .destaque{font-variant-numeric:tabular-nums;font-weight:640}
+.demo{margin:2rem 0;background:linear-gradient(135deg,#101a19,#23413c);color:#fff;border-radius:14px;padding:1.35rem;box-shadow:0 20px 45px #18181b22}.demo small,.demo p{color:#d2e4df}.demo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}.demo-card{background:#ffffff12;border:1px solid #ffffff2b;border-radius:9px;padding:.8rem}.demo-card strong{display:block;font-size:1.35rem}.regra{background:#f3faf8;border:1px solid #b7ded3;border-radius:10px;padding:1.1rem 1.25rem;margin:1.5rem 0}.regra p{margin:.35rem 0;color:#31544b}.segmentos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem;margin:1.5rem 0}.segmento{border:1px solid var(--line);border-radius:10px;padding:1.2rem}.segmento p{font-size:.9rem;color:var(--dim)}.lead{border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin:1.5rem 0;background:var(--soft)}.lead label{display:block;font-size:.88rem;font-weight:620;margin:.8rem 0 .3rem}.lead input,.lead select{width:100%;border:1px solid var(--line);border-radius:7px;padding:.65rem;background:var(--bg);font:inherit}.lead-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.consent{display:flex!important;gap:.55rem;align-items:flex-start;font-weight:400!important}.consent input{width:auto!important;margin-top:.25rem}.lead-status{font-size:.86rem;color:var(--dim);margin-top:.8rem}.privacy-note{font-size:.82rem;color:var(--dim)}.honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important}.calculator{border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin:1.5rem 0}.calculator output{display:block;font-size:1.35rem;font-weight:700;color:var(--green);margin-top:1rem}
+ .faq{border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin:1.5rem 0}.faq details{border-top:1px solid var(--line);padding:.75rem 0}.faq summary{cursor:pointer;font-weight:620}.faq details p{font-size:.9rem;color:var(--dim);margin:.5rem 0 0}
+@media(max-width:560px){.demo-grid,.segmentos,.lead-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -129,14 +132,27 @@ ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
 
   <div class="btns">
     <a class="btn" href="https://github.com/TaynanGT/rtc-check/releases/latest">Baixar para Windows</a>
+    <a class="btn sec" href="#demo">Ver demonstração</a>
     <a class="btn sec" href="#precos">Planos</a>
-    <a class="btn sec" href="#o-que-nao-e">O que ele não faz</a>
-    <a class="btn sec" href="https://rtc-check-vendas.onrender.com">Quero o plano Escritório</a>
+    <a class="btn sec" href="https://rtc-check-vendas.onrender.com">Assinar o Escritório</a>
   </div>
   <p class="nota">A varredura é gratuita para sempre e de código aberto: sem cadastro,
   sem upload, sem conta. Exportação e automação nos planos pagos, com
   <a href="#precos">14 dias de teste grátis</a>.</p>
 </header>
+
+<section class="w" id="demo" aria-labelledby="demo-title">
+  <div class="demo">
+    <small>DEMONSTRAÇÃO VISUAL · nenhum dado fiscal real</small>
+    <h2 id="demo-title">De acervo para fila de ação em minutos.</h2>
+    <p>O aplicativo local transforma ocorrências repetidas numa lista de produtos que o cadastro consegue corrigir.</p>
+    <div class="demo-grid" aria-label="Exemplo de resultado do RTC Check">
+      <div class="demo-card"><small>XMLs lidos</small><strong>4.127</strong><small>lote local</small></div>
+      <div class="demo-card"><small>Ocorrências</small><strong>8.102</strong><small>não são 8.102 tarefas</small></div>
+      <div class="demo-card"><small>SKUs a corrigir</small><strong>214</strong><small>fila exportável no teste</small></div>
+    </div>
+  </div>
+</section>
 
 <section class="w">
 <h2>Um clique no Windows — ou um comando na automação</h2>
@@ -162,6 +178,10 @@ servidor ou CI, a mesma análise continua disponível pelo terminal:</p>
 produto se corrige uma vez; o mesmo SKU quebrado aparece em milhares de notas.
 Relatório que conta ocorrência em vez de produto transforma um dia de trabalho
 numa parede intransponível.</p>
+
+<p><strong>Entrega pronta:</strong> no plano Escritório, a interface baixa um único
+ZIP com relatório HTML imprimível, fila CSV, auditoria JSON e manifesto. Os XMLs
+originais permanecem fora do pacote.</p>
 
 <blockquote>Os números acima são de um acervo de exemplo. Os seus saem da
 primeira execução, que leva alguns segundos.</blockquote>
@@ -210,6 +230,9 @@ primeira execução, que leva alguns segundos.</blockquote>
 <tr><td><code>RTC005</code></td><td>bloqueio</td>
   <td>CST proíbe <code>gIBSCBS</code>, mas o grupo foi informado</td>
   <td class="ok">gratuito</td></tr>
+<tr><td><code>RTC006</code></td><td>bloqueio</td>
+  <td><code>cClassTrib</code> inexistente ou não vigente para NF-e na tabela oficial</td>
+  <td class="ok">gratuito</td></tr>
 <tr><td><code>NCM001</code></td><td>bloqueio</td>
   <td>NCM ausente ou fora do formato de 8 dígitos</td>
   <td class="no">pago</td></tr>
@@ -234,6 +257,15 @@ layout da nota. O literal <code>SEM GTIN</code> só nasceu no 4.00: numa nota de
 2015 o campo vazio era o jeito certo de dizer que o produto não tem código de
 barras. Essa regra foi corrigida depois de rodar contra NF-e reais e ver a
 ferramenta acusar exatamente isso.</p>
+</section>
+
+<section class="w" aria-labelledby="normativa-title">
+<h2 id="normativa-title">Regra rastreável, não caixa-preta.</h2>
+<div class="regra">
+  <p><strong>Snapshot atual:</strong> NT 2025.002-RTC v1.50 · tabela cClassTrib do IT 2025.002 v1.60.</p>
+  <p>O relatório identifica a referência usada. Antes de uma emissão, confirme a nota corrigida no validador oficial.</p>
+  <p><a href="https://github.com/TaynanGT/rtc-check/blob/main/docs/normativa-rtc.md">Ver fontes, versão e processo de atualização</a></p>
+</div>
 </section>
 
 <section class="w" id="o-que-nao-e">
@@ -279,7 +311,7 @@ rtc-check ./pasta-com-xmls</code></pre>
 
 <p class="nota">Em produção, fixe uma versão em vez de acompanhar a
 <code>main</code>: acrescente a tag da release à URL, como em
-<code>...rtc-check.git@v0.1.1</code>. As tags estão em
+<code>...rtc-check.git@v0.4.1</code>. As tags estão em
 <a href="https://github.com/TaynanGT/rtc-check/releases">releases</a>.</p>
 
 <p>O agrupamento interno usa documento do emitente + SKU. Códigos iguais de
@@ -323,14 +355,22 @@ dias, sem cadastro e sem cartão:</p>
 <tbody>
 <tr><td>Tempo total</td><td class="destaque">1,43 s</td></tr>
 <tr><td>Pico de memória</td><td class="destaque">6 MB</td></tr>
-<tr><td>Testes automatizados</td><td class="destaque">151 passando</td></tr>
-<tr><td>Cobertura</td><td class="destaque">94%</td></tr>
+<tr><td>Qualidade</td><td class="destaque">CI em Windows, macOS e Linux</td></tr>
+<tr><td>Compatibilidade</td><td class="destaque">Python 3.11 a 3.14</td></tr>
 </tbody>
 </table>
 
 <p class="nota">Há um teste de volume no repositório que trava o build se o tempo
 ou a memória saírem da ordem de grandeza. Você pode reproduzir com
 <code>pytest -s</code>.</p>
+</section>
+
+<section class="w" aria-labelledby="para-quem-title">
+<h2 id="para-quem-title">Escolha o fluxo que você precisa vender ou operar.</h2>
+<div class="segmentos">
+  <article class="segmento"><h3>Escritórios e times fiscais</h3><p>Varra vários emitentes, entregue a fila em CSV/PDF e compare a evolução depois da correção do cadastro.</p><a href="#contato">Quero avaliar o plano Escritório</a></article>
+  <article class="segmento"><h3>ERP e parceiros de implantação</h3><p>Use o CLI no pipeline, ofereça auditoria local ao cliente e avalie a licença Plataforma para redistribuição.</p><a href="#contato">Quero falar sobre Plataforma</a></article>
+</div>
 </section>
 
 <section class="w" id="precos">
@@ -355,7 +395,7 @@ espera.</p>
   <td class="ok">completa</td></tr>
 <tr><td>Regras de cadastro (<code>NCM001</code>, <code>GTIN001</code>)</td>
   <td class="no">não</td><td class="ok">sim</td></tr>
-<tr><td>Saída em JSON, CSV e HTML</td><td class="no">não</td><td class="ok">sim</td></tr>
+<tr><td>Saída em JSON, CSV, HTML e pacote ZIP</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Gravar relatório em arquivo</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Travar o build no CI</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Detalhamento por CNPJ</td><td class="no">não</td><td class="ok">sim</td></tr>
@@ -389,12 +429,62 @@ e dá para removê-la. Isso é conhecido e não vai mudar: fechar o código cust
 única coisa que faz alguém apontar uma pasta de notas fiscais para este programa, que
 é conseguir ler o que ele faz. A assinatura não vende acesso ao binário.</blockquote>
 
-<p><a class="btn" href="https://rtc-check-vendas.onrender.com">Assinar com Mercado Pago</a>
-<a class="btn sec" href="https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md">Prefiro compra assistida</a></p>
+<p><a class="btn" href="https://rtc-check-vendas.onrender.com">Assinar com Mercado Pago</a></p>
 <p class="nota">O pagamento é processado pelo Mercado Pago (Pix, cartão ou boleto) e a
-chave de licença chega por e-mail. A página de compra pode levar até um minuto para
-abrir na primeira visita. No formulário público de compra assistida, não inclua CNPJ,
-XML, chave fiscal ou outros dados confidenciais.</p>
+chave de licença chega por e-mail minutos após a aprovação. A página de compra pode
+levar até um minuto para abrir na primeira visita.</p>
+
+<div class="calculator" id="calculadora">
+  <h3>Estime o tamanho da triagem manual.</h3>
+  <p class="privacy-note">Estimativa educativa feita no navegador; nenhum valor é enviado.</p>
+  <div class="lead-grid">
+    <div><label for="calc-xml">XMLs por mês</label>
+      <input id="calc-xml" type="number" min="1" max="1000000" value="4000"></div>
+    <div><label for="calc-segundos">Segundos de conferência por XML</label>
+      <input id="calc-segundos" type="number" min="1" max="3600" value="30"></div>
+  </div>
+  <output id="calc-output">≈ 33,3 horas de conferência manual por lote.</output>
+  <p class="privacy-note">Não é promessa de economia: o ganho real depende do acervo, das regras e do processo da equipe.</p>
+</div>
+
+<div class="faq" id="faq">
+  <h3>Perguntas frequentes</h3>
+  <details><summary>O RTC Check garante conformidade?</summary>
+    <p>Não. Ele faz triagem dentro da cobertura declarada e encaminha a confirmação para o validador oficial.</p>
+  </details>
+  <details><summary>O que é a rejeição 1115?</summary>
+    <p>É o risco associado à ausência do grupo IBS/CBS em item no escopo monitorado pela UB12-10.</p>
+  </details>
+  <details><summary>Meus XMLs vão para a Internet?</summary>
+    <p>Não no Desktop: o servidor escuta em 127.0.0.1 e os temporários são apagados ao terminar.</p>
+  </details>
+  <p class="privacy-note"><a href="https://github.com/TaynanGT/rtc-check/blob/main/docs/faq-rtc.md">Ver FAQ operacional completa ↗</a></p>
+</div>
+
+<div class="lead" id="contato">
+  <h3>Receba o próximo passo comercial de forma privada.</h3>
+  <p class="privacy-note">Informe somente dados de contato. Nunca envie XML, CNPJ, chave de NF-e ou credenciais.</p>
+  <form id="lead-form">
+    <div class="honeypot" aria-hidden="true">
+      <label for="lead-site">Não preencha este campo</label>
+      <input id="lead-site" name="site" tabindex="-1" autocomplete="off">
+    </div>
+    <div class="lead-grid">
+      <div><label for="lead-email">E-mail corporativo</label><input id="lead-email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
+      <div><label for="lead-empresa">Empresa (opcional)</label><input id="lead-empresa" name="empresa" autocomplete="organization" maxlength="80"></div>
+    </div>
+    <div class="lead-grid">
+      <div><label for="lead-perfil">Seu perfil</label><select id="lead-perfil" name="perfil" required><option value="">Selecione</option><option>Escritório contábil</option><option>Time fiscal/financeiro</option><option>ERP/parceiro de implantação</option></select></div>
+      <div><label for="lead-plano">Interesse</label><select id="lead-plano" name="plano" required><option value="">Selecione</option><option>Escritório</option><option>Plataforma</option></select></div>
+    </div>
+    <label class="consent"><input id="lead-consent" type="checkbox" required> Concordo que estes dados mínimos sejam usados somente para responder a este pedido comercial.</label>
+    <label class="consent"><input id="lead-news" name="novidades" type="checkbox" value="sim">
+      Quero receber, separadamente, atualizações sobre mudanças de NT e novas versões.</label>
+    <p><button class="btn" type="submit">Solicitar contato privado</button></p>
+    <p class="lead-status" id="lead-status" role="status" aria-live="polite"></p>
+  </form>
+</div>
+<p class="nota">O recebimento é configurável e não usa issue pública. Consulte o <a href="https://github.com/TaynanGT/rtc-check/blob/main/docs/captacao-privada.md">guia de captação privada</a> antes de ativar um endpoint.</p>
 </section>
 
 <footer class="w">
@@ -403,11 +493,16 @@ XML, chave fiscal ou outros dados confidenciais.</p>
   <p>Ferramenta independente, sem vínculo com a SEFAZ, a Receita Federal ou
   qualquer órgão público. Não substitui orientação do seu contador.</p>
   <p><a href="https://github.com/TaynanGT/rtc-check">Código no GitHub</a> ·
+  <a href="privacy.html">Privacidade</a> ·
+  <a href="terms.html">Termos</a> ·
+  <a href="status.html">Status normativo</a> ·
   <a href="https://github.com/TaynanGT/rtc-check/blob/main/docs/planos.md">Planos e
   licença</a> ·
+  <a href="https://github.com/TaynanGT/rtc-check/blob/main/docs/webhook-e-cupons.md">Contratos de integração</a> ·
   <a href="https://github.com/TaynanGT/rtc-check/blob/main/README.en.md">English</a></p>
 </footer>
 
+<script src="lead-config.js"></script>
 <script>
 (function () {
   var corte = new Date(2026, 7, 3); // 3 de agosto de 2026, hora local
@@ -427,6 +522,46 @@ XML, chave fiscal ou outros dados confidenciais.</p>
     el.textContent = 'em vigor';
     el.style.fontSize = '1.4rem';
   }
+})();
+</script>
+<script>
+document.getElementById('lead-form').addEventListener('submit', async function (event) {
+  event.preventDefault();
+  var status = document.getElementById('lead-status');
+  var dados = Object.fromEntries(new FormData(event.currentTarget).entries());
+  if (dados.site) {
+    status.textContent = 'Pedido recusado.';
+    return;
+  }
+  var endpoint = window.RTC_CHECK_LEADS_ENDPOINT || '';
+  if (!endpoint) {
+    status.innerHTML = 'A captação privada ainda não está ativa. <a href="https://github.com/TaynanGT/rtc-check/releases/latest">Baixe o aplicativo</a> e use o teste local sem cadastro.';
+    return;
+  }
+  delete dados.site;
+  status.textContent = 'Enviando somente seus dados de contato…';
+  try {
+    var resposta = await fetch(endpoint, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dados)});
+    if (!resposta.ok) throw new Error('falha no recebimento');
+    event.currentTarget.reset();
+    status.textContent = 'Recebemos seu pedido. O retorno será feito pelo e-mail informado.';
+  } catch (_) {
+    status.textContent = 'Não foi possível enviar agora. Tente novamente mais tarde.';
+  }
+});
+</script>
+<script>
+(function () {
+  var xml = document.getElementById('calc-xml');
+  var segundos = document.getElementById('calc-segundos');
+  var output = document.getElementById('calc-output');
+  function calcular() {
+    var horas = Math.max(0, Number(xml.value) * Number(segundos.value) / 3600);
+    output.textContent = '≈ ' + horas.toLocaleString('pt-BR', {maximumFractionDigits: 1}) +
+      ' horas de conferência manual por lote.';
+  }
+  xml.addEventListener('input', calcular);
+  segundos.addEventListener('input', calcular);
 })();
 </script>
 

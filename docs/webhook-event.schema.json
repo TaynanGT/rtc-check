@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RTC Check private checkout event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "occurred_at", "order_id", "plan", "amount_brl"],
+  "properties": {
+    "event_id": {"type": "string", "minLength": 8, "maxLength": 120},
+    "event_type": {"enum": ["checkout_iniciado", "pagamento_confirmado", "licenca_emitida", "pagamento_cancelado", "reembolso_confirmado"]},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "order_id": {"type": "string", "minLength": 1, "maxLength": 120},
+    "plan": {"enum": ["Escritório", "Plataforma"]},
+    "amount_brl": {"type": "number", "minimum": 0},
+    "coupon_code": {"type": "string", "maxLength": 64},
+    "license_id": {"type": "string", "maxLength": 120}
+  }
+}

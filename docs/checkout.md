@@ -8,9 +8,9 @@ RTC_CHECK_PAYMENT_PROVIDER=
 RTC_CHECK_CHECKOUT_URL=
 ```
 
-Sem configuração, o botão **Comprar licença** abre o formulário comercial do
-GitHub e informa que a compra é assistida. Com uma URL HTTPS, a interface mostra
-o nome do provedor e abre seu checkout hospedado.
+Sem configuração, o botão **Comprar licença** abre a captação privada da landing
+e informa que a compra é assistida. Com uma URL HTTPS e um host permitido, a
+interface mostra o nome do provedor e abre seu checkout hospedado.
 
 ## Contrato do provedor
 
@@ -36,5 +36,13 @@ Estados mínimos: `checkout_iniciado`, `pagamento_confirmado`,
 
 O checkout automático oficial está no ar em
 <https://rtc-check-vendas.onrender.com>, que é a URL padrão embutida no
-aplicativo quando o ambiente não define outra. A compra assistida pelo
-formulário continua existindo como alternativa.
+aplicativo quando o ambiente não define outra. A captação assistida continua
+existindo como alternativa.
+
+Os contratos de webhook, cupons, retries, idempotência e assinatura estão em
+[`webhook-e-cupons.md`](webhook-e-cupons.md) e [`webhook-event.schema.json`](webhook-event.schema.json).
+
+Para apontar outra URL de checkout, defina também
+`RTC_CHECK_CHECKOUT_ALLOWED_HOSTS` com uma lista separada por vírgulas dos
+hosts exatos autorizados. Uma URL cujo host não esteja nessa lista cai com
+segurança para o checkout oficial.

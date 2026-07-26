@@ -25,6 +25,8 @@ jobs:
           uv run ruff check .
           uv run mypy
           uv run pytest -q
+          uvx --from bandit bandit -q -r src
+          uvx pip-audit --strict
 
       - name: Construir wheel e sdist
         run: uv build
@@ -82,12 +84,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="${GITHUB_REF_NAME}"
+          find dist dist-windows -type f -maxdepth 2 -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
           if gh release view "$tag" > /dev/null 2>&1; then
             echo "release $tag ja existe, anexando os pacotes"
-            gh release upload "$tag" dist/* dist-windows/* --clobber
+            gh release upload "$tag" dist/* dist-windows/* SHA256SUMS.txt --clobber
           else
             echo "criando release $tag"
-            gh release create "$tag" dist/* dist-windows/* \
+            gh release create "$tag" dist/* dist-windows/* SHA256SUMS.txt \
               --title "RTC Check ${tag#v}" \
               --notes-from-tag
           fi

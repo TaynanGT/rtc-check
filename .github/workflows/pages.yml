@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "scripts/validate_site.py"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -31,7 +32,7 @@ jobs:
         run: |
           test -f site/index.html || { echo "site/index.html sumiu"; exit 1; }
           grep -q "<title>" site/index.html || { echo "sem <title>"; exit 1; }
-          echo "página ok"
+          python scripts/validate_site.py
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
 

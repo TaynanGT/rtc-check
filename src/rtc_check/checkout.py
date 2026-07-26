@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from urllib.parse import urlparse
 
 URL_COMPRA_ASSISTIDA = (
-    "https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md"
+    "https://taynangt.github.io/rtc-check/#contato"
 )
 # Checkout oficial: o servidor de vendas do projeto, com pagamento pelo
 # Mercado Pago. O ambiente continua podendo apontar para outra URL HTTPS.
@@ -32,7 +32,13 @@ def carregar() -> Checkout:
     provedor = os.environ.get("RTC_CHECK_PAYMENT_PROVIDER", "").strip()[:40]
     url = os.environ.get("RTC_CHECK_CHECKOUT_URL", "").strip()
     parsed = urlparse(url)
-    if parsed.scheme == "https" and parsed.netloc:
+    permitidos = {
+        host.strip().lower()
+        for host in os.environ.get("RTC_CHECK_CHECKOUT_ALLOWED_HOSTS", "").split(",")
+        if host.strip()
+    }
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme == "https" and host and host in permitidos:
         return Checkout(
             provedor=provedor or "checkout externo",
             url=url,
