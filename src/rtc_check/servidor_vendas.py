@@ -99,6 +99,23 @@ def _diretorio_de_dados() -> Path:
     return Path(candidato)
 
 
+def _normalizar_pem(texto: str) -> str:
+    """Reconstrói o PEM quando o campo de ambiente achatou as quebras de linha.
+
+    Campos de variável de ambiente costumam colar o bloco numa linha só, e o
+    formato PEM exige os marcadores em linhas próprias. O corpo base64 é
+    extraído entre os marcadores e o bloco é remontado.
+    """
+    inicio = "-----BEGIN PRIVATE KEY-----"
+    fim = "-----END PRIVATE KEY-----"
+    aparado = texto.strip()
+    if inicio not in aparado or fim not in aparado:
+        return aparado
+    corpo = aparado.split(inicio, 1)[1].split(fim, 1)[0]
+    corpo_limpo = "".join(corpo.split())
+    return f"{inicio}\n{corpo_limpo}\n{fim}\n"
+
+
 def _pem_ed25519_valido(texto: str) -> bool:
     try:
         chave = serialization.load_pem_private_key(texto.encode(), password=None)
@@ -120,7 +137,7 @@ def garantir_chave_de_emissao(diretorio: Path) -> None:
     if os.environ.get("RTC_CHECK_CHAVE_PRIVADA"):
         return
     caminho = diretorio / "emissor-ed25519.pem"
-    pem_do_ambiente = os.environ.get("RTC_CHECK_CHAVE_PRIVADA_PEM", "").strip()
+    pem_do_ambiente = _normalizar_pem(os.environ.get("RTC_CHECK_CHAVE_PRIVADA_PEM", ""))
     if pem_do_ambiente and not _pem_ed25519_valido(pem_do_ambiente):
         # Placeholder ou valor truncado não pode virar a chave do emissor.
         print(

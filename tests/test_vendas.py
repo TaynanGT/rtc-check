@@ -282,6 +282,18 @@ def test_chave_privada_do_ambiente_e_materializada_no_disco(monkeypatch, tmp_pat
     assert ed.validar_chave(chave).titular == "Ambiente"
 
 
+def test_pem_achatado_pelo_campo_de_ambiente_e_reconstruido(monkeypatch, tmp_path):
+    pem = (tmp_path / "emissor-ed25519.pem").read_text(encoding="utf-8")
+    achatado = " ".join(pem.split())
+    assert "\n" not in achatado
+    publica_original = sv.chave_publica_do_emissor()
+
+    monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
+    monkeypatch.setenv("RTC_CHECK_CHAVE_PRIVADA_PEM", achatado)
+    sv.garantir_chave_de_emissao(tmp_path / "dados")
+    assert sv.chave_publica_do_emissor() == publica_original
+
+
 def test_pem_invalido_no_ambiente_e_ignorado_com_aviso(monkeypatch, tmp_path, capsys):
     monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
     monkeypatch.setenv("RTC_CHECK_CHAVE_PRIVADA_PEM", "trocar-depois")
