@@ -1,6 +1,6 @@
 [project]
 name = "rtc-check"
-version = "0.2.1"
+version = "0.2.2"
 description = "Auditoria local de prontidão da NF-e para a Reforma Tributária (IBS/CBS)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -35,7 +35,10 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: XML",
     "Topic :: Utilities",
 ]
-dependencies = ["cryptography>=46,<47"]
+dependencies = [
+    "cryptography>=48.0.1,<49",
+    "defusedxml>=0.7,<1",
+]
 
 [project.urls]
 Homepage = "https://taynangt.github.io/rtc-check/"
@@ -49,7 +52,13 @@ Planos = "https://taynangt.github.io/rtc-check/#precos"
 rtc-check = "rtc_check.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "mypy>=1.11"]
+dev = [
+    "mypy>=1.11",
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.6",
+    "types-defusedxml>=0.7",
+]
 
 [build-system]
 requires = ["hatchling"]
