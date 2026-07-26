@@ -15,10 +15,14 @@ Versionamento semântico.
   reembolsos ficam auditáveis em `vendas.jsonl`.
 - Guia de ativação para o titular da conta em `docs/mercadopago.md`; variáveis
   correspondentes em `.env.example`.
-- Deploy de um clique do servidor de vendas via blueprint `render.yaml`: URL
-  pública detectada automaticamente (`RENDER_EXTERNAL_URL`), chave de emissão
-  Ed25519 gerada sozinha no primeiro boot no disco persistente e anunciada em
-  `GET /chave-publica`, com roteiro sem terminal na documentação.
+- Deploy de um clique do servidor de vendas via blueprint `render.yaml` (plano
+  gratuito): URL pública detectada automaticamente (`RENDER_EXTERNAL_URL`),
+  chave de emissão Ed25519 gerada sozinha no primeiro boot (ou fornecida por
+  `RTC_CHECK_CHAVE_PRIVADA_PEM`) e anunciada em `GET /chave-publica`, com
+  roteiro sem terminal na documentação.
+- Checkout oficial ativado: o aplicativo e o site apontam por padrão para
+  https://rtc-check-vendas.onrender.com, e `CHAVE_PUBLICA_PADRAO` passa a ser a
+  chave pública do emissor desse servidor.
 
 ## [0.3.1] / 2026-07-26
 

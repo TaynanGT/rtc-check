@@ -13,6 +13,10 @@ from urllib.parse import urlparse
 URL_COMPRA_ASSISTIDA = (
     "https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md"
 )
+# Checkout oficial: o servidor de vendas do projeto, com pagamento pelo
+# Mercado Pago. O ambiente continua podendo apontar para outra URL HTTPS.
+URL_CHECKOUT_PADRAO = "https://rtc-check-vendas.onrender.com"
+PROVEDOR_PADRAO = "Mercado Pago"
 PRECO_MENSAL_BR = "R$ 149/mês"
 PRECO_ANUAL_BR = "R$ 1.490/ano"
 
@@ -35,7 +39,7 @@ def carregar() -> Checkout:
             automatico=True,
         )
     return Checkout(
-        provedor="compra assistida",
-        url=URL_COMPRA_ASSISTIDA,
-        automatico=False,
+        provedor=provedor or PROVEDOR_PADRAO,
+        url=URL_CHECKOUT_PADRAO,
+        automatico=True,
     )

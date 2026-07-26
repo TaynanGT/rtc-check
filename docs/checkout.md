@@ -34,7 +34,7 @@ O backend do vendedor deve:
 Estados mínimos: `checkout_iniciado`, `pagamento_confirmado`,
 `licenca_emitida`, `pagamento_cancelado` e `reembolso_confirmado`.
 
-O checkout automático não fica ativo enquanto o titular não criar e verificar
-a conta no Mercado Pago, aceitar seus termos e configurar as credenciais no
-servidor de vendas. Essa é uma ação externa e irreversível que não deve ser
-simulada no código; até lá, a compra segue assistida pelo formulário.
+O checkout automático oficial está no ar em
+<https://rtc-check-vendas.onrender.com>, que é a URL padrão embutida no
+aplicativo quando o ambiente não define outra. A compra assistida pelo
+formulário continua existindo como alternativa.
