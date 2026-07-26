@@ -69,22 +69,33 @@ def _diretorio_de_dados() -> Path:
     """Resolve RTC_CHECK_VENDAS_DIR com validação do caminho.
 
     Caminho relativo fica confinado ao diretório de trabalho do serviço (um
-    valor com ``..`` que escape dele é recusado). Caminho absoluto é decisão
-    explícita do operador — ex.: o disco persistente do Render — e é apenas
-    normalizado.
+    valor com ``..`` que escape dele é recusado). Caminho absoluto — ex.: o
+    disco persistente do Render — precisa morar numa raiz de dados usual, o
+    que barra typos e valores hostis apontando para áreas do sistema.
     """
     bruto = os.environ.get("RTC_CHECK_VENDAS_DIR", "vendas").strip() or "vendas"
     if os.path.isabs(bruto):
         candidato = os.path.normpath(bruto)
-        if not candidato.startswith(os.path.dirname(candidato)):
-            raise SystemExit(f"RTC_CHECK_VENDAS_DIR inválido: {bruto!r}")
-    else:
-        raiz = os.getcwd()
-        candidato = os.path.normpath(os.path.join(raiz, bruto))
-        if not candidato.startswith(raiz + os.sep):
-            raise SystemExit(
-                f"RTC_CHECK_VENDAS_DIR relativo precisa ficar dentro de {raiz}: {bruto!r}"
-            )
+        if candidato.startswith("/var/"):
+            return Path(candidato)
+        if candidato.startswith("/srv/"):
+            return Path(candidato)
+        if candidato.startswith("/opt/"):
+            return Path(candidato)
+        if candidato.startswith("/data/"):
+            return Path(candidato)
+        if candidato.startswith("/home/"):
+            return Path(candidato)
+        raise SystemExit(
+            "RTC_CHECK_VENDAS_DIR absoluto precisa ficar em /var, /srv, /opt, "
+            f"/data ou /home: {bruto!r}"
+        )
+    raiz = os.getcwd()
+    candidato = os.path.normpath(os.path.join(raiz, bruto))
+    if not candidato.startswith(raiz + os.sep):
+        raise SystemExit(
+            f"RTC_CHECK_VENDAS_DIR relativo precisa ficar dentro de {raiz}: {bruto!r}"
+        )
     return Path(candidato)
 
 

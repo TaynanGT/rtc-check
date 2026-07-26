@@ -236,17 +236,20 @@ def test_carregar_config_exige_url_segredo_token_e_porta_smtp(monkeypatch, tmp_p
     with pytest.raises(SystemExit, match="SMTP_PORT"):
         sv.carregar_config()
     monkeypatch.setenv("SMTP_PORT", "465")
-    monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", str(tmp_path / "vendas"))
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "vendas-do-teste")
     config = sv.carregar_config()
     assert config.url_publica == "https://vendas.example"
     assert config.segredo_webhook == SEGREDO
+    assert config.diretorio == tmp_path / "vendas-do-teste"
 
     monkeypatch.delenv("RTC_CHECK_VENDAS_URL", raising=False)
     monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://rtc.onrender.com/")
     assert sv.carregar_config().url_publica == "https://rtc.onrender.com"
 
 
-def test_diretorio_de_dados_confina_caminho_relativo(monkeypatch, tmp_path):
+def test_diretorio_de_dados_valida_relativo_e_absoluto(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "../fora-do-projeto")
     with pytest.raises(SystemExit, match="RTC_CHECK_VENDAS_DIR"):
         sv._diretorio_de_dados()
@@ -254,8 +257,13 @@ def test_diretorio_de_dados_confina_caminho_relativo(monkeypatch, tmp_path):
     monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "vendas/sub/../dados")
     assert sv._diretorio_de_dados() == Path(os.getcwd()) / "vendas" / "dados"
 
-    monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", str(tmp_path / "dados"))
-    assert sv._diretorio_de_dados() == tmp_path / "dados"
+    if os.name == "posix":
+        monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "/var/dados-rtc-check")
+        assert sv._diretorio_de_dados() == Path("/var/dados-rtc-check")
+
+    monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "/etc/area-do-sistema")
+    with pytest.raises(SystemExit, match="absoluto"):
+        sv._diretorio_de_dados()
 
 
 def test_chave_de_emissao_e_gerada_uma_vez_e_reaproveitada(monkeypatch, tmp_path):
