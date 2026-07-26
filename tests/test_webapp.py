@@ -318,7 +318,10 @@ def test_http_upload_real_exige_novo_lote_quando_trial_muda_regras(app_local):
     )
     assert status == 202
     andamento = json.loads(body)
-    assert andamento["etapa"] in {"preparando", "analisando"}
+    # Em runners mais rápidos o worker pode já ter chegado a finalizando antes
+    # de a resposta 202 ser lida; o contrato é aceitação assíncrona, não uma
+    # garantia sobre qual etapa intermediária vence a corrida.
+    assert andamento["etapa"] in {"preparando", "analisando", "finalizando"}
     assert andamento["id"]
     final = _aguardar_analise(base, andamento["id"])
     resultado = final["resultado"]
