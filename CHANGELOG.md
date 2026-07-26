@@ -3,6 +3,43 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.5.0] / 2026-07-26
+
+Da resposta ao recebimento: esta versão liga o checkout de verdade. Assinar o
+plano Escritório agora é um clique, com Pix, cartão ou boleto pelo Mercado
+Pago, e a licença chega por e-mail minutos após a aprovação.
+
+### Adicionado
+- Integração de pagamentos com Mercado Pago: cliente mínimo da API
+  (`rtc_check/mercadopago.py`) e servidor de vendas `rtc-check-vendas`
+  (`rtc_check/servidor_vendas.py`), que cria o Checkout Pro dos planos mensal e
+  anual, valida a assinatura HMAC do webhook, reconsulta o pagamento na API,
+  confere valor/moeda/status com idempotência por pagamento, emite a licença
+  Ed25519 e envia a chave por e-mail. Vendas, recusas, cancelamentos e
+  reembolsos ficam auditáveis em `vendas.jsonl`.
+- Guia de ativação para o titular da conta em `docs/mercadopago.md`; variáveis
+  correspondentes em `.env.example`.
+- Deploy de um clique do servidor de vendas via blueprint `render.yaml` (plano
+  gratuito): URL pública detectada automaticamente (`RENDER_EXTERNAL_URL`),
+  chave de emissão Ed25519 gerada sozinha no primeiro boot (ou fornecida por
+  `RTC_CHECK_CHAVE_PRIVADA_PEM`) e anunciada em `GET /chave-publica`, com
+  roteiro sem terminal na documentação.
+- Checkout oficial ativado: o aplicativo e o site apontam por padrão para
+  https://rtc-check-vendas.onrender.com, e `CHAVE_PUBLICA_PADRAO` passa a ser a
+  chave pública do emissor desse servidor.
+- Endurecimento do servidor de vendas: pagamento de ambiente de teste
+  (`live_mode` falso) é recusado, limite de criação de checkout por IP,
+  cabeçalhos de segurança (CSP, X-Frame-Options) nas respostas, suporte a
+  HEAD para monitores e log auditável por webhook sem dados pessoais.
+- E-mail da chave informa a validade da licença e o id do pagamento para
+  reconciliação; página de retorno diferencia pagamento aprovado de boleto
+  aguardando compensação.
+
+### Corrigido
+- Reembolso, cancelamento ou chargeback notificado depois da emissão da
+  licença era descartado como duplicado e não ficava registrado; a
+  idempotência agora é por (pagamento, evento).
+
 ## [0.4.1] / 2026-07-26
 
 ### Adicionado

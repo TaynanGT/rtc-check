@@ -229,7 +229,7 @@ def test_http_entrega_interface_status_e_seguranca(app_local):
     assert not dados["em_teste"]
     assert not dados["licenciado"]
     assert dados["checkout"]["preco_mensal"] == "R$ 149/mês"
-    assert dados["checkout"]["url"].endswith("/#contato")
+    assert dados["checkout"]["url"] == "https://rtc-check-vendas.onrender.com"
     assert len(dados["catalogo_regras"]) == 8
     assert dados["cobertura"]["documentos"] == ["NF-e modelo 55"]
     assert dados["idade_snapshot_dias"] >= 0

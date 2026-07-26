@@ -1,0 +1,47 @@
+# Deploy de um clique do servidor de vendas (rtc-check-vendas) no Render,
+# no plano GRATUITO (custo zero).
+# Em https://dashboard.render.com: New → Blueprint → aponte este repositório.
+# Depois preencha PAYMENT_API_KEY e PAYMENT_WEBHOOK_SECRET no painel do serviço
+# (sync: false impede que esses segredos morem neste arquivo).
+#
+# O plano gratuito não tem disco persistente e hiberna sem tráfego (a primeira
+# visita pode levar ~1 minuto para acordar; o Mercado Pago reenvia webhooks).
+# Por isso: no primeiro boot o servidor mostra o PEM da chave de emissão no
+# log privado — copie-o para RTC_CHECK_CHAVE_PRIVADA_PEM para a chave
+# sobreviver a reinícios — e cada venda manda cópia oculta ao e-mail do
+# vendedor quando o SMTP está configurado.
+services:
+  - type: web
+    name: rtc-check-vendas
+    runtime: python
+    plan: free
+    buildCommand: pip install .
+    startCommand: rtc-check-vendas
+    healthCheckPath: /saude
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: PAYMENT_PROVIDER
+        value: mercadopago
+      # Access token de produção do Mercado Pago (APP_USR-...).
+      - key: PAYMENT_API_KEY
+        sync: false
+      # Assinatura secreta mostrada no painel de Webhooks do Mercado Pago.
+      - key: PAYMENT_WEBHOOK_SECRET
+        sync: false
+      # PEM da chave de emissão: copie do log do primeiro boot (obrigatório
+      # no plano gratuito para a chave sobreviver a reinícios).
+      - key: RTC_CHECK_CHAVE_PRIVADA_PEM
+        sync: false
+      # A URL pública vem de RENDER_EXTERNAL_URL automaticamente. SMTP é
+      # muito recomendado no plano gratuito: o e-mail (com cópia oculta ao
+      # vendedor) é o registro durável de cada chave vendida.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false

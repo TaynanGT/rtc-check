@@ -85,10 +85,11 @@ Use a [captação comercial privada](https://taynangt.github.io/rtc-check/#conta
 somente e-mail corporativo, perfil e interesse. Nunca envie XML, CNPJ, chave de NF-e,
 credenciais ou dados de pagamento.
 
-O checkout é modular. Quando `RTC_CHECK_PAYMENT_PROVIDER` e
-`RTC_CHECK_CHECKOUT_URL` estão configurados com uma URL HTTPS, a instalação
-mostra o checkout automático; sem essas variáveis, o produto usa a captação
-assistida privada como fallback. A conta do provedor e a verificação final
-continuam sendo responsabilidade do titular, e nenhuma credencial fica no
-repositório. O pacote local nunca precisa de credenciais de pagamento para
-ativar o teste.
+O checkout com Mercado Pago está implementado e no ar
+([docs/mercadopago.md](docs/mercadopago.md)): o servidor `rtc-check-vendas`, em
+<https://rtc-check-vendas.onrender.com>, cria o checkout hospedado (Pix, cartão ou
+boleto), valida o webhook assinado e emite a licença após o pagamento confirmado.
+Essa é a URL padrão da instalação; `RTC_CHECK_CHECKOUT_URL` (com
+`RTC_CHECK_CHECKOUT_ALLOWED_HOSTS`) pode apontar para outro checkout HTTPS.
+Nenhuma credencial fica no repositório, e o pacote local nunca precisa de
+credenciais de pagamento para ativar o teste.

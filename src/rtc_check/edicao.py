@@ -37,9 +37,10 @@ PREFIXO_CHAVE = "RTC2"
 DIAS_DE_TESTE = 14
 URL_PLANOS = "https://taynangt.github.io/rtc-check/#precos"
 
-# Chave pública Ed25519 do emissor oficial. Ela pode estar no programa: só a
-# chave privada, mantida fora do repositório, consegue emitir uma licença.
-CHAVE_PUBLICA_PADRAO = "_N26nweHMOt1wkfAMGO_mZmPnVqB0IuqfnA7TOVhRpY"
+# Chave pública Ed25519 do emissor oficial (o servidor de vendas em
+# https://rtc-check-vendas.onrender.com/chave-publica). Ela pode estar no
+# programa: só a chave privada, mantida fora do repositório, emite licenças.
+CHAVE_PUBLICA_PADRAO = "4cbmXWpYzkAeQDfhM4u-iBl_WOJuhXFfd6LlTcqJanU"
 
 
 class Plano(StrEnum):

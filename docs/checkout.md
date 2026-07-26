@@ -14,7 +14,14 @@ interface mostra o nome do provedor e abre seu checkout hospedado.
 
 ## Contrato do provedor
 
-O backend privado do vendedor, fora deste repositório público, deve:
+O contrato abaixo está implementado para o Mercado Pago em
+`rtc_check/servidor_vendas.py` (comando `rtc-check-vendas`), com o cliente da
+API em `rtc_check/mercadopago.py`. O código é aberto; os segredos (access
+token, segredo do webhook, chave privada Ed25519, SMTP) vivem só no ambiente
+do servidor do vendedor. O passo a passo de ativação está em
+[mercadopago.md](mercadopago.md).
+
+O backend do vendedor deve:
 
 1. criar checkout para o plano mensal ou anual;
 2. receber webhook assinado pelo provedor;
@@ -27,13 +34,15 @@ O backend privado do vendedor, fora deste repositório público, deve:
 Estados mínimos: `checkout_iniciado`, `pagamento_confirmado`,
 `licenca_emitida`, `pagamento_cancelado` e `reembolso_confirmado`.
 
-O checkout automático não está ativo enquanto o titular não escolher o provedor,
-verificar a conta e aceitar seus termos. Essa é uma ação externa e irreversível
-que não deve ser simulada no código.
+O checkout automático oficial está no ar em
+<https://rtc-check-vendas.onrender.com>, que é a URL padrão embutida no
+aplicativo quando o ambiente não define outra. A captação assistida continua
+existindo como alternativa.
 
 Os contratos de webhook, cupons, retries, idempotência e assinatura estão em
 [`webhook-e-cupons.md`](webhook-e-cupons.md) e [`webhook-event.schema.json`](webhook-event.schema.json).
 
-Defina também `RTC_CHECK_CHECKOUT_ALLOWED_HOSTS` com uma lista separada por
-vírgulas dos hosts exatos autorizados. Uma URL HTTPS cujo host não esteja nessa
-lista cai com segurança para a compra assistida.
+Para apontar outra URL de checkout, defina também
+`RTC_CHECK_CHECKOUT_ALLOWED_HOSTS` com uma lista separada por vírgulas dos
+hosts exatos autorizados. Uma URL cujo host não esteja nessa lista cai com
+segurança para o checkout oficial.

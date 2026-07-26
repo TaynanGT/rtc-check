@@ -10,6 +10,7 @@ def config_isolada(tmp_path, monkeypatch):
     """Nenhum teste pode ver, gravar ou gastar a licença real da máquina."""
     monkeypatch.setenv("RTC_CHECK_HOME", str(tmp_path / "config"))
     monkeypatch.delenv("RTC_CHECK_LICENCA", raising=False)
+    monkeypatch.delenv("RTC_CHECK_ORIGEM_DA_CHAVE", raising=False)
     privada = Ed25519PrivateKey.generate()
     caminho = tmp_path / "emissor-ed25519.pem"
     caminho.write_bytes(
