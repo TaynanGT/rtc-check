@@ -63,7 +63,7 @@ def _achado(
     )
 
 
-# A edição em uso decide quais regras rodam. As regras RTC001-RTC006 tratam o
+# A edição em uso decide quais regras rodam. As regras RTC001-RTC007 tratam o
 # corte da RTC e ficam gratuitas; NCM001 e GTIN001 são higiene de cadastro.
 TODAS_AS_REGRAS = frozenset(
     {
@@ -73,6 +73,7 @@ TODAS_AS_REGRAS = frozenset(
         "RTC004",
         "RTC005",
         "RTC006",
+        "RTC007",
         "NCM001",
         "GTIN001",
     }
@@ -136,13 +137,40 @@ def avaliar_item(
                         arquivo,
                     )
                 )
-            if "RTC006" in ativas and item.cclass_trib not in CCLASSTRIB_NFE:
+            # cClassTrib vazio já é o RTC002; RTC006 trata só código preenchido
+            # e inválido, para um defeito não render dois bloqueios.
+            if (
+                "RTC006" in ativas
+                and item.tem_class_trib
+                and item.cclass_trib not in CCLASSTRIB_NFE
+            ):
                 achados.append(
                     _achado(
                         Severidade.BLOQUEIO,
                         "RTC006",
                         f"cClassTrib '{item.cclass_trib}' não é vigente para NF-e "
                         "na tabela oficial v1.60 do IT 2025.002.",
+                        nota,
+                        item,
+                        arquivo,
+                    )
+                )
+            # Na tabela oficial, os 3 primeiros dígitos do cClassTrib são o
+            # próprio CST; um par individualmente válido mas incoerente seria
+            # rejeitado e passava aqui sem nenhum achado.
+            if (
+                "RTC007" in ativas
+                and item.cst_ibscbs in CSTS_IBSCBS
+                and item.cclass_trib in CCLASSTRIB_NFE
+                and item.cclass_trib[:3] != item.cst_ibscbs
+            ):
+                achados.append(
+                    _achado(
+                        Severidade.BLOQUEIO,
+                        "RTC007",
+                        f"cClassTrib '{item.cclass_trib}' pertence ao CST "
+                        f"{item.cclass_trib[:3]} na tabela oficial, incompatível "
+                        f"com o CST {item.cst_ibscbs} informado no item.",
                         nota,
                         item,
                         arquivo,
@@ -198,32 +226,39 @@ def avaliar_item(
         )
 
     if "GTIN001" in ativas:
-        if gtin.esta_vazio(item.cean):
-            if nota.exige_literal_sem_gtin:
-                achados.append(
-                    _achado(
-                        Severidade.ALERTA,
-                        "GTIN001",
-                        "cEAN vazio. No layout 4.00, produto sem código de barras "
-                        "precisa do literal 'SEM GTIN'.",
-                        nota,
-                        item,
-                        arquivo,
+        # A NT 2017.001 impõe as mesmas exigências ao cEAN (unidade comercial)
+        # e ao cEANTrib (unidade tributável); os dois são validados.
+        campos_gtin: tuple[tuple[str, str | None], ...] = (
+            ("cEAN", item.cean),
+            ("cEANTrib", item.ceantrib),
+        )
+        for rotulo, valor_gtin in campos_gtin:
+            if gtin.esta_vazio(valor_gtin):
+                if nota.exige_literal_sem_gtin:
+                    achados.append(
+                        _achado(
+                            Severidade.ALERTA,
+                            "GTIN001",
+                            f"{rotulo} vazio. No layout 4.00, produto sem código "
+                            "de barras precisa do literal 'SEM GTIN'.",
+                            nota,
+                            item,
+                            arquivo,
+                        )
                     )
-                )
-        else:
-            valido, motivo = gtin.validar(item.cean)
-            if not valido:
-                achados.append(
-                    _achado(
-                        Severidade.ALERTA,
-                        "GTIN001",
-                        motivo,
-                        nota,
-                        item,
-                        arquivo,
+            else:
+                valido, motivo = gtin.validar(valor_gtin)
+                if not valido:
+                    achados.append(
+                        _achado(
+                            Severidade.ALERTA,
+                            "GTIN001",
+                            motivo if rotulo == "cEAN" else f"{rotulo}: {motivo}",
+                            nota,
+                            item,
+                            arquivo,
+                        )
                     )
-                )
 
     return achados
 

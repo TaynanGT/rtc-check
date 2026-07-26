@@ -20,7 +20,7 @@ Você precisa de **licença comercial** (plano Plataforma) em dois casos:
 | **Preço** | R$ 0, para sempre | R$ 149/mês ou R$ 1.490/ano | sob consulta |
 | Interface local para Windows | sim | sim | sim |
 | Varredura local, ilimitada | sim | sim | sim |
-| Regras do corte (`RTC001` a `RTC006`) | sim | sim | sim |
+| Regras do corte (`RTC001` a `RTC007`) | sim | sim | sim |
 | Contagem de bloqueios, alertas e SKUs | sim | sim | sim |
 | Lista detalhada de SKUs | 5 primeiros | completa | completa |
 | Regras de cadastro (`NCM001`, `GTIN001`) | não | sim | sim |

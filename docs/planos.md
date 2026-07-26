@@ -27,7 +27,7 @@ Rode `rtc-check --plano` para ver a lista na sua instalação. Em resumo:
 |---|---|---|
 | Varredura local ilimitada | sim | sim |
 | Relatório de texto, contagens completas | sim | sim |
-| Regras `RTC001` a `RTC006` | sim | sim |
+| Regras `RTC001` a `RTC007` | sim | sim |
 | Lista detalhada de SKUs | 5 primeiros | completa |
 | Regras `NCM001` e `GTIN001` | não | sim |
 | `--formato json`, `csv`, `html` | não | sim |

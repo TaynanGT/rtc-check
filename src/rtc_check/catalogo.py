@@ -109,6 +109,26 @@ REGRAS: dict[str, RegraCatalogo] = {
         confianca="deterministica",
         fonte=NORMATIVA_RTC.fonte_tabela,
     ),
+    "RTC007": RegraCatalogo(
+        codigo="RTC007",
+        titulo="cClassTrib incompatível com o CST",
+        campo="det/imposto/IBSCBS/cClassTrib",
+        referencia="IT 2025.002",
+        rejeicao=None,
+        impacto=(
+            "Na tabela oficial, os 3 primeiros dígitos do cClassTrib são o "
+            "próprio CST; um par incoerente é inválido mesmo com os dois "
+            "códigos existindo isoladamente."
+        ),
+        acao=(
+            "Alinhe o cClassTrib ao CST do item: os 3 primeiros dígitos do "
+            "código devem ser o próprio CST."
+        ),
+        responsavel="Fiscal / cadastro tributário",
+        status="oficial_ativa",
+        confianca="deterministica",
+        fonte=NORMATIVA_RTC.fonte_tabela,
+    ),
     "NCM001": RegraCatalogo(
         codigo="NCM001",
         titulo="NCM inválido",

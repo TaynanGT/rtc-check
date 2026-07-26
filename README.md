@@ -79,7 +79,7 @@ uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
 
 Em produção, prefira fixar uma versão a acompanhar a `main`: acrescente a tag da
-release à URL, como em `...rtc-check.git@v0.5.0`. As tags disponíveis estão em
+release à URL, como em `...rtc-check.git@v0.6.0`. As tags disponíveis estão em
 [releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.14.
@@ -173,7 +173,7 @@ Códigos de saída: `0` tudo certo, `1` há bloqueio (com `--falhar-em-bloqueio`
 |---|---|---|---|
 | **Preço** | R$ 0, para sempre | R$ 149/mês ou R$ 1.490/ano | sob consulta |
 | Varredura local ilimitada | sim | sim | sim |
-| Regras do corte (`RTC001` a `RTC006`) | sim | sim | sim |
+| Regras do corte (`RTC001` a `RTC007`) | sim | sim | sim |
 | Contagem de bloqueios e SKUs | sim | sim | sim |
 | Lista completa de SKUs | 5 primeiros | completa | completa |
 | Regras de cadastro (`NCM001`, `GTIN001`) | não | sim | sim |
@@ -215,10 +215,11 @@ disponível no plano Escritório com `--por-cnpj`.
 | `RTC004` | bloqueio | CST exige `gIBSCBS`, mas o grupo não foi informado | gratuito |
 | `RTC005` | bloqueio | CST proíbe `gIBSCBS`, mas o grupo foi informado | gratuito |
 | `RTC006` | bloqueio | `cClassTrib` inexistente ou não vigente para NF-e na tabela oficial | gratuito |
+| `RTC007` | bloqueio | `cClassTrib` incompatível com o CST informado no item | gratuito |
 | `NCM001` | bloqueio | NCM ausente ou fora do formato de 8 dígitos | pago |
 | `GTIN001` | alerta | GTIN com dígito verificador inválido ou malformado. `cEAN` vazio só alerta em layout 4.00 ou superior | pago |
 
-As seis regras do corte de agosto são gratuitas, de propósito: elas respondem à
+As sete regras do corte de agosto são gratuitas, de propósito: elas respondem à
 pergunta que tem prazo. `NCM001` e `GTIN001` são higiene de cadastro, valem o ano
 inteiro e não têm data marcada.
 

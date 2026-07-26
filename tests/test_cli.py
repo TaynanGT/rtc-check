@@ -33,7 +33,7 @@ def _nota_crt3(sku: str, ncm: str = "72104900", documento: str = "1") -> str:
 <NFe xmlns="http://www.portalfiscal.inf.br/nfe"><infNFe Id="NFe1" versao="4.00">
 <ide><mod>55</mod><nNF>1</nNF></ide>
 <emit><CNPJ>{documento}</CNPJ><xNome>T</xNome><CRT>3</CRT></emit>
-<det nItem="1"><prod><cProd>{sku}</cProd><cEAN>SEM GTIN</cEAN>
+<det nItem="1"><prod><cProd>{sku}</cProd><cEAN>SEM GTIN</cEAN><cEANTrib>SEM GTIN</cEANTrib>
 <xProd>PRODUTO {sku}</xProd><NCM>{ncm}</NCM><CFOP>5102</CFOP></prod></det>
 </infNFe></NFe>"""
 

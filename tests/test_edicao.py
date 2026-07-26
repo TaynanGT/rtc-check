@@ -106,7 +106,7 @@ def test_teste_gratis_libera_o_mesmo_que_escritorio():
 
 
 def test_regras_de_cadastro_so_no_plano_pago():
-    regras_rtc = {"RTC001", "RTC002", "RTC003", "RTC004", "RTC005", "RTC006"}
+    regras_rtc = {"RTC001", "RTC002", "RTC003", "RTC004", "RTC005", "RTC006", "RTC007"}
     assert set(ed.Edicao().regras_ativas) == regras_rtc
     pago = ed.Edicao(plano=ed.Plano.ESCRITORIO).regras_ativas
     assert regras_rtc | {"NCM001", "GTIN001"} == set(pago)

@@ -53,7 +53,7 @@ def test_layout_4_exige_o_literal():
 
     achados = avaliar_nota(nota)
     vazios = [a for a in achados if a.codigo == "GTIN001" and a.sku == "SKU-4004"]
-    assert len(vazios) == 1
+    assert len(vazios) == 2  # cEAN e cEANTrib vazios, um alerta cada
     assert "SEM GTIN" in vazios[0].mensagem
 
 

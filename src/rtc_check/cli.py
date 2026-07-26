@@ -14,7 +14,6 @@ from . import edicao as ed
 from .diagnostico import dados as dados_diagnostico
 from .parser import XmlInvalido, ler_nota, varrer_pasta
 from .report import (
-    Comparativo,
     RelatorioAnteriorInvalido,
     Resumo,
     agregar,
@@ -85,6 +84,8 @@ def analisar(
         emitente = resumo.registrar_emitente(nota.emitente_cnpj, nota.emitente_nome)
         if nota.em_escopo_agosto:
             resumo.notas_em_escopo += 1
+        if nota.crt_indeterminado:
+            resumo.notas_sem_crt += 1
         resumo.total_itens += len(nota.itens)
 
         emitente.notas += 1
@@ -98,7 +99,11 @@ def analisar(
             resumo.por_severidade[achado.severidade.value] += 1
             if achado.severidade is Severidade.BLOQUEIO:
                 emitente.bloqueios += 1
-                emitente.skus.add(achado.sku)
+                # Mesma chave-reserva de agregar(): produtos sem cProd não
+                # podem colapsar num único "SKU" da contagem por emitente.
+                emitente.skus.add(
+                    achado.sku or f"(sem código) {achado.descricao[:30]}"
+                )
             elif achado.severidade is Severidade.ALERTA:
                 emitente.alertas += 1
         if progresso:
@@ -258,11 +263,6 @@ def _iniciar_teste() -> int:
     return 0
 
 
-def _carregar_comparativo(caminho: Path, resumo: Resumo) -> Comparativo:
-    dados = json.loads(caminho.read_text(encoding="utf-8"))
-    return comparar(resumo, dados, caminho.name)
-
-
 def main(argv: list[str] | None = None) -> int:
     args = construir_parser().parse_args(argv)
 
@@ -281,6 +281,25 @@ def main(argv: list[str] | None = None) -> int:
     if args.diagnostico:
         print(json.dumps(dados_diagnostico(), ensure_ascii=False, indent=2))
         return 0
+
+    if args.licenca and args.pasta:
+        # O help promete que --licenca ativa a chave; junto de uma varredura,
+        # ela precisa ficar gravada para as próximas execuções também.
+        try:
+            ativada = ed.salvar_licenca(args.licenca)
+            print(
+                f"licença do plano {ativada.nome} ativada e gravada para as "
+                "próximas execuções.",
+                file=sys.stderr,
+            )
+        except ed.LicencaInvalida:
+            pass  # resolver() avisa e a varredura segue no plano Comunidade
+        except OSError as erro:
+            print(
+                f"aviso: não consegui gravar a licença ({erro}); "
+                "ela vale só nesta execução.",
+                file=sys.stderr,
+            )
 
     edicao = ed.resolver(args.licenca)
     if edicao.aviso:
@@ -306,16 +325,59 @@ def main(argv: list[str] | None = None) -> int:
             print(impedimento, file=sys.stderr)
             return SAIDA_FORA_DO_PLANO
 
+    if args.formato == "csv" and (args.por_cnpj or args.comparar):
+        print(
+            "aviso: --por-cnpj e --comparar não aparecem no formato csv; "
+            "use json ou html para vê-los.",
+            file=sys.stderr,
+        )
+
+    # O arquivo do comparativo é validado ANTES da varredura: um typo no nome
+    # não pode custar a análise inteira de um acervo grande.
+    dados_anteriores: object = None
+    if args.comparar:
+        try:
+            dados_anteriores = json.loads(args.comparar.read_text(encoding="utf-8"))
+        except OSError as erro:
+            print(
+                f"erro: não consegui ler {args.comparar}: {erro}", file=sys.stderr
+            )
+            return 2
+        except json.JSONDecodeError:
+            print(
+                f"erro: {args.comparar} não é um relatório do RTC Check "
+                "(gere o anterior com --formato json).",
+                file=sys.stderr,
+            )
+            return 2
+        if not isinstance(dados_anteriores, dict) or "itens" not in dados_anteriores:
+            print(
+                f"erro: {args.comparar} não parece um relatório do RTC Check "
+                "(gere o anterior com --formato json).",
+                file=sys.stderr,
+            )
+            return 2
+
     resumo = analisar(
         args.pasta, recursivo=not args.sem_recursao, regras=edicao.regras_ativas
     )
+    if resumo.arquivos_lidos == 0:
+        print(
+            f"aviso: nenhum arquivo .xml encontrado em {args.pasta} — "
+            "nada foi analisado.",
+            file=sys.stderr,
+        )
 
     comparativo = None
     if args.comparar:
         try:
-            comparativo = _carregar_comparativo(args.comparar, resumo)
-        except (OSError, json.JSONDecodeError, RelatorioAnteriorInvalido) as erro:
-            print(f"erro: não consegui ler {args.comparar}: {erro}", file=sys.stderr)
+            comparativo = comparar(resumo, dados_anteriores, args.comparar.name)
+        except RelatorioAnteriorInvalido as erro:
+            print(
+                f"erro: {args.comparar} não parece um relatório do RTC Check: "
+                f"{erro}",
+                file=sys.stderr,
+            )
             return 2
 
     if args.formato == "texto":
@@ -334,13 +396,25 @@ def main(argv: list[str] | None = None) -> int:
         saida = formatar_html(resumo, por_cnpj=args.por_cnpj, comparativo=comparativo)
 
     if args.saida:
-        args.saida.write_text(saida, encoding="utf-8")
+        # utf-8-sig no CSV: sem o BOM, o Excel pt-BR abre o arquivo como ANSI
+        # e corrompe acentuação por duplo clique.
+        codificacao = "utf-8-sig" if args.formato == "csv" else "utf-8"
+        args.saida.write_text(saida, encoding=codificacao)
         print(f"relatório gravado em {args.saida}", file=sys.stderr)
     else:
         print(saida)
 
-    if args.falhar_em_bloqueio and resumo.por_severidade[Severidade.BLOQUEIO.value]:
-        return 1
+    if args.falhar_em_bloqueio:
+        if resumo.arquivos_lidos == 0:
+            # Portão de CI "verde" sem analisar nada é o pior modo de falha.
+            print(
+                "erro: --falhar-em-bloqueio sem nenhum XML analisado; "
+                "confira o caminho da pasta.",
+                file=sys.stderr,
+            )
+            return 2
+        if resumo.por_severidade[Severidade.BLOQUEIO.value]:
+            return 1
     return 0
 
 
