@@ -269,7 +269,8 @@ def test_diretorio_de_dados_valida_relativo_e_absoluto(monkeypatch, tmp_path):
 
 
 def test_chave_privada_do_ambiente_e_materializada_no_disco(monkeypatch, tmp_path):
-    pem = Path(os.environ["RTC_CHECK_CHAVE_PRIVADA"]).read_text(encoding="utf-8")
+    # O conftest grava o PEM do emissor de teste neste caminho fixo.
+    pem = (tmp_path / "emissor-ed25519.pem").read_text(encoding="utf-8")
     monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
     monkeypatch.setenv("RTC_CHECK_CHAVE_PRIVADA_PEM", pem)
     sv.garantir_chave_de_emissao(tmp_path)
