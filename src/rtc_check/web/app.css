@@ -191,7 +191,9 @@ padding:.8rem .55rem;font-size:.7rem}.stepper b{display:none}.workspace-grid{pad
 grid-template-columns:1fr 1fr}.score{width:92px;height:92px}.upgrade-note{align-items:stretch;
 flex-direction:column}.issuer-grid{grid-template-columns:1fr}.list-meta{align-items:stretch;
 flex-direction:column}.list-meta input{width:100%}.sort-control{width:100%;justify-content:space-between}.sort-control select{flex:1}
-.comparison-card,.coverage-grid{grid-template-columns:1fr;flex-direction:column}}
+.comparison-card,.coverage-grid{grid-template-columns:1fr;flex-direction:column}.brand small{display:none}
+.top-actions{gap:.3rem}.top-actions .button{padding:.48rem .52rem;font-size:.68rem}
+.filter-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.filter{width:100%}}
 @media(max-width:560px){.rule-picker-content{grid-template-columns:1fr}.feedback-card{align-items:stretch;flex-direction:column}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 @media print{.topbar,.hero,.workspace,.toolbar,.upgrade-note,.next-buttons,.why-local,.footer,
