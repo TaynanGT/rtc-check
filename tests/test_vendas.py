@@ -2,11 +2,13 @@
 
 import hashlib
 import hmac
+import http.client
 import json
 import threading
 import urllib.error
 import urllib.request
 from datetime import date, timedelta
+from urllib.parse import urlparse
 
 import pytest
 
@@ -208,6 +210,205 @@ def test_webhook_de_outro_topico_e_ignorado_sem_consultar_api(servidor, monkeypa
     )
     assert status == 200
     assert dados["desfecho"] == sv.PAGAMENTO_IGNORADO
+
+
+def test_carregar_config_exige_url_segredo_token_e_porta_smtp(monkeypatch, tmp_path):
+    for variavel in (
+        "RTC_CHECK_VENDAS_URL",
+        "PAYMENT_WEBHOOK_SECRET",
+        "PAYMENT_API_KEY",
+        "SMTP_PORT",
+        "RTC_CHECK_VENDAS_DIR",
+    ):
+        monkeypatch.delenv(variavel, raising=False)
+    with pytest.raises(SystemExit, match="RTC_CHECK_VENDAS_URL"):
+        sv.carregar_config()
+    monkeypatch.setenv("RTC_CHECK_VENDAS_URL", "https://vendas.example/")
+    with pytest.raises(SystemExit, match="PAYMENT_WEBHOOK_SECRET"):
+        sv.carregar_config()
+    monkeypatch.setenv("PAYMENT_WEBHOOK_SECRET", SEGREDO)
+    with pytest.raises(SystemExit, match="PAYMENT_API_KEY"):
+        sv.carregar_config()
+    monkeypatch.setenv("PAYMENT_API_KEY", "APP_USR-teste")
+    monkeypatch.setenv("SMTP_PORT", "não-numérica")
+    with pytest.raises(SystemExit, match="SMTP_PORT"):
+        sv.carregar_config()
+    monkeypatch.setenv("SMTP_PORT", "465")
+    monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", str(tmp_path / "vendas"))
+    config = sv.carregar_config()
+    assert config.url_publica == "https://vendas.example"
+    assert config.segredo_webhook == SEGREDO
+
+
+def test_linha_ilegivel_no_registro_e_ignorada(tmp_path):
+    (tmp_path / "vendas.jsonl").write_text(
+        'não é json\n[1, 2]\n{"id_pagamento": "1"}\n', encoding="utf-8"
+    )
+    assert sv.ja_processado(tmp_path, "1")
+    assert not sv.ja_processado(tmp_path, "2")
+
+
+def test_email_com_smtp_configurado_carrega_a_chave(monkeypatch, tmp_path):
+    envios = []
+
+    class SMTPFalso:
+        def __init__(self, host, porta, timeout=0):
+            envios.append(("conexao", host, porta))
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *excecao):
+            return False
+
+        def login(self, usuario, senha):
+            envios.append(("login", usuario))
+
+        def send_message(self, mensagem):
+            envios.append(("mensagem", mensagem))
+
+    monkeypatch.setattr(sv.smtplib, "SMTP_SSL", SMTPFalso)
+    config = sv.ConfigVendas(
+        url_publica="https://vendas.example",
+        segredo_webhook=SEGREDO,
+        diretorio=tmp_path,
+        smtp_host="smtp.example",
+        smtp_usuario="vendas@example.com",
+        smtp_senha="senha",
+        remetente="RTC Check <vendas@example.com>",
+    )
+    assert sv.enviar_chave_por_email(config, "comprador@example.com", "RTC2.a.b", "anual")
+    mensagem = next(item[1] for item in envios if item[0] == "mensagem")
+    assert mensagem["To"] == "comprador@example.com"
+    assert "RTC2.a.b" in mensagem.get_content()
+    assert ("login", "vendas@example.com") in envios
+
+
+class _RespostaFalsa:
+    def __init__(self, corpo: bytes):
+        self._corpo = corpo
+
+    def read(self) -> bytes:
+        return self._corpo
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *excecao):
+        return False
+
+
+def test_criar_preferencia_usa_o_token_e_devolve_init_point(monkeypatch):
+    monkeypatch.setenv("PAYMENT_API_KEY", "APP_USR-teste")
+    capturadas = []
+
+    def urlopen_falso(requisicao, timeout=0):
+        capturadas.append(requisicao)
+        return _RespostaFalsa(
+            json.dumps({"init_point": "https://mp.example/checkout"}).encode()
+        )
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen_falso)
+    url = mp.criar_preferencia(mp.PLANOS_DE_VENDA["mensal"], "https://vendas.example")
+    assert url == "https://mp.example/checkout"
+    requisicao = capturadas[0]
+    assert requisicao.get_header("Authorization") == "Bearer APP_USR-teste"
+    assert requisicao.get_header("X-idempotency-key")
+
+
+def test_api_sem_token_com_erro_http_ou_resposta_estranha(monkeypatch):
+    monkeypatch.delenv("PAYMENT_API_KEY", raising=False)
+    with pytest.raises(mp.ErroMercadoPago, match="PAYMENT_API_KEY"):
+        mp.token_de_acesso()
+
+    monkeypatch.setenv("PAYMENT_API_KEY", "APP_USR-teste")
+    with pytest.raises(mp.ErroMercadoPago, match="id de pagamento"):
+        mp.obter_pagamento("não-numérico")
+
+    def http_401(requisicao, timeout=0):
+        raise urllib.error.HTTPError(requisicao.full_url, 401, "unauthorized", None, None)
+
+    monkeypatch.setattr(urllib.request, "urlopen", http_401)
+    with pytest.raises(mp.ErroMercadoPago, match="HTTP 401"):
+        mp.obter_pagamento("123")
+
+    def rede_fora(requisicao, timeout=0):
+        raise urllib.error.URLError("sem rede")
+
+    monkeypatch.setattr(urllib.request, "urlopen", rede_fora)
+    with pytest.raises(mp.ErroMercadoPago, match="falha ao falar"):
+        mp.obter_pagamento("123")
+
+    monkeypatch.setattr(
+        urllib.request, "urlopen", lambda r, timeout=0: _RespostaFalsa(b"[1, 2]")
+    )
+    with pytest.raises(mp.ErroMercadoPago, match="resposta inesperada"):
+        mp.obter_pagamento("123")
+
+    monkeypatch.setattr(
+        urllib.request, "urlopen", lambda r, timeout=0: _RespostaFalsa(b"{}")
+    )
+    with pytest.raises(mp.ErroMercadoPago, match="init_point"):
+        mp.criar_preferencia(mp.PLANOS_DE_VENDA["anual"], "https://vendas.example")
+
+
+def _get_sem_seguir_redirect(base: str, caminho: str):
+    endereco = urlparse(base)
+    conexao = http.client.HTTPConnection(endereco.hostname, endereco.port)
+    try:
+        conexao.request("GET", caminho)
+        resposta = conexao.getresponse()
+        return resposta.status, dict(resposta.getheaders()), resposta.read()
+    finally:
+        conexao.close()
+
+
+def test_comprar_redireciona_para_o_checkout_hospedado(servidor, monkeypatch):
+    monkeypatch.setattr(
+        mp, "criar_preferencia", lambda plano, url: f"https://mp.example/{plano.codigo}"
+    )
+    status, cabecalhos, _ = _get_sem_seguir_redirect(servidor, "/comprar/mensal")
+    assert status == 303
+    assert cabecalhos["Location"] == "https://mp.example/mensal"
+
+
+def test_comprar_plano_desconhecido_e_rota_errada_dao_404(servidor):
+    status, _, _ = _get_sem_seguir_redirect(servidor, "/comprar/vitalicio")
+    assert status == 404
+    status, _, _ = _get_sem_seguir_redirect(servidor, "/nada")
+    assert status == 404
+    status, dados = _post(f"{servidor}/outro-webhook", {})
+    assert status == 404
+    assert "erro" in dados
+
+
+def test_comprar_com_api_indisponivel_da_502(servidor, monkeypatch):
+    def indisponivel(plano, url):
+        raise mp.ErroMercadoPago("api fora do ar")
+
+    monkeypatch.setattr(mp, "criar_preferencia", indisponivel)
+    status, _, corpo = _get_sem_seguir_redirect(servidor, "/comprar/anual")
+    assert status == 502
+    assert "indispon" in corpo.decode()
+
+
+def test_webhook_com_api_indisponivel_devolve_500_para_reenvio(servidor, monkeypatch):
+    def indisponivel(_id):
+        raise mp.ErroMercadoPago("api fora do ar")
+
+    monkeypatch.setattr(mp, "obter_pagamento", indisponivel)
+    status, dados = _post(
+        f"{servidor}/webhook/mercadopago?data.id=999&type=payment",
+        {"x-signature": _assinatura("999", "req-9"), "x-request-id": "req-9"},
+    )
+    assert status == 500
+    assert "consultado" in dados["erro"]
+
+
+def test_pagina_de_obrigado_orienta_a_ativacao(servidor):
+    with urllib.request.urlopen(f"{servidor}/obrigado") as resposta:
+        pagina = resposta.read().decode()
+    assert "rtc-check --licenca" in pagina
 
 
 def test_pagina_de_planos_e_saude(servidor):
