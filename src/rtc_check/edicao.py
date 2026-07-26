@@ -41,6 +41,11 @@ URL_PLANOS = "https://taynangt.github.io/rtc-check/#precos"
 # https://rtc-check-vendas.onrender.com/chave-publica). Ela pode estar no
 # programa: só a chave privada, mantida fora do repositório, emite licenças.
 CHAVE_PUBLICA_PADRAO = "4cbmXWpYzkAeQDfhM4u-iBl_WOJuhXFfd6LlTcqJanU"
+# Chaves de emissores anteriores seguem confiáveis: licenças vendidas antes de
+# uma troca de chave continuam validando após a atualização do aplicativo.
+CHAVES_PUBLICAS_ANTERIORES: tuple[str, ...] = (
+    "_N26nweHMOt1wkfAMGO_mZmPnVqB0IuqfnA7TOVhRpY",
+)
 
 
 class Plano(StrEnum):
@@ -149,12 +154,21 @@ def _b64_decodificar(valor: str) -> bytes:
     return decodificado
 
 
-def _chave_publica() -> Ed25519PublicKey:
-    texto = os.environ.get("RTC_CHECK_CHAVE_PUBLICA", CHAVE_PUBLICA_PADRAO)
-    try:
-        return Ed25519PublicKey.from_public_bytes(_b64_decodificar(texto))
-    except (LicencaInvalida, ValueError) as erro:
-        raise LicencaInvalida("chave pública de licença inválida") from erro
+def _chaves_publicas() -> list[Ed25519PublicKey]:
+    """Chaves de verificação confiáveis, da mais atual para as anteriores."""
+    do_ambiente = os.environ.get("RTC_CHECK_CHAVE_PUBLICA")
+    textos = (
+        [do_ambiente]
+        if do_ambiente
+        else [CHAVE_PUBLICA_PADRAO, *CHAVES_PUBLICAS_ANTERIORES]
+    )
+    chaves = []
+    for texto in textos:
+        try:
+            chaves.append(Ed25519PublicKey.from_public_bytes(_b64_decodificar(texto)))
+        except (LicencaInvalida, ValueError) as erro:
+            raise LicencaInvalida("chave pública de licença inválida") from erro
+    return chaves
 
 
 def _chave_privada(caminho: str | None = None) -> Ed25519PrivateKey:
@@ -217,9 +231,19 @@ def _decodificar(chave: str) -> tuple[Plano, date, str]:
     _, corpo, assinatura = partes
     try:
         carga = _b64_decodificar(corpo)
-        _chave_publica().verify(_b64_decodificar(assinatura), carga)
+        bytes_da_assinatura = _b64_decodificar(assinatura)
+        verificada = False
+        for chave_publica in _chaves_publicas():
+            try:
+                chave_publica.verify(bytes_da_assinatura, carga)
+                verificada = True
+                break
+            except InvalidSignature:
+                continue
+        if not verificada:
+            raise LicencaInvalida("chave corrompida")
         dados = json.loads(carga.decode())
-    except (InvalidSignature, LicencaInvalida, UnicodeDecodeError, json.JSONDecodeError) as erro:
+    except (LicencaInvalida, UnicodeDecodeError, json.JSONDecodeError) as erro:
         raise LicencaInvalida("chave corrompida") from erro
 
     try:
