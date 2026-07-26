@@ -90,9 +90,43 @@ def test_pagamento_aprovado_emite_licenca_valida_e_e_idempotente(tmp_path):
     repetido = sv.processar_pagamento(
         "111",
         tmp_path,
-        buscar_pagamento=lambda _id: pytest.fail("não deveria reconsultar"),
+        buscar_pagamento=lambda _id: _pagamento_aprovado("mensal"),
     )
     assert repetido.desfecho == sv.PAGAMENTO_DUPLICADO
+
+
+def test_reembolso_depois_da_venda_e_registrado_uma_unica_vez(tmp_path):
+    venda = sv.processar_pagamento(
+        "777", tmp_path, buscar_pagamento=lambda _id: _pagamento_aprovado("mensal")
+    )
+    assert venda.desfecho == sv.LICENCA_EMITIDA
+
+    reembolso = sv.processar_pagamento(
+        "777",
+        tmp_path,
+        buscar_pagamento=lambda _id: {"status": "refunded", "external_reference": "mensal"},
+    )
+    assert reembolso.desfecho == sv.REEMBOLSO_CONFIRMADO
+
+    eventos = sv.eventos_registrados(tmp_path, "777")
+    assert eventos == {sv.LICENCA_EMITIDA, sv.REEMBOLSO_CONFIRMADO}
+
+    repetido = sv.processar_pagamento(
+        "777",
+        tmp_path,
+        buscar_pagamento=lambda _id: {"status": "refunded", "external_reference": "mensal"},
+    )
+    assert repetido.desfecho == sv.PAGAMENTO_DUPLICADO
+
+
+def test_pagamento_de_ambiente_de_teste_nao_emite(tmp_path):
+    resultado = sv.processar_pagamento(
+        "778",
+        tmp_path,
+        buscar_pagamento=lambda _id: _pagamento_aprovado("mensal", live_mode=False),
+    )
+    assert resultado.desfecho == sv.PAGAMENTO_RECUSADO
+    assert "ambiente de teste" in resultado.detalhe
 
 
 def test_valor_errado_moeda_errada_e_plano_desconhecido_nao_emitem(tmp_path):
@@ -348,10 +382,11 @@ def test_rota_da_chave_publica_anuncia_o_emissor(servidor):
 
 def test_linha_ilegivel_no_registro_e_ignorada(tmp_path):
     (tmp_path / "vendas.jsonl").write_text(
-        'não é json\n[1, 2]\n{"id_pagamento": "1"}\n', encoding="utf-8"
+        'não é json\n[1, 2]\n{"id_pagamento": "1", "evento": "licenca_emitida"}\n',
+        encoding="utf-8",
     )
-    assert sv.ja_processado(tmp_path, "1")
-    assert not sv.ja_processado(tmp_path, "2")
+    assert sv.eventos_registrados(tmp_path, "1") == {sv.LICENCA_EMITIDA}
+    assert sv.eventos_registrados(tmp_path, "2") == set()
 
 
 def test_email_com_smtp_configurado_carrega_a_chave(monkeypatch, tmp_path):
@@ -383,11 +418,16 @@ def test_email_com_smtp_configurado_carrega_a_chave(monkeypatch, tmp_path):
         smtp_senha="senha",
         remetente="RTC Check <vendas@example.com>",
     )
-    assert sv.enviar_chave_por_email(config, "comprador@example.com", "RTC2.a.b", "anual")
+    assert sv.enviar_chave_por_email(
+        config, "comprador@example.com", "RTC2.a.b", "anual", "2027-07-26", "170606"
+    )
     mensagem = next(item[1] for item in envios if item[0] == "mensagem")
     assert mensagem["To"] == "comprador@example.com"
     assert mensagem["Bcc"] == "vendas@example.com"
-    assert "RTC2.a.b" in mensagem.get_content()
+    corpo = mensagem.get_content()
+    assert "RTC2.a.b" in corpo
+    assert "válida até 26/07/2027" in corpo
+    assert "pagamento Mercado Pago 170606" in corpo
     assert ("login", "vendas@example.com") in envios
 
 
@@ -516,6 +556,35 @@ def test_pagina_de_obrigado_orienta_a_ativacao(servidor):
     with urllib.request.urlopen(f"{servidor}/obrigado") as resposta:
         pagina = resposta.read().decode()
     assert "rtc-check --licenca" in pagina
+    assert "%%MENSAGEM%%" not in pagina
+
+    with urllib.request.urlopen(
+        f"{servidor}/obrigado?collection_status=pending"
+    ) as resposta:
+        pendente = resposta.read().decode()
+    assert "aguardando compensação" in pendente
+
+
+def test_head_responde_para_monitores(servidor):
+    endereco = urlparse(servidor)
+    conexao = http.client.HTTPConnection(endereco.hostname, endereco.port)
+    try:
+        conexao.request("HEAD", "/saude")
+        assert conexao.getresponse().status == 200
+    finally:
+        conexao.close()
+
+
+def test_limite_de_compras_por_minuto(servidor, monkeypatch):
+    monkeypatch.setattr(
+        mp, "criar_preferencia", lambda plano, url: "https://mp.example/pref"
+    )
+    ultimos = [
+        _get_sem_seguir_redirect(servidor, "/comprar/mensal")[0]
+        for _ in range(sv.LIMITE_DE_COMPRAS_POR_MINUTO + 1)
+    ]
+    assert ultimos[0] == 303
+    assert ultimos[-1] == 429
 
 
 def test_pagina_de_planos_e_saude(servidor):

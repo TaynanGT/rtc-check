@@ -23,6 +23,18 @@ Versionamento semântico.
 - Checkout oficial ativado: o aplicativo e o site apontam por padrão para
   https://rtc-check-vendas.onrender.com, e `CHAVE_PUBLICA_PADRAO` passa a ser a
   chave pública do emissor desse servidor.
+- Endurecimento do servidor de vendas: pagamento de ambiente de teste
+  (`live_mode` falso) é recusado, limite de criação de checkout por IP,
+  cabeçalhos de segurança (CSP, X-Frame-Options) nas respostas, suporte a
+  HEAD para monitores e log auditável por webhook sem dados pessoais.
+- E-mail da chave informa a validade da licença e o id do pagamento para
+  reconciliação; página de retorno diferencia pagamento aprovado de boleto
+  aguardando compensação.
+
+### Corrigido
+- Reembolso, cancelamento ou chargeback notificado depois da emissão da
+  licença era descartado como duplicado e não ficava registrado; a
+  idempotência agora é por (pagamento, evento).
 
 ## [0.3.1] / 2026-07-26
 

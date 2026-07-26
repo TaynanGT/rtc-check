@@ -172,6 +172,19 @@ do Mercado Pago num servidor de homologação; o fluxo é idêntico. Confira:
 4. reenviar o mesmo webhook devolve `pagamento_duplicado` (nenhuma segunda
    emissão).
 
+## Conferir vendas e reenviar uma chave manualmente
+
+Cada evento (venda, recusa, cancelamento, reembolso) vira uma linha JSON em
+`vendas.jsonl` no diretório de dados, incluindo a chave emitida e o id do
+pagamento no Mercado Pago — o mesmo id que aparece na atividade da sua conta.
+Com SMTP configurado, você também recebe cópia oculta de cada e-mail de chave;
+para reenviar uma chave, basta encaminhar essa cópia ao comprador.
+
+Limitação do plano gratuito, sem disco persistente: um reinício zera o
+`vendas.jsonl`. Se o Mercado Pago reenviar uma notificação antiga depois
+disso, uma segunda chave pode ser emitida para o mesmo pagamento — inofensivo
+(vai para o mesmo comprador) e visível na sua cópia por e-mail.
+
 ## Renovação, reembolso e cancelamento
 
 - A licença mensal vale 33 dias e a anual 368: dois dias de folga para o

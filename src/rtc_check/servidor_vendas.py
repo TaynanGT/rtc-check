@@ -17,6 +17,7 @@ import os
 import smtplib
 import sys
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -34,6 +35,7 @@ from . import mercadopago as mp
 from .edicao import Plano, _b64_codificar, _chave_privada, gerar_chave
 
 MAX_CORPO_WEBHOOK = 64 * 1024
+LIMITE_DE_COMPRAS_POR_MINUTO = 10
 _TRAVA_REGISTRO = threading.Lock()
 
 # Estados do contrato em docs/checkout.md.
@@ -230,20 +232,27 @@ def _arquivo_de_vendas(diretorio: Path) -> Path:
     return diretorio / "vendas.jsonl"
 
 
-def ja_processado(diretorio: Path, id_pagamento: str) -> bool:
+def eventos_registrados(diretorio: Path, id_pagamento: str) -> set[str]:
+    """Eventos já gravados para um pagamento; base da idempotência por evento.
+
+    A idempotência precisa ser por (pagamento, evento), não por pagamento: um
+    reembolso chega depois da emissão da licença para o mesmo id e ainda
+    precisa ser registrado.
+    """
     arquivo = _arquivo_de_vendas(diretorio)
     if not arquivo.exists():
-        return False
+        return set()
     with _TRAVA_REGISTRO:
         linhas = arquivo.read_text(encoding="utf-8").splitlines()
+    eventos: set[str] = set()
     for linha in linhas:
         try:
             registro = json.loads(linha)
         except json.JSONDecodeError:
             continue
         if isinstance(registro, dict) and registro.get("id_pagamento") == id_pagamento:
-            return True
-    return False
+            eventos.add(str(registro.get("evento", "")))
+    return eventos
 
 
 def registrar_venda(diretorio: Path, registro: dict[str, Any]) -> None:
@@ -260,6 +269,7 @@ class ResultadoDaVenda:
     chave: str = ""
     email_do_comprador: str = ""
     plano: str = ""
+    expira_em: str = ""
 
 
 def processar_pagamento(
@@ -271,13 +281,13 @@ def processar_pagamento(
 ) -> ResultadoDaVenda:
     """Aplica o contrato do checkout a uma notificação de pagamento.
 
-    A licença só é emitida com status aprovado, moeda e valor corretos e id de
-    pagamento inédito. Estados finais (cancelamento, reembolso, chargeback) são
-    registrados para acompanhamento; a chave já emitida expira sozinha.
+    A licença só é emitida com status aprovado, ambiente de produção, moeda e
+    valor corretos e no máximo uma vez por pagamento. Estados finais
+    (cancelamento, reembolso, chargeback) são registrados mesmo quando chegam
+    depois da emissão; a chave já emitida expira sozinha. O pagamento é sempre
+    reconsultado na API — o corpo do webhook nunca é confiável.
     """
-    if ja_processado(diretorio, id_pagamento):
-        return ResultadoDaVenda(PAGAMENTO_DUPLICADO, "webhook repetido; nada a fazer")
-
+    eventos = eventos_registrados(diretorio, id_pagamento)
     buscar = buscar_pagamento or mp.obter_pagamento
     pagamento = buscar(id_pagamento)
     status = str(pagamento.get("status", ""))
@@ -292,6 +302,8 @@ def processar_pagamento(
 
     if status in _STATUS_ENCERRADOS:
         evento = _STATUS_ENCERRADOS[status]
+        if evento in eventos:
+            return ResultadoDaVenda(PAGAMENTO_DUPLICADO, f"{evento} já registrado")
         registrar_venda(
             diretorio,
             {
@@ -309,12 +321,19 @@ def processar_pagamento(
             f"status {status or 'desconhecido'} não emite licença",
         )
 
+    if LICENCA_EMITIDA in eventos:
+        return ResultadoDaVenda(
+            PAGAMENTO_DUPLICADO, "licença já emitida para este pagamento"
+        )
+
     moeda = str(pagamento.get("currency_id", ""))
     valor = float(pagamento.get("transaction_amount") or 0.0)
     pagador = pagamento.get("payer")
     email = str((pagador.get("email") if isinstance(pagador, dict) else None) or "")
 
-    if plano is None:
+    if pagamento.get("live_mode") is False:
+        motivo = "pagamento do ambiente de teste do Mercado Pago não emite licença"
+    elif plano is None:
         motivo = "pagamento aprovado sem plano do RTC Check reconhecido"
     elif moeda != mp.MOEDA:
         motivo = f"moeda {moeda or 'desconhecida'} fora do esperado"
@@ -325,6 +344,8 @@ def processar_pagamento(
     else:
         motivo = ""
     if motivo:
+        if PAGAMENTO_RECUSADO in eventos:
+            return ResultadoDaVenda(PAGAMENTO_DUPLICADO, "recusa já registrada")
         registrar_venda(
             diretorio,
             {
@@ -358,11 +379,17 @@ def processar_pagamento(
         chave=chave,
         email_do_comprador=email,
         plano=plano.codigo,
+        expira_em=expira_em.isoformat(),
     )
 
 
 def enviar_chave_por_email(
-    config: ConfigVendas, destinatario: str, chave: str, codigo_plano: str
+    config: ConfigVendas,
+    destinatario: str,
+    chave: str,
+    codigo_plano: str,
+    expira_em: str = "",
+    id_pagamento: str = "",
 ) -> bool:
     """Envia a chave ao comprador; sem SMTP configurado, fica só no registro."""
     if not config.smtp_host:
@@ -376,14 +403,26 @@ def enviar_chave_por_email(
     if copia_do_vendedor:
         mensagem["Bcc"] = copia_do_vendedor
     mensagem["Subject"] = "Sua licença do RTC Check — plano Escritório"
+    validade = ""
+    if expira_em:
+        try:
+            validade = f", válida até {date.fromisoformat(expira_em):%d/%m/%Y}"
+        except ValueError:
+            validade = ""
+    referencia = (
+        f"Referência da compra: pagamento Mercado Pago {id_pagamento}.\n"
+        if id_pagamento
+        else ""
+    )
     mensagem.set_content(
         "Obrigado pela compra do RTC Check (plano Escritório, "
-        f"{codigo_plano}).\n\n"
+        f"{codigo_plano}{validade}).\n\n"
         "Sua chave de licença:\n\n"
         f"{chave}\n\n"
         "Para ativar, rode no computador onde o RTC Check está instalado:\n\n"
         f"  rtc-check --licenca {chave}\n\n"
         "Ou cole a chave no campo de licença da interface visual (rtc-check --app).\n"
+        f"{referencia}"
         "Dúvidas: responda este e-mail.\n"
     )
     with smtplib.SMTP_SSL(config.smtp_host, config.smtp_porta, timeout=30) as smtp:
@@ -417,15 +456,28 @@ _PAGINA_OBRIGADO = """<!doctype html>
 <style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:3rem auto;
 padding:0 1rem;line-height:1.5}</style></head><body>
 <h1>Obrigado!</h1>
-<p>Assim que o Mercado Pago confirmar o pagamento, a chave de licença será
-enviada para o e-mail informado no checkout. Guarde-a: a ativação é
-<code>rtc-check --licenca SUA-CHAVE</code>.</p>
-<p>Se a chave não chegar em até uma hora, verifique a caixa de spam ou responda
+%%MENSAGEM%%
+<p>Se a chave não chegar, verifique a caixa de spam ou responda
 o e-mail de contato da compra.</p>
 </body></html>"""
 
+_MENSAGEM_APROVADO = (
+    "<p>Assim que o Mercado Pago confirmar o pagamento, a chave de licença será "
+    "enviada para o e-mail informado no checkout, normalmente em poucos minutos. "
+    "Guarde-a: a ativação é <code>rtc-check --licenca SUA-CHAVE</code>.</p>"
+)
+_MENSAGEM_PENDENTE = (
+    "<p>Seu pagamento está <strong>aguardando compensação</strong> (comum no "
+    "boleto, que pode levar até 3 dias úteis). Assim que o Mercado Pago "
+    "confirmar, a chave de licença será enviada para o e-mail informado no "
+    "checkout. A ativação é <code>rtc-check --licenca SUA-CHAVE</code>.</p>"
+)
+
 
 def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
+    compras_recentes: dict[str, list[float]] = {}
+    trava_compras = threading.Lock()
+
     class Handler(BaseHTTPRequestHandler):
         server_version = "RTCCheckVendas/1.0"
 
@@ -442,6 +494,13 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
             self.send_header("Content-Length", str(len(corpo)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("Referrer-Policy", "no-referrer")
+            self.send_header(
+                "Content-Security-Policy",
+                "default-src 'none'; style-src 'unsafe-inline'; "
+                "base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+            )
             self.end_headers()
             self.wfile.write(corpo)
 
@@ -455,12 +514,32 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
         def _html(self, pagina: str) -> None:
             self._enviar(pagina.encode(), "text/html; charset=utf-8")
 
+        def do_HEAD(self) -> None:  # noqa: N802
+            # Monitores de disponibilidade costumam usar HEAD.
+            caminho = urlparse(self.path).path
+            conhecido = caminho in {"/", "/obrigado", "/saude", "/chave-publica"}
+            self.send_response(
+                HTTPStatus.OK if conhecido else HTTPStatus.NOT_FOUND
+            )
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
         def do_GET(self) -> None:  # noqa: N802
             caminho = urlparse(self.path).path
             if caminho == "/":
                 self._html(_PAGINA_PLANOS)
             elif caminho == "/obrigado":
-                self._html(_PAGINA_OBRIGADO)
+                consulta = parse_qs(urlparse(self.path).query)
+                retorno = str(
+                    (consulta.get("collection_status") or consulta.get("status") or [""])[0]
+                )
+                pendente = retorno in {"pending", "in_process"}
+                self._html(
+                    _PAGINA_OBRIGADO.replace(
+                        "%%MENSAGEM%%",
+                        _MENSAGEM_PENDENTE if pendente else _MENSAGEM_APROVADO,
+                    )
+                )
             elif caminho == "/saude":
                 self._json(
                     {
@@ -500,10 +579,35 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
                 }
             )
 
+        def _ip_do_cliente(self) -> str:
+            # Atrás do proxy da hospedagem, o IP real vem em X-Forwarded-For.
+            encaminhado = self.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+            return encaminhado or self.client_address[0]
+
+        def _dentro_do_limite_de_compras(self) -> bool:
+            agora = time.monotonic()
+            ip = self._ip_do_cliente()
+            with trava_compras:
+                historico = [t for t in compras_recentes.get(ip, []) if agora - t < 60]
+                if len(historico) >= LIMITE_DE_COMPRAS_POR_MINUTO:
+                    compras_recentes[ip] = historico
+                    return False
+                historico.append(agora)
+                compras_recentes[ip] = historico
+                if len(compras_recentes) > 10_000:
+                    compras_recentes.clear()
+            return True
+
         def _comprar(self, codigo: str) -> None:
             plano = mp.PLANOS_DE_VENDA.get(codigo)
             if plano is None:
                 self._json({"erro": "plano desconhecido"}, HTTPStatus.NOT_FOUND)
+                return
+            if not self._dentro_do_limite_de_compras():
+                self._json(
+                    {"erro": "muitas tentativas deste endereço; aguarde um minuto"},
+                    HTTPStatus.TOO_MANY_REQUESTS,
+                )
                 return
             try:
                 url = mp.criar_preferencia(plano, config.url_publica)
@@ -578,6 +682,8 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
                 )
                 return
 
+            # Uma linha auditável por notificação, sem e-mail nem chave.
+            print(f"webhook: pagamento={id_do_dado} desfecho={resultado.desfecho}")
             if resultado.desfecho == LICENCA_EMITIDA:
                 try:
                     enviado = enviar_chave_por_email(
@@ -585,6 +691,8 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
                         resultado.email_do_comprador,
                         resultado.chave,
                         resultado.plano,
+                        resultado.expira_em,
+                        id_do_dado,
                     )
                     if not enviado:
                         print(
