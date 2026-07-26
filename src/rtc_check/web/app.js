@@ -4,6 +4,20 @@ const $$ = (selector) => [...document.querySelectorAll(selector)];
 let selectedFiles = [];
 let currentResult = null;
 let currentFilter = "todos";
+let currentSearch = "";
+let selectionTooLarge = false;
+const MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
+
+function setStep(step) {
+  ["select", "analyze", "correct"].forEach((name, index) => {
+    const node = $(`#step-${name}`);
+    const number = index + 1;
+    node.classList.toggle("active", number === step);
+    node.classList.toggle("done", number < step);
+    if (number === step) node.setAttribute("aria-current", "step");
+    else node.removeAttribute("aria-current");
+  });
+}
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Tab") document.body.classList.add("keyboard-nav");
@@ -33,8 +47,10 @@ function toast(message) {
 function setBusy(active, message = "Lendo XMLs e agrupando os produtos.") {
   $("#progress").classList.toggle("hidden", !active);
   $("#progress-message").textContent = message;
-  $("#analyze").disabled = active || !selectedFiles.length;
+  $("#analyze").disabled = active || !selectedFiles.length || selectionTooLarge;
   $("#demo").disabled = active;
+  $("#hero-demo").disabled = active;
+  setStep(active ? 2 : (currentResult ? 3 : 1));
 }
 
 function renderStatus(status) {
@@ -48,12 +64,28 @@ function renderStatus(status) {
   details.push(`<p>NT ${status.normativa.versao} · tabela ${status.normativa.tabela_versao}</p>`);
   $("#plan-details").innerHTML = details.join("");
   $("#trial").classList.toggle("hidden", status.pago);
-  $("#checkout").classList.toggle("hidden", status.pago);
+  $("#checkout").classList.toggle("hidden", status.licenciado);
+  $("#offer-summary").classList.toggle("hidden", status.licenciado);
+  $("#offer-monthly").textContent = `Escritório · ${status.checkout.preco_mensal}`;
+  $("#offer-annual").textContent =
+    `ou ${status.checkout.preco_anual} · exportações e fila completa`;
   $("#checkout").href = status.checkout.url;
   $("#checkout").setAttribute("aria-disabled", "false");
-  $("#checkout-note").textContent = status.checkout.automatico
-    ? `Checkout seguro por ${status.checkout.provedor}. O teste continua sem cartão.`
-    : "Compra assistida; não inclua dados fiscais no formulário público. O teste é local.";
+  $("#checkout").textContent = status.em_teste
+    ? `Continuar após o teste — ${status.checkout.preco_mensal}`
+    : `Assinar Escritório — ${status.checkout.preco_mensal}`;
+  if (status.licenciado) {
+    $("#checkout-note").textContent = status.dias_restantes !== null
+      ? `Recursos liberados neste PC por mais ${status.dias_restantes} dia(s).`
+      : "Licença ativa: análises e exportações liberadas.";
+  } else if (status.em_teste) {
+    $("#checkout-note").textContent =
+      `Teste ativo por mais ${status.dias_restantes} dia(s). A compra assistida abre um formulário público: não inclua XMLs nem dados fiscais.`;
+  } else {
+    $("#checkout-note").textContent = status.checkout.automatico
+      ? `Checkout seguro por ${status.checkout.provedor}. O teste continua sem cartão.`
+      : "Compra assistida; não inclua dados fiscais no formulário público. O teste é local.";
+  }
   if (status.aviso) toast(status.aviso);
 }
 
@@ -67,12 +99,38 @@ function escapeText(value) {
   return node.innerHTML;
 }
 
+async function copyText(value, successMessage) {
+  try {
+    await navigator.clipboard.writeText(value);
+  } catch {
+    const helper = document.createElement("textarea");
+    helper.value = value;
+    helper.setAttribute("readonly", "");
+    helper.style.position = "fixed";
+    helper.style.opacity = "0";
+    document.body.appendChild(helper);
+    helper.select();
+    document.execCommand("copy");
+    helper.remove();
+  }
+  toast(successMessage);
+}
+
 function renderRows() {
   if (!currentResult) return;
-  const items = currentResult.itens.filter((item) =>
-    currentFilter === "todos" || item.severidade === currentFilter
-  );
+  const query = currentSearch.trim().toLocaleLowerCase("pt-BR");
+  const items = currentResult.itens.filter((item) => {
+    const matchesFilter = currentFilter === "todos" || item.severidade === currentFilter;
+    const haystack = [
+      item.sku, item.descricao, item.ncm, item.emitente,
+      ...item.codigos, ...item.mensagens.map((message) => message.acao),
+    ].join(" ").toLocaleLowerCase("pt-BR");
+    return matchesFilter && (!query || haystack.includes(query));
+  });
   $("#empty-filter").classList.toggle("hidden", items.length !== 0);
+  $("#visible-count").textContent = query || currentFilter !== "todos"
+    ? `${items.length} correspondência(s) · ${currentResult.itens.length} carregada(s)`
+    : `Mostrando ${items.length} de ${currentResult.total_grupos} SKU(s)`;
   $("#result-rows").innerHTML = items.map((item) => {
     const first = item.mensagens[0] || {codigo: "", mensagem: "", acao: ""};
     const messages = item.mensagens.map((entry) =>
@@ -82,7 +140,9 @@ function renderRows() {
       <td><span class="severity ${item.severidade}">${item.severidade}</span></td>
       <td><span class="sku">${escapeText(item.sku)}</span>
         <span class="description">${escapeText(item.descricao)}</span>${messages}</td>
-      <td><span class="action">${escapeText(first.acao)}</span></td>
+      <td><span class="action">${escapeText(first.acao)}</span>
+        <button class="button ghost compact copy-action" type="button"
+          data-copy-sku="${escapeText(item.sku)}">Copiar ação</button></td>
       <td><span class="impact">${item.ocorrencias.toLocaleString("pt-BR")} ocorrência(s)</span>
         <span class="description">${item.notas_afetadas.toLocaleString("pt-BR")} nota(s)</span></td>
       <td><span class="code">${escapeText(item.emitente)}</span></td>
@@ -106,6 +166,28 @@ function renderResult(result) {
     metric(result.alertas, "Alertas", result.alertas ? "warn" : ""),
     metric(result.skus_a_corrigir, "SKUs a corrigir", result.skus_a_corrigir ? "bad" : ""),
   ].join("");
+  const invalid = result.arquivos_invalidos || [];
+  const invalidTotal = result.total_arquivos_invalidos ?? invalid.length;
+  $("#invalid-alert").classList.toggle("hidden", !invalid.length);
+  $("#invalid-title").textContent = invalidTotal === 1
+    ? "1 arquivo não pôde ser lido"
+    : `${invalidTotal} arquivos não puderam ser lidos`;
+  $("#invalid-files").innerHTML = invalid.map((entry) =>
+    `<li><strong>${escapeText(entry.arquivo)}</strong>: ${escapeText(entry.motivo)}</li>`
+  ).join("");
+
+  const issuers = result.emitentes || [];
+  $("#issuer-title").textContent = result.pode_exportar
+    ? `Resumo por emitente (${issuers.length})`
+    : "Resumo por emitente — disponível no teste";
+  $("#issuer-grid").innerHTML = result.pode_exportar
+    ? issuers.map((issuer) => `<article class="issuer-card">
+        <strong>${escapeText(issuer.nome || issuer.cnpj)}</strong>
+        <span>${escapeText(issuer.cnpj)} · ${issuer.notas} nota(s) · ${issuer.itens} item(ns)</span>
+        <span>${issuer.bloqueios} bloqueio(s) · ${issuer.skus} SKU(s)</span>
+      </article>`).join("")
+    : `<article class="issuer-card"><strong>Ative o teste grátis</strong>
+        <span>Veja notas, itens, bloqueios e SKUs separados por emitente.</span></article>`;
   const upgrade = result.grupos_ocultos > 0 || !result.pode_exportar;
   $("#upgrade-note").classList.toggle("hidden", !upgrade);
   $("#upgrade-message").textContent = result.grupos_ocultos > 0
@@ -115,7 +197,20 @@ function renderResult(result) {
     button.disabled = !result.pode_exportar;
     button.title = result.pode_exportar ? "" : "Disponível no teste grátis";
   });
+  const first = result.itens[0];
+  $("#next-action-title").textContent = first
+    ? `Comece por ${first.sku}: ${first.mensagens[0]?.acao || "revise a parametrização indicada."}`
+    : "Nenhum ajuste bloqueador foi encontrado neste lote.";
+  $("#copy-first").classList.toggle("hidden", !first);
+  $("#copy-queue").disabled = !result.itens.length;
+  currentFilter = "todos";
+  $$(".filter").forEach((button) =>
+    button.classList.toggle("active", button.dataset.filter === "todos")
+  );
+  currentSearch = "";
+  $("#queue-search").value = "";
   renderRows();
+  setStep(3);
   $("#results").scrollIntoView({behavior: "smooth", block: "start"});
 }
 
@@ -131,25 +226,80 @@ async function analyze(path, options = {}) {
   }
 }
 
+function formatBytes(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toLocaleString("pt-BR", {maximumFractionDigits: 1})} MB`;
+}
+
 function updateSelection(files) {
-  selectedFiles = [...files].filter((file) => /\.(xml|zip)$/i.test(file.name));
+  const received = [...files];
+  selectedFiles = received.filter((file) => /\.(xml|zip)$/i.test(file.name));
+  const rejected = received.length - selectedFiles.length;
   $("#selection-label").textContent = selectedFiles.length
     ? `${selectedFiles.length} arquivo(s) selecionado(s)`
     : "Nenhum arquivo XML ou ZIP selecionado";
-  $("#analyze").disabled = !selectedFiles.length;
+  const total = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+  const tooLarge = total > MAX_UPLOAD_BYTES;
+  selectionTooLarge = tooLarge;
+  $("#selection-panel").classList.toggle("hidden", !selectedFiles.length);
+  $("#selection-panel").classList.toggle("danger", tooLarge);
+  $("#selection-summary").textContent = tooLarge
+    ? "Este lote ultrapassa o limite de 64 MB"
+    : `${selectedFiles.length} arquivo(s) pronto(s) para análise`;
+  $("#selection-meta").textContent = tooLarge
+    ? `${formatBytes(total)} no total · divida em lotes de até 64 MB`
+    : `${formatBytes(total)} no total${rejected ? ` · ${rejected} arquivo(s) ignorado(s)` : ""}`;
+  const visible = selectedFiles.slice(0, 3);
+  $("#selection-files").innerHTML = visible.map((file) =>
+    `<li title="${escapeText(file.name)}">${escapeText(file.name)} · ${formatBytes(file.size)}</li>`
+  ).join("") + (selectedFiles.length > 3
+    ? `<li>+ ${selectedFiles.length - 3} arquivo(s)</li>` : "");
+  $("#analyze").disabled = !selectedFiles.length || tooLarge;
+  currentResult = null;
+  $("#results").classList.add("hidden");
+  setStep(1);
+  if (!selectedFiles.length && rejected) {
+    toast("Nenhum XML ou ZIP válido foi encontrado na seleção.");
+  }
 }
 
 async function activateTrial() {
   try {
     const payload = await api("/api/teste", {method: "POST", body: "{}"});
     renderStatus(payload.status);
-    toast(payload.mensagem);
     if (currentResult && !currentResult.demo) {
-      toast("Execute a análise novamente para liberar todos os recursos.");
+      if (selectedFiles.length) {
+        toast(`${payload.mensagem} Refazendo a análise com todos os recursos…`);
+        await analyzeSelected("Reprocessando o lote com todos os recursos liberados.");
+      } else {
+        toast(`${payload.mensagem} Liberando o resultado armazenado…`);
+        await refreshCurrentResult();
+      }
+    } else {
+      toast(payload.mensagem);
     }
   } catch (error) {
     toast(error.message);
   }
+}
+
+async function refreshCurrentResult() {
+  if (!currentResult) return;
+  const result = await api(`/api/atualizar/${currentResult.id}`, {
+    method: "POST",
+    body: "{}",
+  });
+  renderResult(result);
+}
+
+function analyzeSelected(message = `Processando ${selectedFiles.length} arquivo(s) somente neste PC.`) {
+  if (!selectedFiles.length || selectionTooLarge) {
+    toast("Selecione um lote válido de até 64 MB.");
+    return Promise.resolve();
+  }
+  const data = new FormData();
+  selectedFiles.forEach((file) => data.append("arquivos", file, file.name));
+  return analyze("/api/analisar", {method: "POST", body: data, message});
 }
 
 async function exportResult(format) {
@@ -181,6 +331,13 @@ async function exportResult(format) {
 $("#files").addEventListener("change", (event) => updateSelection(event.target.files));
 $("#folder-files").addEventListener("change", (event) => updateSelection(event.target.files));
 $("#folder-open").addEventListener("click", () => $("#folder-files").click());
+$("#selection-clear").addEventListener("click", () => {
+  selectedFiles = [];
+  $("#files").value = "";
+  $("#folder-files").value = "";
+  updateSelection([]);
+  toast("Seleção limpa.");
+});
 const dropzone = $("#dropzone");
 ["dragenter", "dragover"].forEach((name) => dropzone.addEventListener(name, (event) => {
   event.preventDefault(); dropzone.classList.add("drag");
@@ -188,20 +345,31 @@ const dropzone = $("#dropzone");
 ["dragleave", "drop"].forEach((name) => dropzone.addEventListener(name, (event) => {
   event.preventDefault(); dropzone.classList.remove("drag");
 }));
-dropzone.addEventListener("drop", (event) => updateSelection(event.dataTransfer.files));
-
-$("#analyze").addEventListener("click", () => {
-  const data = new FormData();
-  selectedFiles.forEach((file) => data.append("arquivos", file, file.name));
-  analyze("/api/analisar", {
-    method: "POST", body: data,
-    message: `Processando ${selectedFiles.length} arquivo(s) somente neste PC.`,
-  });
+dropzone.addEventListener("drop", (event) => {
+  const hasDirectory = [...(event.dataTransfer.items || [])].some((item) =>
+    item.webkitGetAsEntry?.()?.isDirectory
+  );
+  if (hasDirectory) {
+    toast("Para incluir uma pasta, use “Selecionar uma pasta inteira”.");
+    $("#folder-open").focus();
+    return;
+  }
+  updateSelection(event.dataTransfer.files);
 });
+window.addEventListener("dragover", (event) => event.preventDefault());
+window.addEventListener("drop", (event) => {
+  event.preventDefault();
+  if (!dropzone.contains(event.target)) {
+    toast("Solte os arquivos dentro da área pontilhada.");
+  }
+});
+
+$("#analyze").addEventListener("click", () => analyzeSelected());
 $("#demo").addEventListener("click", () => analyze("/api/demo", {
   method: "POST", body: "{}",
   message: "Preparando uma análise demonstrativa.",
 }));
+$("#hero-demo").addEventListener("click", () => $("#demo").click());
 $("#trial").addEventListener("click", activateTrial);
 $("#upgrade-trial").addEventListener("click", activateTrial);
 
@@ -211,9 +379,58 @@ $$(".filter").forEach((button) => button.addEventListener("click", () => {
   currentFilter = button.dataset.filter;
   renderRows();
 }));
+$("#queue-search").addEventListener("input", (event) => {
+  currentSearch = event.target.value;
+  renderRows();
+});
 $$(".export").forEach((button) => button.addEventListener("click", () =>
   exportResult(button.dataset.format)
 ));
+$("#result-rows").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-copy-sku]");
+  if (!button || !currentResult) return;
+  const item = currentResult.itens.find((entry) => entry.sku === button.dataset.copySku);
+  const first = item?.mensagens[0];
+  if (!item || !first) return;
+  copyText(
+    `SKU ${item.sku} — ${item.descricao}\nEmitente: ${item.emitente}\nAção: ${first.acao}`,
+    `Ação do SKU ${item.sku} copiada.`,
+  );
+});
+
+$("#copy-queue").addEventListener("click", () => {
+  if (!currentResult?.itens.length) return;
+  const lines = ["Prioridade\tSKU\tProduto\tEmitente\tAção"];
+  currentResult.itens.forEach((item) => {
+    lines.push([
+      item.severidade,
+      item.sku,
+      item.descricao,
+      item.emitente,
+      item.mensagens[0]?.acao || "",
+    ].join("\t"));
+  });
+  copyText(lines.join("\n"), "Fila copiada. Cole no Excel, e-mail ou chamado do ERP.");
+});
+
+$("#copy-first").addEventListener("click", () => {
+  const item = currentResult?.itens[0];
+  const first = item?.mensagens[0];
+  if (!item || !first) return;
+  copyText(
+    `SKU ${item.sku} — ${item.descricao}\nEmitente: ${item.emitente}\nAção: ${first.acao}`,
+    "Primeira ação copiada.",
+  );
+});
+
+$("#new-analysis").addEventListener("click", () => {
+  selectedFiles = [];
+  currentResult = null;
+  $("#files").value = "";
+  $("#folder-files").value = "";
+  updateSelection([]);
+  $("#analisar-title").scrollIntoView({behavior: "smooth", block: "start"});
+});
 
 const settings = $("#settings-dialog");
 $("#settings-open").addEventListener("click", () => {
@@ -240,7 +457,17 @@ $("#license-activate").addEventListener("click", async (event) => {
     });
     renderStatus(payload.status);
     license.close();
-    toast(payload.mensagem);
+    if (currentResult && !currentResult.demo) {
+      if (selectedFiles.length) {
+        toast(`${payload.mensagem} Refazendo a análise com a licença ativa…`);
+        await analyzeSelected("Reprocessando o lote com a licença ativa.");
+      } else {
+        toast(`${payload.mensagem} Liberando o resultado armazenado…`);
+        await refreshCurrentResult();
+      }
+    } else {
+      toast(payload.mensagem);
+    }
   } catch (error) {
     $("#license-error").textContent = error.message;
     $("#license-error").classList.remove("hidden");

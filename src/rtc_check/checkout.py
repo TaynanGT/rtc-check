@@ -13,6 +13,8 @@ from urllib.parse import urlparse
 URL_COMPRA_ASSISTIDA = (
     "https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md"
 )
+PRECO_MENSAL_BR = "R$ 149/mês"
+PRECO_ANUAL_BR = "R$ 1.490/ano"
 
 
 @dataclass(frozen=True)

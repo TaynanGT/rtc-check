@@ -30,6 +30,12 @@
         <p class="hero-text">Arraste XMLs ou um ZIP. O RTC Check transforma milhares de
           ocorrências numa fila clara de SKUs para corrigir — sem upload para nuvem,
           sem cadastro e sem limite de CNPJ.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#analisar-title">Começar análise</a>
+          <button class="button secondary" id="hero-demo" type="button">
+            Testar com exemplo
+          </button>
+        </div>
         <div class="trust-row" aria-label="Garantias do produto">
           <span>✓ Nenhuma telemetria</span>
           <span>✓ Arquivos apagados após a análise</span>
@@ -47,9 +53,9 @@
 
     <section class="workspace" aria-labelledby="analisar-title">
       <div class="stepper" aria-label="Etapas">
-        <span class="active"><b>1</b> Selecionar</span>
-        <span><b>2</b> Analisar</span>
-        <span><b>3</b> Corrigir</span>
+        <span class="active" id="step-select" aria-current="step"><b>1</b> Selecionar</span>
+        <span id="step-analyze"><b>2</b> Analisar</span>
+        <span id="step-correct"><b>3</b> Corrigir</span>
       </div>
       <div class="workspace-grid">
         <div>
@@ -65,11 +71,22 @@
             <span>ou clique para selecionar XML/ZIP</span>
             <small id="selection-label">Nenhum arquivo selecionado</small>
           </label>
-          <input id="folder-files" class="visually-hidden" type="file"
-            accept=".xml" multiple webkitdirectory>
+          <p class="upload-limits">Até 64 MB por envio · XML de até 25 MB · ZIP aceito</p>
+          <input id="folder-files" class="hidden" type="file"
+            accept=".xml" multiple webkitdirectory aria-hidden="true" tabindex="-1">
           <button class="button text folder-button" id="folder-open" type="button">
             Selecionar uma pasta inteira
           </button>
+          <div class="selection-panel hidden" id="selection-panel" aria-live="polite">
+            <div>
+              <strong id="selection-summary"></strong>
+              <span id="selection-meta"></span>
+              <ul id="selection-files"></ul>
+            </div>
+            <button class="button ghost compact" id="selection-clear" type="button">
+              Limpar
+            </button>
+          </div>
 
           <div class="primary-actions">
             <button class="button primary" id="analyze" type="button" disabled>
@@ -91,6 +108,10 @@
           <p class="section-kicker">Sua instalação</p>
           <h2 id="plan-title">Plano <span id="plan-name">carregando…</span></h2>
           <div id="plan-details" class="plan-details" aria-live="polite"></div>
+          <div class="offer-summary" id="offer-summary">
+            <strong id="offer-monthly">Escritório · R$ 149/mês</strong>
+            <span id="offer-annual">ou R$ 1.490/ano · exportações e fila completa</span>
+          </div>
           <button class="button primary full" id="trial" type="button">
             Ativar 14 dias grátis
           </button>
@@ -129,6 +150,20 @@
 
       <div class="metrics" id="metrics"></div>
 
+      <div class="invalid-alert hidden" id="invalid-alert" role="alert">
+        <strong id="invalid-title"></strong>
+        <p>Esses documentos não entraram nas métricas abaixo. Revise-os antes de concluir.</p>
+        <details>
+          <summary>Ver arquivos e motivos</summary>
+          <ul id="invalid-files"></ul>
+        </details>
+      </div>
+
+      <details class="issuer-summary" id="issuer-summary">
+        <summary id="issuer-title">Resumo por emitente</summary>
+        <div class="issuer-grid" id="issuer-grid"></div>
+      </details>
+
       <div class="toolbar">
         <div class="filter-group" role="group" aria-label="Filtrar achados">
           <button class="filter active" data-filter="todos" type="button">Todos</button>
@@ -136,10 +171,13 @@
           <button class="filter" data-filter="alerta" type="button">Alertas</button>
         </div>
         <div class="export-group">
+          <button class="button ghost compact" id="copy-queue" type="button">
+            Copiar fila
+          </button>
           <button class="button ghost compact export" data-format="csv" type="button">CSV</button>
           <button class="button ghost compact export" data-format="json" type="button">JSON</button>
           <button class="button primary compact export" data-format="html" type="button">
-            Relatório / PDF
+            Baixar relatório
           </button>
         </div>
       </div>
@@ -152,8 +190,18 @@
         </button>
       </div>
 
+      <div class="list-meta">
+        <label>
+          <span class="visually-hidden">Buscar na fila</span>
+          <input id="queue-search" type="search"
+            placeholder="Buscar SKU, produto, NCM ou emitente">
+        </label>
+        <span id="visible-count"></span>
+      </div>
+
       <div class="table-wrap">
         <table>
+          <caption class="visually-hidden">Fila priorizada de correções fiscais</caption>
           <thead>
             <tr><th>Prioridade</th><th>SKU e produto</th><th>O que corrigir</th>
               <th>Impacto</th><th>Emitente</th></tr>
@@ -168,14 +216,22 @@
       <section class="next-actions">
         <div>
           <p class="section-kicker">Próximo passo recomendado</p>
-          <h3>Corrija o primeiro SKU e valide uma nota nova na SVRS.</h3>
+          <h3 id="next-action-title">Corrija o primeiro SKU e valide uma nota nova na SVRS.</h3>
           <p>O histórico aponta padrões; a confirmação final deve ser feita no
             validador oficial ou no ambiente de homologação do seu emissor.</p>
         </div>
-        <a class="button secondary" target="_blank" rel="noreferrer"
-          href="https://dfe-portal.svrs.rs.gov.br/Cff/ValidadorRtcNfe">
-          Abrir validador oficial ↗
-        </a>
+        <div class="next-buttons">
+          <button class="button dark-outline" id="copy-first" type="button">
+            Copiar primeira ação
+          </button>
+          <a class="button secondary" target="_blank" rel="noreferrer"
+            href="https://dfe-portal.svrs.rs.gov.br/Cff/ValidadorRtcNfe">
+            Abrir validador oficial ↗
+          </a>
+          <button class="button dark-outline" id="new-analysis" type="button">
+            Analisar outro lote
+          </button>
+        </div>
       </section>
     </section>
 
