@@ -17,7 +17,8 @@ Você precisa de **licença comercial** (plano Plataforma) em dois casos:
 
 | | Comunidade | Escritório | Plataforma |
 |---|---|---|---|
-| **Preço** | R$ 0, para sempre | R$ 390/mês | sob consulta |
+| **Preço** | R$ 0, para sempre | R$ 149/mês ou R$ 1.490/ano | sob consulta |
+| Interface local para Windows | sim | sim | sim |
 | Varredura local, ilimitada | sim | sim | sim |
 | Regras do corte (`RTC001` a `RTC006`) | sim | sim | sim |
 | Contagem de bloqueios, alertas e SKUs | sim | sim | sim |
@@ -28,7 +29,7 @@ Você precisa de **licença comercial** (plano Plataforma) em dois casos:
 | `--falhar-em-bloqueio` (CI) | não | sim | sim |
 | Detalhamento por CNPJ | não | sim | sim |
 | Comparativo entre execuções | não | sim | sim |
-| Atualização de regras | via GitHub | pacote assinado, no dia da NT | idem |
+| Atualização de regras | via GitHub | atualização prioritária e versionada | idem |
 | Suporte | issues públicas | e-mail, 1 dia útil | contrato |
 | Licença para redistribuir | não | não | sim |
 
@@ -66,19 +67,24 @@ notas rejeitadas por dia × horas para reprocessar cada uma × custo/hora
 + valor do faturamento parado esperando autorização
 ```
 
-Uma única nota travada num embarque costuma pagar o ano do plano Escritório. Mas o
-número que importa é o seu, e ele sai da primeira varredura, que é gratuita.
+Não há promessa de retorno. Compare o valor do plano com o custo observado de
+reprocessamento, faturamento parado e horas de cadastro. O número que importa é o
+seu, e a primeira varredura gratuita ajuda a estimá-lo.
 
 ## Uma palavra sobre a trava
 
 O código é aberto, então o gating dos recursos pagos está no repositório e pode ser
 removido. Isso é conhecido e não vai mudar: fechar o código custaria a auditabilidade,
 que é justamente o motivo pelo qual alguém aponta uma pasta de notas fiscais para este
-programa. A assinatura não vende acesso ao binário, vende regra atualizada, suporte com
-prazo e direito de redistribuir.
+programa. A assinatura não vende acesso ao binário: vende priorização de atualizações
+após revisão técnica, suporte com prazo e direito de redistribuir.
 
 ## Contato
 
 Abra o [formulário do plano Escritório ou licença comercial](https://github.com/TaynanGT/rtc-check/issues/new?template=comercial.md).
 Ele é público: não inclua XML, CNPJ, chave de NF-e nem outros dados confidenciais. Para uma
 conversa privada, use o e-mail exibido no perfil do mantenedor.
+
+O checkout é modular e ainda não está ativo: `.env.example` reserva provedor, URL,
+chave de API e segredo de webhook sem comprometer dados no repositório. Até a conta do
+provedor ser escolhida e verificada pelo titular, a compra é assistida pelo formulário.

@@ -110,6 +110,22 @@ def construir_parser() -> argparse.ArgumentParser:
     p.add_argument("-o", "--saida", type=Path, help="grava em arquivo em vez do stdout")
     p.add_argument("--sem-recursao", action="store_true", help="não entra em subpastas")
     p.add_argument(
+        "--app",
+        action="store_true",
+        help="abre a interface visual local no navegador",
+    )
+    p.add_argument(
+        "--sem-navegador",
+        action="store_true",
+        help="com --app, inicia o servidor sem abrir o navegador",
+    )
+    p.add_argument(
+        "--porta",
+        type=int,
+        default=0,
+        help="porta local da interface; 0 escolhe uma porta livre",
+    )
+    p.add_argument(
         "--falhar-em-bloqueio",
         action="store_true",
         help="sai com código 1 se houver bloqueios (útil em CI)",
@@ -226,6 +242,14 @@ def _carregar_comparativo(caminho: Path, resumo: Resumo) -> Comparativo:
 
 def main(argv: list[str] | None = None) -> int:
     args = construir_parser().parse_args(argv)
+
+    if args.app:
+        if not 0 <= args.porta <= 65535:
+            print("erro: --porta precisa estar entre 0 e 65535", file=sys.stderr)
+            return 2
+        from .webapp import executar
+
+        return executar(porta=args.porta, abrir_navegador=not args.sem_navegador)
 
     if args.licenca and not args.pasta:
         return _ativar_licenca(args.licenca)

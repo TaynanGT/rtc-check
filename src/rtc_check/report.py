@@ -11,6 +11,7 @@ import csv
 import html
 import io
 import json
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
@@ -461,6 +462,12 @@ code{font:.8rem ui-monospace,Consolas,monospace;background:#f4f4f5;
 padding:.05rem .3rem;border-radius:3px}
 .msg{color:#52525b;font-size:.8rem;margin-top:.2rem}
 footer{margin-top:2rem;color:#a1a1aa;font-size:.8rem}
+.report-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.brand{font-weight:750;color:var(--brand);font-size:.85rem;margin-bottom:.25rem}
+.print{border:0;background:var(--brand);color:#fff;padding:.55rem .8rem;border-radius:7px;
+font-weight:650;cursor:pointer}
+@media print{body{padding:0;background:#fff}.print{display:none}.card,.tw{break-inside:avoid}
+a{color:inherit;text-decoration:none}@page{margin:12mm}}
 """
 
 
@@ -506,8 +513,13 @@ def formatar_html(
     *,
     por_cnpj: bool = False,
     comparativo: Comparativo | None = None,
+    marca: str = "RTC Check",
+    cor: str = "#0f766e",
 ) -> str:
     e = html.escape
+    marca = (marca or "RTC Check").strip()[:60]
+    if not re.fullmatch(r"#[0-9A-Fa-f]{6}", cor):
+        cor = "#0f766e"
     dias = dias_ate_corte(hoje)
     b = resumo.por_severidade[Severidade.BLOQUEIO.value]
     a = resumo.por_severidade[Severidade.ALERTA.value]
@@ -563,9 +575,12 @@ def formatar_html(
     return f"""<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RTC Check: relatório de prontidão</title><style>{_CSS}</style></head>
+<title>{e(marca)}: relatório de prontidão</title>
+<style>:root{{--brand:{cor}}}{_CSS}</style></head>
 <body><div class="wrap">
-<h1>Prontidão para a Reforma Tributária</h1>
+<div class="report-head"><div><div class="brand">{e(marca)}</div>
+<h1>Prontidão para a Reforma Tributária</h1></div>
+<button class="print" onclick="window.print()">Imprimir / salvar em PDF</button></div>
 <p class="sub">Corte da obrigatoriedade para emitentes CRT=3:
 <strong>03/08/2026</strong>, faltam {dias} dias.<br>
 Referência: <a href="{e(NORMATIVA_RTC.fonte)}">{e(NORMATIVA_RTC.rotulo)}</a>,

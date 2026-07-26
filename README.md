@@ -8,7 +8,8 @@
 **[English](README.en.md)**
 
 **Descubra hoje quais produtos mantêm um padrão de XML com risco de rejeição
-a partir de 3 de agosto.**
+a partir de 3 de agosto — com uma interface visual e sem enviar a nota fiscal
+para a nuvem.**
 
 A partir de **03/08/2026**, a UB12-10 passa a rejeitar a NF-e de empresa no
 Regime Normal (CRT=3) sem o grupo `IBSCBS`, quando a regra for aplicável.
@@ -42,17 +43,28 @@ o processo de atualização estão em [docs/normativa-rtc.md](docs/normativa-rtc
 
 ## Roda na sua máquina. Ponto.
 
-Nenhum XML sai do seu computador. Sem upload, sem conta, sem servidor, sem telemetria.
-Fora a biblioteca `cryptography`, usada apenas para verificar licenças Ed25519, o runtime
-usa só a biblioteca padrão do Python. Dá para auditar o que ele faz em uma tarde, e é por
-isso que o código é aberto.
+Nenhum XML sai do seu computador. Sem conta, servidor externo ou telemetria. A interface
+visual usa um servidor temporário restrito a `127.0.0.1`; os uploads do navegador são
+processados no próprio PC e apagados ao terminar a análise. O runtime usa `defusedxml`
+para bloquear construções XML perigosas e `cryptography` para verificar licenças
+Ed25519. O código é aberto para que esse fluxo seja auditável.
 
 A varredura e o relatório acima são **gratuitos para sempre e sem cadastro**: qualquer
-pessoa com um CNPJ e um terminal identifica padrões do acervo com risco de rejeição.
+pessoa identifica padrões do acervo com risco de rejeição pela interface ou pelo terminal.
 Exportar, automatizar e comparar execuções fazem parte dos planos pagos, com
 [14 dias de teste grátis](#planos) liberados por um comando local.
 
 ## Instalação
+
+### Windows, sem Python
+
+Baixe `RTC-Check-Windows-*.zip` na
+[release mais recente](https://github.com/TaynanGT/rtc-check/releases/latest),
+extraia e abra `RTC-Check.exe`. O navegador abrirá a interface local. O pacote inclui
+um SHA-256 para conferência; enquanto não houver assinatura Authenticode, o Windows
+pode exibir o SmartScreen.
+
+### Python, Windows, macOS ou Linux
 
 Ainda não está no PyPI ([falta um passo que só o dono da conta faz](docs/publicar-no-pypi.md)).
 
@@ -67,10 +79,20 @@ uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
 
 Em produção, prefira fixar uma versão a acompanhar a `main`: acrescente a tag da
-release à URL, como em `...rtc-check.git@v0.2.1`. As tags disponíveis estão em
+release à URL, como em `...rtc-check.git@v0.3.0`. As tags disponíveis estão em
 [releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.14.
+
+## Interface visual
+
+```bash
+rtc-check --app
+```
+
+Na interface, selecione XMLs ou um ZIP, veja a fila priorizada, filtre bloqueios,
+ative o teste, personalize a marca e exporte CSV, JSON ou um relatório pronto para
+impressão/PDF. O botão **Encerrar** finaliza o servidor e remove os resultados em memória.
 
 ## Uso
 
@@ -134,7 +156,7 @@ Códigos de saída: `0` tudo certo, `1` há bloqueio (com `--falhar-em-bloqueio`
 
 | | Comunidade | Escritório | Plataforma |
 |---|---|---|---|
-| **Preço** | R$ 0, para sempre | R$ 390/mês | sob consulta |
+| **Preço** | R$ 0, para sempre | R$ 149/mês ou R$ 1.490/ano | sob consulta |
 | Varredura local ilimitada | sim | sim | sim |
 | Regras do corte (`RTC001` a `RTC006`) | sim | sim | sim |
 | Contagem de bloqueios e SKUs | sim | sim | sim |
@@ -143,7 +165,7 @@ Códigos de saída: `0` tudo certo, `1` há bloqueio (com `--falhar-em-bloqueio`
 | Exportar JSON, CSV e HTML | não | sim | sim |
 | Gravar em arquivo, portão de CI | não | sim | sim |
 | Quebra por CNPJ, comparativo | não | sim | sim |
-| Atualização de regras | via GitHub | pacote assinado, no dia da NT | idem |
+| Atualização de regras | via GitHub | atualização prioritária e versionada | idem |
 | Suporte | issues públicas | e-mail, 1 dia útil | contrato |
 | Licença para redistribuir | não | não | sim |
 
@@ -154,7 +176,8 @@ ativação, variáveis de ambiente e emissão de chaves em [docs/planos.md](docs
 O plano gratuito não é isca. Ele responde inteira a pergunta que fez você chegar aqui,
 que é *"meu padrão atual tem risco de rejeição em agosto?"*. O que se paga é o
 trabalho depois da resposta: exportar para quem vai corrigir, travar o pipeline,
-acompanhar a fila semana a semana e receber a regra atualizada no dia em que a NT sai.
+acompanhar a fila semana a semana e receber atualizações priorizadas depois da revisão
+técnica de cada NT.
 
 ## Vários emitentes sem colisão de SKU
 
@@ -223,7 +246,7 @@ publicar suas modificações, existe licença comercial. Veja
 
 Uma observação honesta sobre os planos: o código é aberto, então o gating dos recursos
 pagos está aqui no repositório e qualquer pessoa consegue removê-lo. Isso é conhecido e
-não vai mudar. O que a assinatura entrega não é acesso ao binário, é a regra atualizada
-no dia em que a nota técnica sai, o suporte com prazo e o direito de redistribuir. Quem
+não vai mudar. O que a assinatura entrega não é acesso ao binário: é priorização de
+atualizações após revisão técnica, suporte com prazo e direito de redistribuir. Quem
 precisa patchear para não pagar provavelmente não é o cliente deste produto, e não vale
 transformar a ferramenta em algo que ninguém consegue auditar só por causa disso.

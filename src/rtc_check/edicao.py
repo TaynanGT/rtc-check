@@ -10,8 +10,8 @@ Sobre a honestidade do mecanismo: o RTC Check é AGPL, então o código deste
 módulo está aberto e qualquer pessoa consegue contorná-lo. Isso é intencional e
 não é um problema. A chave assinada existe para deixar o limite do plano
 explícito e para evitar compartilhamento casual, não para ser DRM. Quem paga
-está comprando regra atualizada no dia da NT, suporte e o direito de
-redistribuir; nada disso um patch local entrega.
+está comprando priorização de atualizações após revisão técnica, suporte e o
+direito de redistribuir; nada disso um patch local entrega.
 """
 
 from __future__ import annotations
