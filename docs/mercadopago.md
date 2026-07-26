@@ -14,11 +14,11 @@ Pago e de lá você saca para a conta bancária. Vender o RTC Check dentro do
 digital) e não é necessária para receber: o checkout hospedado do Mercado Pago
 basta e funciona com Pix, cartão e boleto.
 
-## O roteiro sem terminal (recomendado)
+## O roteiro sem terminal e sem custo (recomendado)
 
-Nada aqui exige programar. São cliques e dois copiar-e-colar de credenciais —
-sempre do painel do Mercado Pago direto para o painel da hospedagem, nunca por
-e-mail ou chat.
+Nada aqui exige programar nem pagar hospedagem: o blueprint usa o plano
+**gratuito** do Render. São cliques e copiar-e-colar de credenciais — sempre
+de um painel para outro painel, nunca por e-mail ou chat.
 
 1. **Conta.** Entre em [mercadopago.com.br](https://www.mercadopago.com.br) e
    complete a verificação de identidade (e de CNPJ, se vender como empresa).
@@ -26,31 +26,41 @@ e-mail ou chat.
    use (ou crie) uma aplicação com o produto **CheckoutPro**.
 3. **Hospedagem.** Crie uma conta no [Render](https://dashboard.render.com),
    clique em **New → Blueprint**, conecte seu GitHub e escolha este
-   repositório. O arquivo `render.yaml` já descreve o serviço inteiro
-   (`rtc-check-vendas`, disco persistente, URL pública automática).
+   repositório. O `render.yaml` descreve o serviço inteiro no plano gratuito,
+   com URL pública automática.
 4. **Access token.** No painel do Mercado Pago, em **Credenciais de
    produção**, copie o **Access Token** (`APP_USR-...`) e cole no Render como
-   valor da variável `PAYMENT_API_KEY`.
-5. **Webhook.** Ainda no painel do Mercado Pago, em **Webhooks → Modo
-   produção**, configure a URL
-   `https://SEU-SERVICO.onrender.com/webhook/mercadopago` com o evento
-   **Pagamentos**, copie a **assinatura secreta** exibida e cole no Render em
-   `PAYMENT_WEBHOOK_SECRET`.
-6. **Pronto.** No primeiro boot o servidor gera sozinho a chave de emissão de
-   licenças (fica no disco persistente) e anuncia a chave pública em
+   valor de `PAYMENT_API_KEY`. Os demais campos pedidos podem ficar com um
+   valor temporário (ex.: `trocar-depois`) ou em branco.
+5. **Chave de emissão.** Após o primeiro boot, abra a aba **Logs** do serviço
+   no Render: o servidor gerou a chave que assina as licenças e imprimiu o
+   bloco `-----BEGIN PRIVATE KEY-----`...`-----END PRIVATE KEY-----` com
+   instruções. Copie o bloco inteiro para a variável
+   `RTC_CHECK_CHAVE_PRIVADA_PEM` (aba **Environment**). Sem isso, o plano
+   gratuito perderia a chave num reinício e as licenças vendidas ficariam
+   órfãs. O log é privado da sua conta.
+6. **Webhook.** No painel do Mercado Pago, em **Webhooks → Modo produção**,
+   configure a URL `https://SEU-SERVICO.onrender.com/webhook/mercadopago` com
+   o evento **Pagamentos**, copie a **assinatura secreta** exibida e cole no
+   Render em `PAYMENT_WEBHOOK_SECRET`.
+7. **E-mail (muito recomendado no plano gratuito).** Preencha no Render:
+   `SMTP_HOST=smtp.gmail.com`, `SMTP_USER=seu-gmail`, `SMTP_PASS=senha de
+   aplicativo` (crie em [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords),
+   requer verificação em duas etapas) e `SMTP_FROM=seu-gmail`. Cada venda
+   envia a chave ao comprador **com cópia oculta para você** — sem disco
+   persistente, esse e-mail é o seu registro durável de cada chave vendida.
+8. **Pronto.** O servidor anuncia a chave pública em
    `https://SEU-SERVICO.onrender.com/chave-publica`. Copie esse valor para
-   `CHAVE_PUBLICA_PADRAO` em `src/rtc_check/edicao.py` (ou peça a quem cuida do
-   código — basta informar a URL do serviço) para que as instalações dos
-   clientes reconheçam as licenças vendidas.
+   `CHAVE_PUBLICA_PADRAO` em `src/rtc_check/edicao.py` (ou informe a URL a
+   quem cuida do código) para que as instalações dos clientes reconheçam as
+   licenças vendidas.
 
-E-mail automático da chave é opcional: sem SMTP configurado, cada chave vendida
-fica registrada em `vendas.jsonl` no disco do serviço para envio manual. Para
-automatizar, preencha `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` e `SMTP_FROM` no
-Render (um Gmail com senha de app funciona: host `smtp.gmail.com`).
-
-No plano gratuito do Render o serviço hiberna sem tráfego e o webhook pode
-atrasar alguns segundos até acordar (o Mercado Pago reenvia em caso de erro);
-o plano Starter evita a hibernação.
+Limitações honestas do plano gratuito: o serviço hiberna sem tráfego — a
+página de compra pode levar até ~1 minuto para abrir na primeira visita (o
+webhook não sofre: o Mercado Pago reenvia notificações que falham) — e não há
+disco persistente, papel que os passos 5 e 7 cobrem. Quando as vendas
+justificarem, trocar `plan: free` por `plan: starter` (e opcionalmente voltar
+um disco) elimina as duas limitações.
 
 As seções seguintes detalham o mesmo processo para quem prefere fazer à mão em
 um VPS próprio.

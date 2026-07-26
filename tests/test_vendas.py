@@ -268,15 +268,39 @@ def test_diretorio_de_dados_valida_relativo_e_absoluto(monkeypatch, tmp_path):
             sv._diretorio_de_dados()
 
 
+def test_chave_privada_do_ambiente_e_materializada_no_disco(monkeypatch, tmp_path):
+    pem = Path(os.environ["RTC_CHECK_CHAVE_PRIVADA"]).read_text(encoding="utf-8")
+    monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
+    monkeypatch.setenv("RTC_CHECK_CHAVE_PRIVADA_PEM", pem)
+    sv.garantir_chave_de_emissao(tmp_path)
+    assert (tmp_path / "emissor-ed25519.pem").exists()
+    # A mesma chave do ambiente segue emitindo: a pública configurada confere.
+    chave = ed.gerar_chave(
+        ed.Plano.ESCRITORIO, date.today() + timedelta(days=30), "Ambiente"
+    )
+    assert ed.validar_chave(chave).titular == "Ambiente"
+
+
+def test_pem_aparece_no_log_em_hospedagem_sem_disco(monkeypatch, tmp_path, capsys):
+    monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
+    monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA_PEM", raising=False)
+    monkeypatch.setenv("RENDER", "true")
+    sv.garantir_chave_de_emissao(tmp_path / "dados")
+    saida = capsys.readouterr().err
+    assert "RTC_CHECK_CHAVE_PRIVADA_PEM" in saida
+    assert "BEGIN PRIVATE KEY" in saida
+
+
 def test_chave_de_emissao_e_gerada_uma_vez_e_reaproveitada(monkeypatch, tmp_path):
     monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
-    sv.garantir_chave_de_emissao(tmp_path)
-    caminho = tmp_path / "emissor-ed25519.pem"
-    assert caminho.exists()
+    monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA_PEM", raising=False)
+    dados = tmp_path / "dados"
+    sv.garantir_chave_de_emissao(dados)
+    assert (dados / "emissor-ed25519.pem").exists()
     primeira = sv.chave_publica_do_emissor()
 
     monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
-    sv.garantir_chave_de_emissao(tmp_path)
+    sv.garantir_chave_de_emissao(dados)
     assert sv.chave_publica_do_emissor() == primeira
 
     # Uma licença emitida com essa chave valida contra a pública anunciada.
@@ -334,6 +358,7 @@ def test_email_com_smtp_configurado_carrega_a_chave(monkeypatch, tmp_path):
     assert sv.enviar_chave_por_email(config, "comprador@example.com", "RTC2.a.b", "anual")
     mensagem = next(item[1] for item in envios if item[0] == "mensagem")
     assert mensagem["To"] == "comprador@example.com"
+    assert mensagem["Bcc"] == "vendas@example.com"
     assert "RTC2.a.b" in mensagem.get_content()
     assert ("login", "vendas@example.com") in envios
 

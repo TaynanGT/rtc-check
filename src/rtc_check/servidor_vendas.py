@@ -100,26 +100,41 @@ def _diretorio_de_dados() -> Path:
 
 
 def garantir_chave_de_emissao(diretorio: Path) -> None:
-    """Gera o par Ed25519 do emissor no primeiro boot, se ninguém forneceu um.
+    """Garante uma chave Ed25519 de emissão para este processo.
 
-    A chave privada fica no diretório de dados do servidor (fora do repositório)
-    e passa a valer via RTC_CHECK_CHAVE_PRIVADA para as emissões deste processo.
+    Ordem: RTC_CHECK_CHAVE_PRIVADA (caminho de um PEM), depois
+    RTC_CHECK_CHAVE_PRIVADA_PEM (o conteúdo do PEM, para hospedagem sem disco
+    persistente) e, por fim, geração local no primeiro boot. Em hospedagem
+    sem disco (ex.: plano gratuito do Render), o PEM gerado é mostrado no log
+    privado do serviço para o operador copiá-lo para o ambiente — sem isso, um
+    reinício criaria outra chave e as licenças já vendidas seriam órfãs.
     """
     if os.environ.get("RTC_CHECK_CHAVE_PRIVADA"):
         return
     caminho = diretorio / "emissor-ed25519.pem"
-    if not caminho.exists():
+    pem_do_ambiente = os.environ.get("RTC_CHECK_CHAVE_PRIVADA_PEM", "").strip()
+    if pem_do_ambiente:
+        diretorio.mkdir(parents=True, exist_ok=True)
+        caminho.write_text(pem_do_ambiente + "\n", encoding="utf-8")
+        caminho.chmod(0o600)
+    elif not caminho.exists():
         diretorio.mkdir(parents=True, exist_ok=True)
         privada = Ed25519PrivateKey.generate()
-        caminho.write_bytes(
-            privada.private_bytes(
-                serialization.Encoding.PEM,
-                serialization.PrivateFormat.PKCS8,
-                serialization.NoEncryption(),
-            )
+        pem = privada.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
         )
+        caminho.write_bytes(pem)
         caminho.chmod(0o600)
         print(f"chave de emissão Ed25519 gerada em {caminho}", file=sys.stderr)
+        if os.environ.get("RENDER") or os.environ.get("RTC_CHECK_MOSTRAR_PEM") == "1":
+            print(
+                "esta hospedagem pode não ter disco persistente. Copie o bloco "
+                "abaixo para a variável de ambiente RTC_CHECK_CHAVE_PRIVADA_PEM "
+                "para a chave sobreviver a reinícios:\n" + pem.decode(),
+                file=sys.stderr,
+            )
     os.environ["RTC_CHECK_CHAVE_PRIVADA"] = str(caminho)
 
 
@@ -314,6 +329,11 @@ def enviar_chave_por_email(
     mensagem = EmailMessage()
     mensagem["From"] = config.remetente or config.smtp_usuario
     mensagem["To"] = destinatario
+    # Cópia oculta para o vendedor: em hospedagem sem disco persistente, o
+    # e-mail é o registro durável da chave emitida.
+    copia_do_vendedor = config.smtp_usuario or config.remetente
+    if copia_do_vendedor:
+        mensagem["Bcc"] = copia_do_vendedor
     mensagem["Subject"] = "Sua licença do RTC Check — plano Escritório"
     mensagem.set_content(
         "Obrigado pela compra do RTC Check (plano Escritório, "
