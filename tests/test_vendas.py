@@ -282,6 +282,17 @@ def test_chave_privada_do_ambiente_e_materializada_no_disco(monkeypatch, tmp_pat
     assert ed.validar_chave(chave).titular == "Ambiente"
 
 
+def test_pem_invalido_no_ambiente_e_ignorado_com_aviso(monkeypatch, tmp_path, capsys):
+    monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
+    monkeypatch.setenv("RTC_CHECK_CHAVE_PRIVADA_PEM", "trocar-depois")
+    dados = tmp_path / "dados"
+    sv.garantir_chave_de_emissao(dados)
+    assert "não contém um PEM Ed25519 válido" in capsys.readouterr().err
+    # Uma chave real foi gerada no lugar do placeholder.
+    assert "BEGIN PRIVATE KEY" in (dados / "emissor-ed25519.pem").read_text()
+    assert sv.chave_publica_do_emissor()
+
+
 def test_pem_aparece_no_log_em_hospedagem_sem_disco(monkeypatch, tmp_path, capsys):
     monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
     monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA_PEM", raising=False)

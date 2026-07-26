@@ -99,6 +99,14 @@ def _diretorio_de_dados() -> Path:
     return Path(candidato)
 
 
+def _pem_ed25519_valido(texto: str) -> bool:
+    try:
+        chave = serialization.load_pem_private_key(texto.encode(), password=None)
+    except (ValueError, TypeError):
+        return False
+    return isinstance(chave, Ed25519PrivateKey)
+
+
 def garantir_chave_de_emissao(diretorio: Path) -> None:
     """Garante uma chave Ed25519 de emissão para este processo.
 
@@ -113,6 +121,14 @@ def garantir_chave_de_emissao(diretorio: Path) -> None:
         return
     caminho = diretorio / "emissor-ed25519.pem"
     pem_do_ambiente = os.environ.get("RTC_CHECK_CHAVE_PRIVADA_PEM", "").strip()
+    if pem_do_ambiente and not _pem_ed25519_valido(pem_do_ambiente):
+        # Placeholder ou valor truncado não pode virar a chave do emissor.
+        print(
+            "RTC_CHECK_CHAVE_PRIVADA_PEM não contém um PEM Ed25519 válido; "
+            "ignorando e usando/gerando a chave local",
+            file=sys.stderr,
+        )
+        pem_do_ambiente = ""
     if pem_do_ambiente:
         diretorio.mkdir(parents=True, exist_ok=True)
         caminho.write_text(pem_do_ambiente + "\n", encoding="utf-8")
