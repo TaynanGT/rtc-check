@@ -51,6 +51,7 @@ Planos = "https://taynangt.github.io/rtc-check/#precos"
 [project.scripts]
 rtc-check = "rtc_check.cli:main"
 rtc-check-desktop = "rtc_check.webapp:main"
+rtc-check-vendas = "rtc_check.servidor_vendas:main"
 
 [project.optional-dependencies]
 dev = [

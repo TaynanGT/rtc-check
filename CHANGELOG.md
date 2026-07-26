@@ -3,6 +3,19 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## Não lançado
+
+### Adicionado
+- Integração de pagamentos com Mercado Pago: cliente mínimo da API
+  (`rtc_check/mercadopago.py`) e servidor de vendas `rtc-check-vendas`
+  (`rtc_check/servidor_vendas.py`), que cria o Checkout Pro dos planos mensal e
+  anual, valida a assinatura HMAC do webhook, reconsulta o pagamento na API,
+  confere valor/moeda/status com idempotência por pagamento, emite a licença
+  Ed25519 e envia a chave por e-mail. Vendas, recusas, cancelamentos e
+  reembolsos ficam auditáveis em `vendas.jsonl`.
+- Guia de ativação para o titular da conta em `docs/mercadopago.md`; variáveis
+  correspondentes em `.env.example`.
+
 ## [0.3.0] / 2026-07-26
 
 ### Adicionado

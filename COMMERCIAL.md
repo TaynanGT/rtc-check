@@ -85,6 +85,9 @@ Abra o [formulário do plano Escritório ou licença comercial](https://github.c
 Ele é público: não inclua XML, CNPJ, chave de NF-e nem outros dados confidenciais. Para uma
 conversa privada, use o e-mail exibido no perfil do mantenedor.
 
-O checkout é modular e ainda não está ativo: `.env.example` reserva provedor, URL,
-chave de API e segredo de webhook sem comprometer dados no repositório. Até a conta do
-provedor ser escolhida e verificada pelo titular, a compra é assistida pelo formulário.
+O checkout com Mercado Pago está implementado no repositório
+([docs/mercadopago.md](docs/mercadopago.md)): o servidor `rtc-check-vendas` cria o
+checkout hospedado, valida o webhook assinado e emite a licença por e-mail após o
+pagamento. `.env.example` reserva os nomes das credenciais sem comprometer dados no
+repositório. Até a conta ser verificada pelo titular e o servidor entrar no ar, a
+compra segue assistida pelo formulário.

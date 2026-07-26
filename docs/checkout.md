@@ -14,7 +14,14 @@ o nome do provedor e abre seu checkout hospedado.
 
 ## Contrato do provedor
 
-O backend privado do vendedor, fora deste repositório público, deve:
+O contrato abaixo está implementado para o Mercado Pago em
+`rtc_check/servidor_vendas.py` (comando `rtc-check-vendas`), com o cliente da
+API em `rtc_check/mercadopago.py`. O código é aberto; os segredos (access
+token, segredo do webhook, chave privada Ed25519, SMTP) vivem só no ambiente
+do servidor do vendedor. O passo a passo de ativação está em
+[mercadopago.md](mercadopago.md).
+
+O backend do vendedor deve:
 
 1. criar checkout para o plano mensal ou anual;
 2. receber webhook assinado pelo provedor;
@@ -27,6 +34,7 @@ O backend privado do vendedor, fora deste repositório público, deve:
 Estados mínimos: `checkout_iniciado`, `pagamento_confirmado`,
 `licenca_emitida`, `pagamento_cancelado` e `reembolso_confirmado`.
 
-O checkout automático não está ativo enquanto o titular não escolher o provedor,
-verificar a conta e aceitar seus termos. Essa é uma ação externa e irreversível
-que não deve ser simulada no código.
+O checkout automático não fica ativo enquanto o titular não criar e verificar
+a conta no Mercado Pago, aceitar seus termos e configurar as credenciais no
+servidor de vendas. Essa é uma ação externa e irreversível que não deve ser
+simulada no código; até lá, a compra segue assistida pelo formulário.

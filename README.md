@@ -172,6 +172,8 @@ Códigos de saída: `0` tudo certo, `1` há bloqueio (com `--falhar-em-bloqueio`
 O teste grátis de 14 dias libera tudo da coluna Escritório, sem cadastro, sem cartão
 e sem rede: `rtc-check --iniciar-teste` grava um arquivo local e pronto. Detalhes de
 ativação, variáveis de ambiente e emissão de chaves em [docs/planos.md](docs/planos.md).
+O recebimento dos pagamentos usa o Mercado Pago; a implementação e o roteiro de
+ativação estão em [docs/mercadopago.md](docs/mercadopago.md).
 
 O plano gratuito não é isca. Ele responde inteira a pergunta que fez você chegar aqui,
 que é *"meu padrão atual tem risco de rejeição em agosto?"*. O que se paga é o
