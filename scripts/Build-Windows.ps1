@@ -18,7 +18,10 @@ try {
     uv sync --all-extras
     uv run ruff check .
     uv run mypy
-    uv run pytest -q
+    # O fluxo de navegador tem job próprio no CI, com Chromium instalado.
+    # O empacotamento valida toda a suíte restante sem baixar um navegador
+    # de centenas de MB que não faz parte do executável distribuído.
+    uv run pytest -q -m "not browser"
 
     New-Item -ItemType Directory -Force -Path $resolvedOutput | Out-Null
 
