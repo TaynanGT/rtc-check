@@ -99,6 +99,10 @@ function escapeText(value) {
   return node.innerHTML;
 }
 
+function escapeAttribute(value) {
+  return escapeText(value).replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+}
+
 async function copyText(value, successMessage) {
   try {
     await navigator.clipboard.writeText(value);
@@ -142,7 +146,7 @@ function renderRows() {
         <span class="description">${escapeText(item.descricao)}</span>${messages}</td>
       <td><span class="action">${escapeText(first.acao)}</span>
         <button class="button ghost compact copy-action" type="button"
-          data-copy-sku="${escapeText(item.sku)}">Copiar ação</button></td>
+          data-copy-sku="${escapeAttribute(item.sku)}">Copiar ação</button></td>
       <td><span class="impact">${item.ocorrencias.toLocaleString("pt-BR")} ocorrência(s)</span>
         <span class="description">${item.notas_afetadas.toLocaleString("pt-BR")} nota(s)</span></td>
       <td><span class="code">${escapeText(item.emitente)}</span></td>
@@ -231,7 +235,7 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toLocaleString("pt-BR", {maximumFractionDigits: 1})} MB`;
 }
 
-function updateSelection(files) {
+function updateSelection(files, {preserveResult = false} = {}) {
   const received = [...files];
   selectedFiles = received.filter((file) => /\.(xml|zip)$/i.test(file.name));
   const rejected = received.length - selectedFiles.length;
@@ -251,13 +255,17 @@ function updateSelection(files) {
     : `${formatBytes(total)} no total${rejected ? ` · ${rejected} arquivo(s) ignorado(s)` : ""}`;
   const visible = selectedFiles.slice(0, 3);
   $("#selection-files").innerHTML = visible.map((file) =>
-    `<li title="${escapeText(file.name)}">${escapeText(file.name)} · ${formatBytes(file.size)}</li>`
+    `<li title="${escapeAttribute(file.name)}">${escapeText(file.name)} · ${formatBytes(file.size)}</li>`
   ).join("") + (selectedFiles.length > 3
     ? `<li>+ ${selectedFiles.length - 3} arquivo(s)</li>` : "");
   $("#analyze").disabled = !selectedFiles.length || tooLarge;
-  currentResult = null;
-  $("#results").classList.add("hidden");
-  setStep(1);
+  if (!preserveResult) {
+    currentResult = null;
+    $("#results").classList.add("hidden");
+    setStep(1);
+  } else {
+    setStep(currentResult ? 3 : 1);
+  }
   if (!selectedFiles.length && rejected) {
     toast("Nenhum XML ou ZIP válido foi encontrado na seleção.");
   }
@@ -272,8 +280,7 @@ async function activateTrial() {
         toast(`${payload.mensagem} Refazendo a análise com todos os recursos…`);
         await analyzeSelected("Reprocessando o lote com todos os recursos liberados.");
       } else {
-        toast(`${payload.mensagem} Liberando o resultado armazenado…`);
-        await refreshCurrentResult();
+        toast(`${payload.mensagem} Selecione o lote novamente para aplicar todas as regras.`);
       }
     } else {
       toast(payload.mensagem);
@@ -281,15 +288,6 @@ async function activateTrial() {
   } catch (error) {
     toast(error.message);
   }
-}
-
-async function refreshCurrentResult() {
-  if (!currentResult) return;
-  const result = await api(`/api/atualizar/${currentResult.id}`, {
-    method: "POST",
-    body: "{}",
-  });
-  renderResult(result);
 }
 
 function analyzeSelected(message = `Processando ${selectedFiles.length} arquivo(s) somente neste PC.`) {
@@ -335,8 +333,8 @@ $("#selection-clear").addEventListener("click", () => {
   selectedFiles = [];
   $("#files").value = "";
   $("#folder-files").value = "";
-  updateSelection([]);
-  toast("Seleção limpa.");
+  updateSelection([], {preserveResult: true});
+  toast(currentResult ? "Seleção limpa; o resultado atual foi preservado." : "Seleção limpa.");
 });
 const dropzone = $("#dropzone");
 ["dragenter", "dragover"].forEach((name) => dropzone.addEventListener(name, (event) => {
@@ -462,8 +460,7 @@ $("#license-activate").addEventListener("click", async (event) => {
         toast(`${payload.mensagem} Refazendo a análise com a licença ativa…`);
         await analyzeSelected("Reprocessando o lote com a licença ativa.");
       } else {
-        toast(`${payload.mensagem} Liberando o resultado armazenado…`);
-        await refreshCurrentResult();
+        toast(`${payload.mensagem} Selecione o lote novamente para aplicar todas as regras.`);
       }
     } else {
       toast(payload.mensagem);
