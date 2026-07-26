@@ -133,9 +133,9 @@ jobs:
           # Acervo com bloqueio conhecido: precisa sair 1.
           conferir 1 "acervo com bloqueio" tests/fixtures --falhar-em-bloqueio
 
-          # Pasta vazia: precisa sair 0.
+          # Pasta sem XML: o portão não pode passar verde sem analisar nada.
           mkdir -p vazia
-          conferir 0 "acervo limpo" vazia --falhar-em-bloqueio
+          conferir 2 "portão sem nenhum XML" vazia --falhar-em-bloqueio
 
           echo "exit codes corretos nos cinco cenários"
 
