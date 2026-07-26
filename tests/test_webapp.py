@@ -193,6 +193,9 @@ def test_http_entrega_interface_status_e_seguranca(app_local):
     assert status == 200
     assert dados["privacidade"]["telemetria"] is False
     assert dados["plano"] == "Comunidade"
+    assert not dados["em_teste"]
+    assert not dados["licenciado"]
+    assert dados["checkout"]["preco_mensal"] == "R$ 149/mês"
 
     assert _request(
         base,
@@ -230,7 +233,7 @@ def test_http_demo_e_todos_os_downloads(app_local):
         assert "attachment" in headers["Content-Disposition"]
 
 
-def test_http_upload_real_e_bloqueia_exportacao_no_comunidade(app_local):
+def test_http_upload_real_e_trial_atualiza_resultado_sem_novo_upload(app_local):
     base, _ = app_local
     tipo, corpo = _multipart(
         [("nota.xml", (FIXTURES / "legado_crt3.xml").read_bytes())]
@@ -255,6 +258,30 @@ def test_http_upload_real_e_bloqueia_exportacao_no_comunidade(app_local):
     )
     assert status == 402
     assert "Escritório" in json.loads(body)["erro"]
+
+    status, _, body = _request(base, "/api/teste", method="POST", body=b"{}")
+    assert status == 200
+    status_teste = json.loads(body)["status"]
+    assert status_teste["em_teste"]
+    assert not status_teste["licenciado"]
+
+    status, _, body = _request(
+        base,
+        f"/api/atualizar/{resultado['id']}",
+        method="POST",
+        body=b"{}",
+    )
+    assert status == 200
+    atualizado = json.loads(body)
+    assert atualizado["pode_exportar"]
+    assert atualizado["grupos_ocultos"] == 0
+
+    assert _request(
+        base,
+        f"/api/exportar/{resultado['id']}/csv",
+        method="POST",
+        body=b"{}",
+    )[0] == 200
 
 
 def test_http_trata_erros_e_ativa_teste(app_local):
