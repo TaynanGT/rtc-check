@@ -3,6 +3,20 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.5.1] / 2026-07-26
+
+### Corrigido
+- Licenças assinadas pelo emissor anterior continuam validando após a troca da
+  chave oficial: a verificação aceita uma lista de chaves públicas confiáveis.
+- Chave privada de emissão inválida no ambiente derruba o servidor de vendas na
+  inicialização, em vez de falhar na primeira venda.
+- Notificações concorrentes do mesmo pagamento são serializadas por trava,
+  garantindo a emissão única também sob concorrência.
+
+### Adicionado
+- `RTC_CHECK_PERMITIR_SANDBOX=1` permite homologar o checkout completo com
+  pagamentos de teste do Mercado Pago, sem afrouxar a produção.
+
 ## [0.5.0] / 2026-07-26
 
 Da resposta ao recebimento: esta versão liga o checkout de verdade. Assinar o
