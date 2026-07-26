@@ -3,6 +3,22 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.4.1] / 2026-07-26
+
+### Adicionado
+- Contrato versionado de webhook com HMAC, timestamp, idempotência, retries e
+  schema JSON fechado.
+- Critérios de sandbox para cupons, reembolsos, renovação e elegibilidade, sem
+  criar desconto fictício no aplicativo.
+- `scripts/Sign-Windows.ps1`, que assina e valida o executável quando um
+  certificado Authenticode real estiver instalado.
+
+### Alterado
+- O catálogo de 100 melhorias agora distingue capacidades entregues,
+  preparadas e substituídas, sem ocultar dependências externas.
+- A landing page aponta para os contratos de integração e a suíte verifica os
+  artefatos externos.
+
 ## [0.4.0] / 2026-07-26
 
 ### Adicionado
@@ -14,6 +30,8 @@ Versionamento semântico.
   histórico, diagnóstico e eventos operacionais estritamente locais.
 - Smoke visual Chromium no CI, auditoria de dependências, validação do site e
   materiais de suporte, parceiros, vendas e primeiros cinco minutos.
+- Contratos externos versionados para webhook/cupom e script opcional de
+  assinatura Authenticode, sem fingir que provedor ou certificado já existem.
 
 ### Alterado
 - Fluxos demorados agora são assíncronos, canceláveis e protegidos contra

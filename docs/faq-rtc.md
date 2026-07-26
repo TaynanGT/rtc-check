@@ -13,7 +13,7 @@ UB12-10. A regra pode ter exceções; leia a mensagem completa e a fonte exibida
 ## Quais documentos entram?
 
 NF-e modelo 55 é a cobertura principal. NFS-e, CT-e, eventos e cálculo tributário
-integral estão fora do escopo da versão 0.4.0.
+integral estão fora do escopo da versão 0.4.1.
 
 ## Meus XMLs vão para a Internet?
 

@@ -3,8 +3,10 @@
 Este catálogo transforma o pedido de evolução em um backlog verificável. Os
 itens marcados como **feito nesta rodada** foram implementados e validados no
 branch atual; os marcados como **já presente** foram conferidos na base; os
-demais permanecem como próximos incrementos, sem serem apresentados como
-entregues.
+marcados como **preparado** têm contrato, script ou critérios de aceitação
+prontos, mas aguardam uma autoridade externa. O item **substituído** recebeu
+uma solução mais durável. Nada abaixo é apresentado como integração ativa sem
+evidência.
 
 ## 1. Produto e experiência principal
 
@@ -56,7 +58,7 @@ entregues.
 37. **feito nesta rodada** — Usar nomes de arquivo estáveis e amigáveis no pacote.
 38. **já presente** — Copiar a fila em formato tabular para ERP, planilha ou chamado.
 39. **feito nesta rodada** — Copiar a primeira ação e o resumo executivo.
-40. **não ativado** — Webhook exige URL, autenticação e contrato do sistema receptor; foi deliberadamente deixado fora para não criar envio externo implícito.
+40. **preparado** — Contrato HMAC, esquema JSON, idempotência, replay protection e casos de retry estão em `docs/webhook-e-cupons.md`; o envio real aguarda o receptor privado.
 
 ## 5. Interface, acessibilidade e teclado
 
@@ -82,7 +84,7 @@ entregues.
 57. **feito nesta rodada** — Manter tabela pública de comparação Comunidade, Escritório e Plataforma.
 58. **feito nesta rodada** — Registrar somente eventos operacionais agregados no navegador, sem dados fiscais.
 59. **feito nesta rodada** — Formulário privado com consentimento explícito e interesse comercial, sem aceitar XML ou dados fiscais.
-60. **não ativado** — Cupom real depende de checkout, regra comercial e responsável financeiro; não foi simulado nem embutido na licença local.
+60. **preparado** — Ciclo de vida, casos de sandbox e limites de responsabilidade estão documentados; o cupom real continua no provedor financeiro.
 
 ## 7. Onboarding, confiança e documentação
 
@@ -117,7 +119,7 @@ entregues.
 83. **já presente** — Limites de memória e descarte de temporários.
 84. **já presente** — Dependências de runtime pequenas e explícitas.
 85. **já presente** — Entrada de console e interface Desktop no mesmo pacote.
-86. **bloqueado externamente** — Assinatura Authenticode requer certificado de editor; há SHA-256 e instrução de verificação até ele existir.
+86. **preparado** — `scripts/Sign-Windows.ps1` assina e valida quando um certificado de editor estiver instalado; sem certificado, o release mantém SHA-256 e instruções de verificação.
 87. **feito nesta rodada** — Adicionar `rtc-check --diagnostico` sem revelar dados sensíveis.
 88. **já presente** — Empacotamento Windows reproduzível com PyInstaller já está no script de release.
 89. **já presente** — Teste de volume mede tempo e pico de memória para 2.000 XMLs/10.000 itens, com teto de regressão no CI.
@@ -140,7 +142,7 @@ entregues.
 
 O pacote atual fecha o caminho principal: importar, analisar localmente,
 entender a fila, comparar, copiar, entregar um ZIP profissional e pedir suporte
-sem expor XMLs. Três itens dependem de identidade, contrato ou sistema externo
-(webhook, cupom e Authenticode) e não foram simulados como recursos reais. O GIF
-foi substituído deliberadamente por demonstração interativa e teste visual do
-fluxo verdadeiro.
+sem expor XMLs. Os três itens que precisam de identidade, contrato ou sistema
+externo agora têm seu contrato, script ou critérios de aceitação preparados;
+nenhum foi falsamente apresentado como ativo. O GIF foi substituído
+deliberadamente por demonstração interativa e teste visual do fluxo verdadeiro.

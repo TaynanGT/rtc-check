@@ -3,7 +3,7 @@
 Cada release publica `SHA256SUMS.txt`. No Windows:
 
 ```powershell
-Get-FileHash .\RTC-Check-Windows-0.4.0.zip -Algorithm SHA256
+Get-FileHash .\RTC-Check-Windows-0.4.1.zip -Algorithm SHA256
 ```
 
 Compare o valor com o arquivo da mesma release. Fixe uma tag em automações e leia o

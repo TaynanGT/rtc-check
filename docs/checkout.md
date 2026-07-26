@@ -31,6 +31,9 @@ O checkout automático não está ativo enquanto o titular não escolher o prove
 verificar a conta e aceitar seus termos. Essa é uma ação externa e irreversível
 que não deve ser simulada no código.
 
+Os contratos de webhook, cupons, retries, idempotência e assinatura estão em
+[`webhook-e-cupons.md`](webhook-e-cupons.md) e [`webhook-event.schema.json`](webhook-event.schema.json).
+
 Defina também `RTC_CHECK_CHECKOUT_ALLOWED_HOSTS` com uma lista separada por
 vírgulas dos hosts exatos autorizados. Uma URL HTTPS cujo host não esteja nessa
 lista cai com segurança para a compra assistida.
