@@ -162,6 +162,9 @@ quando quiser divulgar o checkout direto.
 
 ## 6. Testar antes de divulgar
 
+Defina `RTC_CHECK_PERMITIR_SANDBOX=1` no ambiente de homologação — sem essa
+variável, pagamento de sandbox (`live_mode` falso) é recusado e nunca vira
+licença, o que é o comportamento certo em produção.
 Use as **credenciais de teste** da mesma aplicação (outro Access Token) e os
 [cartões de teste](https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/additional-content/your-integrations/test/cards)
 do Mercado Pago num servidor de homologação; o fluxo é idêntico. Confira:

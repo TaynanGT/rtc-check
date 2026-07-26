@@ -37,6 +37,20 @@ from .edicao import Plano, _b64_codificar, _chave_privada, gerar_chave
 MAX_CORPO_WEBHOOK = 64 * 1024
 LIMITE_DE_COMPRAS_POR_MINUTO = 10
 _TRAVA_REGISTRO = threading.Lock()
+_TRAVAS_DE_PAGAMENTO: dict[str, threading.Lock] = {}
+_TRAVA_DAS_TRAVAS = threading.Lock()
+
+
+def _trava_do_pagamento(id_pagamento: str) -> threading.Lock:
+    """Serializa notificações concorrentes do mesmo pagamento.
+
+    Sem isso, dois webhooks simultâneos do mesmo id poderiam passar juntos
+    pela checagem de idempotência e emitir duas licenças.
+    """
+    with _TRAVA_DAS_TRAVAS:
+        if len(_TRAVAS_DE_PAGAMENTO) > 10_000:
+            _TRAVAS_DE_PAGAMENTO.clear()
+        return _TRAVAS_DE_PAGAMENTO.setdefault(id_pagamento, threading.Lock())
 
 # Estados do contrato em docs/checkout.md.
 LICENCA_EMITIDA = "licenca_emitida"
@@ -136,7 +150,13 @@ def garantir_chave_de_emissao(diretorio: Path) -> None:
     privado do serviço para o operador copiá-lo para o ambiente — sem isso, um
     reinício criaria outra chave e as licenças já vendidas seriam órfãs.
     """
-    if os.environ.get("RTC_CHECK_CHAVE_PRIVADA"):
+    caminho_configurado = os.environ.get("RTC_CHECK_CHAVE_PRIVADA")
+    if caminho_configurado:
+        # Chave inválida precisa derrubar o boot, não a primeira venda.
+        try:
+            _chave_privada(caminho_configurado)
+        except ValueError as erro:
+            raise SystemExit(f"RTC_CHECK_CHAVE_PRIVADA inválida: {erro}") from erro
         return
     caminho = diretorio / "emissor-ed25519.pem"
     bruto = os.environ.get("RTC_CHECK_CHAVE_PRIVADA_PEM", "")
@@ -285,8 +305,22 @@ def processar_pagamento(
     valor corretos e no máximo uma vez por pagamento. Estados finais
     (cancelamento, reembolso, chargeback) são registrados mesmo quando chegam
     depois da emissão; a chave já emitida expira sozinha. O pagamento é sempre
-    reconsultado na API — o corpo do webhook nunca é confiável.
+    reconsultado na API — o corpo do webhook nunca é confiável — e as
+    notificações de um mesmo id são serializadas por trava.
     """
+    with _trava_do_pagamento(id_pagamento):
+        return _processar_pagamento_travado(
+            id_pagamento, diretorio, buscar_pagamento=buscar_pagamento, hoje=hoje
+        )
+
+
+def _processar_pagamento_travado(
+    id_pagamento: str,
+    diretorio: Path,
+    *,
+    buscar_pagamento: Callable[[str], dict[str, Any]] | None = None,
+    hoje: date | None = None,
+) -> ResultadoDaVenda:
     eventos = eventos_registrados(diretorio, id_pagamento)
     buscar = buscar_pagamento or mp.obter_pagamento
     pagamento = buscar(id_pagamento)
@@ -331,7 +365,8 @@ def processar_pagamento(
     pagador = pagamento.get("payer")
     email = str((pagador.get("email") if isinstance(pagador, dict) else None) or "")
 
-    if pagamento.get("live_mode") is False:
+    sandbox_permitido = os.environ.get("RTC_CHECK_PERMITIR_SANDBOX") == "1"
+    if pagamento.get("live_mode") is False and not sandbox_permitido:
         motivo = "pagamento do ambiente de teste do Mercado Pago não emite licença"
     elif plano is None:
         motivo = "pagamento aprovado sem plano do RTC Check reconhecido"

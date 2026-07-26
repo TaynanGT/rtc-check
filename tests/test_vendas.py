@@ -119,7 +119,8 @@ def test_reembolso_depois_da_venda_e_registrado_uma_unica_vez(tmp_path):
     assert repetido.desfecho == sv.PAGAMENTO_DUPLICADO
 
 
-def test_pagamento_de_ambiente_de_teste_nao_emite(tmp_path):
+def test_pagamento_de_ambiente_de_teste_nao_emite(tmp_path, monkeypatch):
+    monkeypatch.delenv("RTC_CHECK_PERMITIR_SANDBOX", raising=False)
     resultado = sv.processar_pagamento(
         "778",
         tmp_path,
@@ -127,6 +128,54 @@ def test_pagamento_de_ambiente_de_teste_nao_emite(tmp_path):
     )
     assert resultado.desfecho == sv.PAGAMENTO_RECUSADO
     assert "ambiente de teste" in resultado.detalhe
+
+    # Homologação opta explicitamente por aceitar pagamentos de sandbox.
+    monkeypatch.setenv("RTC_CHECK_PERMITIR_SANDBOX", "1")
+    homologado = sv.processar_pagamento(
+        "779",
+        tmp_path,
+        buscar_pagamento=lambda _id: _pagamento_aprovado("mensal", live_mode=False),
+    )
+    assert homologado.desfecho == sv.LICENCA_EMITIDA
+
+
+def test_chave_privada_configurada_invalida_derruba_o_boot(monkeypatch, tmp_path):
+    monkeypatch.setenv("RTC_CHECK_CHAVE_PRIVADA", str(tmp_path / "nao-existe.pem"))
+    with pytest.raises(SystemExit, match="RTC_CHECK_CHAVE_PRIVADA inválida"):
+        sv.garantir_chave_de_emissao(tmp_path)
+
+
+def test_licenca_do_emissor_anterior_continua_valida(monkeypatch, tmp_path):
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    from rtc_check import edicao as ed_modulo
+
+    # A instalação confia na chave nova (padrão) e na anterior; uma licença
+    # assinada pelo emissor antigo precisa continuar validando.
+    antiga = Ed25519PrivateKey.generate()
+    caminho = tmp_path / "emissor-antigo.pem"
+    caminho.write_bytes(
+        antiga.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        )
+    )
+    publica_antiga = ed._b64_codificar(
+        antiga.public_key().public_bytes(
+            serialization.Encoding.Raw, serialization.PublicFormat.Raw
+        )
+    )
+    monkeypatch.delenv("RTC_CHECK_CHAVE_PUBLICA", raising=False)
+    monkeypatch.setattr(ed_modulo, "CHAVES_PUBLICAS_ANTERIORES", (publica_antiga,))
+    chave = ed.gerar_chave(
+        ed.Plano.ESCRITORIO,
+        date.today() + timedelta(days=10),
+        "Cliente Antigo",
+        caminho_chave_privada=str(caminho),
+    )
+    assert ed.validar_chave(chave).titular == "Cliente Antigo"
 
 
 def test_valor_errado_moeda_errada_e_plano_desconhecido_nao_emitem(tmp_path):
