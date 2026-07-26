@@ -1,2 +1,7 @@
 * text=auto eol=lf
 *.png binary
+
+# Fixture gravado em ISO-8859-1 de proposito: e o encoding da maior parte do
+# acervo real de NF-e. Sem o -text, a normalizacao do git pode mexer nos bytes
+# e o teste de acentuacao passa a depender do sistema onde foi feito o checkout.
+tests/fixtures/nfce_mod65_cpf.xml -text

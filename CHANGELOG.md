@@ -3,6 +3,27 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [Não publicado]
+
+### Corrigido
+- Arquivos com extensão em caixa alta (`NFe123.XML`, como o portal do SEFAZ
+  entrega) eram ignorados na varredura no Linux, sem erro nenhum. Um acervo
+  lido pela metade produzia um "nenhum bloqueio encontrado" mentiroso. A
+  extensão agora é comparada sem diferenciar maiúsculas.
+- O limiar do layout 4.00 comparava a versão como texto, e `"10.00" >= "4.00"`
+  é falso: um layout futuro faria a ferramenta parar de cobrar o literal
+  `SEM GTIN` em silêncio. `"4.0"` tinha o mesmo destino. A comparação passou a
+  ser numérica, por componente.
+- Um arquivo sem permissão de leitura ou apagado no meio da varredura derrubava
+  a análise inteira com traceback: só `ParseError` era capturado. Agora vira
+  linha no relatório de ilegíveis, como o XML malformado já virava.
+
+### Segurança
+- O CSV neutraliza fórmula de planilha. `cProd` e `xProd` vêm de XML emitido
+  por terceiro, e o CSV existe justamente para ser aberto no Excel pelo time de
+  cadastro: uma descrição começando com `=` era entregue como fórmula
+  executável. A saída HTML já escapava; a CSV não.
+
 ## [0.1.1] / 2026-07-25
 
 ### Corrigido

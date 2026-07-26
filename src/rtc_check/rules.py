@@ -33,10 +33,6 @@ class Achado:
     ncm: str
     arquivo: str
 
-    @property
-    def chave_sku(self) -> tuple[str, str]:
-        return (self.sku, self.codigo)
-
 
 def _achado(
     sev: Severidade, codigo: str, mensagem: str, nota: NotaFiscal, item: Item

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+  NFC-e (modelo 65) de emitente pessoa fisica, em layout 3.10.
+
+  Cobre tres caminhos que nenhum outro fixture exercitava e que a cobertura de
+  linha nao denunciava, porque sao o lado direito de um "or" numa linha so:
+
+    - modelo 65 em vez de 55 (o parser diz suportar NFC-e);
+    - emitente com CPF em vez de CNPJ;
+    - data de emissao em dEmi em vez de dhEmi (layout anterior ao 4.00).
+
+  Vem em ISO-8859-1 de proposito: e o encoding da maior parte do acervo real, e
+  a acentuacao de xNome/xProd tem que sobreviver a leitura.
+-->
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="3.10">
+  <NFe>
+    <infNFe Id="NFe35150300822602000124650010009923461099234656" versao="3.10">
+      <ide>
+        <cUF>35</cUF>
+        <natOp>VENDA AO CONSUMIDOR</natOp>
+        <mod>65</mod>
+        <serie>1</serie>
+        <nNF>992346</nNF>
+        <dEmi>2015-03-18</dEmi>
+        <tpNF>1</tpNF>
+      </ide>
+      <emit>
+        <CPF>12345678909</CPF>
+        <xNome>ARMAZÉM SÃO JOÃO - COMÉRCIO DE ALIMENTAÇÃO</xNome>
+        <CRT>1</CRT>
+      </emit>
+      <det nItem="1">
+        <prod>
+          <cProd>NFCE-001</cProd>
+          <cEAN></cEAN>
+          <xProd>PÃO FRANCÊS A GRANEL</xProd>
+          <NCM>19059090</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>KG</uCom>
+          <qCom>2.5000</qCom>
+          <vUnCom>18.9000</vUnCom>
+          <vProd>47.25</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMSSN102>
+              <orig>0</orig>
+              <CSOSN>102</CSOSN>
+            </ICMSSN102>
+          </ICMS>
+        </imposto>
+      </det>
+    </infNFe>
+  </NFe>
+</nfeProc>

@@ -42,3 +42,35 @@ def test_digito_verificador_gtin8():
     corpo = "9638507"
     dv = gtin.digito_verificador(corpo)
     assert gtin.validar(corpo + str(dv))[0]
+
+
+@pytest.mark.parametrize("tamanho", gtin.TAMANHOS_VALIDOS)
+def test_todos_os_tamanhos_aceitos_fazem_ida_e_volta(tamanho):
+    """``TAMANHOS_VALIDOS`` tem quatro entradas; só 8 e 13 eram exercitadas."""
+    corpo = "".join(str((i * 7 + 3) % 10) for i in range(tamanho - 1))
+    valido, motivo = gtin.validar(corpo + str(gtin.digito_verificador(corpo)))
+    assert valido, motivo
+
+
+@pytest.mark.parametrize("tamanho", gtin.TAMANHOS_VALIDOS)
+def test_dv_errado_e_recusado_em_todos_os_tamanhos(tamanho):
+    corpo = "".join(str((i * 7 + 3) % 10) for i in range(tamanho - 1))
+    dv_errado = (gtin.digito_verificador(corpo) + 1) % 10
+    valido, motivo = gtin.validar(corpo + str(dv_errado))
+    assert not valido
+    assert "dígito verificador" in motivo
+
+
+@pytest.mark.parametrize("tamanho", [7, 9, 11, 15])
+def test_tamanhos_fora_da_tabela_sao_recusados(tamanho):
+    valido, motivo = gtin.validar("1" * tamanho)
+    assert not valido
+    assert "dígitos" in motivo
+
+
+@pytest.mark.parametrize(
+    ("valor", "vazio"),
+    [(None, True), ("", True), ("   ", True), ("\t", True), ("0", False)],
+)
+def test_esta_vazio(valor, vazio):
+    assert gtin.esta_vazio(valor) is vazio

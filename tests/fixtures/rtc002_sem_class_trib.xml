@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Emitente CRT=3 que ja adotou o grupo gIBSCBS, mas deixou de informar o
+  cClassTrib. E o caso do meio, e o mais traicoeiro: o ERP foi atualizado, o
+  grupo aparece na nota, e por isso o time acredita estar pronto. Falta o codigo
+  de classificacao tributaria, que e obrigatorio por item, e a nota e rejeitada
+  do mesmo jeito depois de 03/08/2026.
+
+  O item 2 tem o grupo completo, com cClassTrib: e o contraste que garante que a
+  regra acusa o item errado e so ele.
+-->
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe35240712345678000199550010000000051000000059" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <natOp>VENDA DE MERCADORIA</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>5</nNF>
+        <dhEmi>2026-07-24T11:30:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+      </ide>
+      <emit>
+        <CNPJ>12345678000199</CNPJ>
+        <xNome>METALURGICA HORIZONTE LTDA</xNome>
+        <CRT>3</CRT>
+      </emit>
+      <det nItem="1">
+        <prod>
+          <cProd>SKU-5005</cProd>
+          <cEAN>7891234567895</cEAN>
+          <xProd>PERFIL U ENRIJECIDO 100MM</xProd>
+          <NCM>72166100</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>MT</uCom>
+          <qCom>80.0000</qCom>
+          <vUnCom>45.0000</vUnCom>
+          <vProd>3600.00</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <vICMS>648.00</vICMS>
+            </ICMS00>
+          </ICMS>
+          <IBSCBS>
+            <CST>000</CST>
+            <gIBSCBS>
+              <vBC>3600.00</vBC>
+              <gIBSUF>
+                <pIBSUF>0.1000</pIBSUF>
+                <vIBSUF>3.60</vIBSUF>
+              </gIBSUF>
+              <gCBS>
+                <pCBS>0.9000</pCBS>
+                <vCBS>32.40</vCBS>
+              </gCBS>
+            </gIBSCBS>
+          </IBSCBS>
+        </imposto>
+      </det>
+      <det nItem="2">
+        <prod>
+          <cProd>SKU-5006</cProd>
+          <cEAN>SEM GTIN</cEAN>
+          <xProd>CANTONEIRA ABAS IGUAIS 50X50</xProd>
+          <NCM>72161000</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>MT</uCom>
+          <qCom>40.0000</qCom>
+          <vUnCom>28.0000</vUnCom>
+          <vProd>1120.00</vProd>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <vICMS>201.60</vICMS>
+            </ICMS00>
+          </ICMS>
+          <IBSCBS>
+            <CST>000</CST>
+            <cClassTrib>000001</cClassTrib>
+            <gIBSCBS>
+              <vBC>1120.00</vBC>
+              <gIBSUF>
+                <pIBSUF>0.1000</pIBSUF>
+                <vIBSUF>1.12</vIBSUF>
+              </gIBSUF>
+              <gCBS>
+                <pCBS>0.9000</pCBS>
+                <vCBS>10.08</vCBS>
+              </gCBS>
+            </gIBSCBS>
+          </IBSCBS>
+        </imposto>
+      </det>
+    </infNFe>
+  </NFe>
+</nfeProc>

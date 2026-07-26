@@ -22,7 +22,7 @@ CRT_REGIME_NORMAL = "3"
 # O literal "SEM GTIN" para produto sem codigo de barras so existe a partir do
 # layout 4.00 (NT 2016.002). Em 2.00 e 3.xx, cEAN vazio era a forma correta de
 # dizer a mesma coisa, entao cobrar o literal ali e falso positivo.
-LAYOUT_COM_SEM_GTIN = "4.00"
+LAYOUT_COM_SEM_GTIN = (4, 0)
 
 
 class XmlInvalido(Exception):
@@ -62,7 +62,28 @@ class NotaFiscal:
     @property
     def exige_literal_sem_gtin(self) -> bool:
         """Só o layout 4.00 em diante conhece o literal ``SEM GTIN``."""
-        return self.versao >= LAYOUT_COM_SEM_GTIN
+        return versao_como_tupla(self.versao) >= LAYOUT_COM_SEM_GTIN
+
+
+def versao_como_tupla(versao: str) -> tuple[int, ...]:
+    """Converte ``"4.00"`` em ``(4, 0)`` para comparar layout por ordem numérica.
+
+    Comparar a string crua parece funcionar e não funciona: ``"10.00" >= "4.00"``
+    é falso, e um layout futuro faria a ferramenta parar de cobrar o literal
+    ``SEM GTIN`` sem avisar ninguém. Versão vazia ou ilegível vira ``()``, que é
+    menor que qualquer versão real: na dúvida, não acusar.
+    """
+    partes: list[int] = []
+    for parte in versao.split("."):
+        digitos = ""
+        for caractere in parte:
+            if not caractere.isdigit():
+                break
+            digitos += caractere
+        if not digitos:
+            return ()
+        partes.append(int(digitos))
+    return tuple(partes)
 
 
 def _texto(elemento: ElementTree.Element, caminho: str) -> str:
@@ -81,6 +102,11 @@ def ler_nota(caminho: Path) -> NotaFiscal:
         arvore = ElementTree.parse(caminho)
     except ElementTree.ParseError as erro:
         raise XmlInvalido(f"XML malformado: {erro}") from erro
+    except OSError as erro:
+        # Um arquivo sem permissao, apagado no meio da varredura ou num share de
+        # rede que piscou nao pode derrubar a analise de um acervo inteiro: vira
+        # linha no relatorio de ilegiveis, como o XML malformado ja virava.
+        raise XmlInvalido(f"não foi possível ler o arquivo: {erro}") from erro
 
     raiz = arvore.getroot()
     inf = raiz.find(".//nfe:infNFe", NS)
@@ -126,6 +152,14 @@ def ler_nota(caminho: Path) -> NotaFiscal:
 
 
 def varrer_pasta(pasta: Path, recursivo: bool = True) -> list[Path]:
-    """Lista os XMLs de uma pasta, ordenados para tornar a saída determinística."""
-    padrao = "**/*.xml" if recursivo else "*.xml"
-    return sorted(p for p in pasta.glob(padrao) if p.is_file())
+    """Lista os XMLs de uma pasta, ordenados para tornar a saída determinística.
+
+    A extensão é comparada sem diferenciar maiúsculas: o portal do SEFAZ e boa
+    parte das ferramentas de Windows entregam ``NFe123.XML``. Filtrar por
+    ``*.xml`` deixava esses arquivos de fora no Linux sem erro nenhum, e um
+    acervo lido pela metade vira um "nenhum bloqueio encontrado" mentiroso.
+    """
+    padrao = "**/*" if recursivo else "*"
+    return sorted(
+        p for p in pasta.glob(padrao) if p.is_file() and p.suffix.lower() == ".xml"
+    )

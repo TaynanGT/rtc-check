@@ -51,8 +51,11 @@ jobs:
       - name: Tipos
         run: uv run mypy
 
+      # branch=true vem do pyproject. O piso subiu de 90 para 98 porque a suite
+      # esta em 100% de linha e de galho: 90 deixava passar modulo inteiro sem
+      # teste nenhum sem que o CI reclamasse.
       - name: Testes
-        run: uv run pytest --cov=rtc_check --cov-report=term-missing --cov-fail-under=90
+        run: uv run pytest --cov=rtc_check --cov-report=term-missing --cov-fail-under=98
 
   instalacao-limpa:
     name: Instalação limpa a partir do wheel (${{ matrix.os }})

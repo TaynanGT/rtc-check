@@ -36,6 +36,21 @@ packages = ["src/rtc_check"]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
 
+[tool.coverage.run]
+# Cobertura de galho, nao so de linha: os defeitos que escaparam desta suite
+# moravam todos em galho nao tomado dentro de linha ja contada como coberta.
+branch = true
+source = ["rtc_check"]
+omit = [
+    # Exercitado de verdade por test_executavel_como_modulo, que roda
+    # `python -m rtc_check` num subprocess. O coverage do processo pai nao
+    # enxerga esse subprocess, e medir daqui daria um 0% mentiroso.
+    "*/rtc_check/__main__.py",
+]
+
+[tool.coverage.report]
+exclude_also = ['if __name__ == "__main__":']
+
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]

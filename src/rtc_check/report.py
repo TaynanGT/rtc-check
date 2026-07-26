@@ -154,6 +154,23 @@ def formatar_json(resumo: Resumo) -> str:
     )
 
 
+# Excel e LibreOffice tratam celula iniciada por um destes como formula. O cProd
+# e o xProd vem de XML emitido por terceiro, e o CSV existe justamente para ser
+# aberto numa planilha pelo time de cadastro.
+_GATILHOS_DE_FORMULA = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _sanitizar_csv(valor: str) -> str:
+    """Neutraliza fórmula em célula de planilha prefixando com apóstrofo.
+
+    O apóstrofo à esquerda é a convenção que Excel e LibreOffice entendem como
+    "isto é texto, não calcule": o conteúdo aparece intacto para quem lê.
+    """
+    if valor.startswith(_GATILHOS_DE_FORMULA):
+        return "'" + valor
+    return valor
+
+
 def formatar_csv(resumo: Resumo) -> str:
     buffer = io.StringIO()
     escritor = csv.writer(buffer, delimiter=";", lineterminator="\n")
@@ -163,9 +180,10 @@ def formatar_csv(resumo: Resumo) -> str:
     )
     for g in resumo.grupos:
         escritor.writerow([
-            g.sku, g.descricao, g.ncm, g.severidade_max.value,
+            _sanitizar_csv(g.sku), _sanitizar_csv(g.descricao),
+            _sanitizar_csv(g.ncm), g.severidade_max.value,
             "|".join(sorted(g.codigos)), g.ocorrencias, len(g.arquivos),
-            " / ".join(g.mensagens[c] for c in sorted(g.codigos)),
+            _sanitizar_csv(" / ".join(g.mensagens[c] for c in sorted(g.codigos))),
         ])
     return buffer.getvalue()
 
