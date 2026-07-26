@@ -11,11 +11,14 @@ Versionamento semântico.
 
 ### Adicionado
 - Dependabot semanal para dependências Python e GitHub Actions.
+- CodeQL para Python e workflows, com proteção obrigatória do check agregado do CI.
 
 ### Alterado
 - Adicionada a dependência `defusedxml` e seus tipos de desenvolvimento.
-- `cryptography` atualizado para a série 48, corrigindo o alerta alto
-  `GHSA-537c-gmf6-5ccf` identificado pelo Dependabot.
+- `cryptography` atualizado para a série 49 (mínimo seguro 48.0.1), corrigindo
+  o alerta alto `GHSA-537c-gmf6-5ccf` identificado pelo Dependabot.
+- Actions de terceiros fixadas por hash de commit para reduzir risco de
+  alteração maliciosa ou acidental de tags.
 
 ## [0.2.1] / 2026-07-25
 
