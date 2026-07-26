@@ -35,7 +35,7 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: XML",
     "Topic :: Utilities",
 ]
-dependencies = ["cryptography>=46,<47"]
+dependencies = ["cryptography>=48.0.1,<49"]
 
 [project.urls]
 Homepage = "https://taynangt.github.io/rtc-check/"
