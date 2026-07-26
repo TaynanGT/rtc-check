@@ -239,6 +239,36 @@ def test_carregar_config_exige_url_segredo_token_e_porta_smtp(monkeypatch, tmp_p
     assert config.url_publica == "https://vendas.example"
     assert config.segredo_webhook == SEGREDO
 
+    monkeypatch.delenv("RTC_CHECK_VENDAS_URL", raising=False)
+    monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://rtc.onrender.com/")
+    assert sv.carregar_config().url_publica == "https://rtc.onrender.com"
+
+
+def test_chave_de_emissao_e_gerada_uma_vez_e_reaproveitada(monkeypatch, tmp_path):
+    monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
+    sv.garantir_chave_de_emissao(tmp_path)
+    caminho = tmp_path / "emissor-ed25519.pem"
+    assert caminho.exists()
+    primeira = sv.chave_publica_do_emissor()
+
+    monkeypatch.delenv("RTC_CHECK_CHAVE_PRIVADA", raising=False)
+    sv.garantir_chave_de_emissao(tmp_path)
+    assert sv.chave_publica_do_emissor() == primeira
+
+    # Uma licença emitida com essa chave valida contra a pública anunciada.
+    monkeypatch.setenv("RTC_CHECK_CHAVE_PUBLICA", primeira)
+    chave = ed.gerar_chave(
+        ed.Plano.ESCRITORIO, date.today() + timedelta(days=30), "Compradora"
+    )
+    assert ed.validar_chave(chave).titular == "Compradora"
+
+
+def test_rota_da_chave_publica_anuncia_o_emissor(servidor):
+    with urllib.request.urlopen(f"{servidor}/chave-publica") as resposta:
+        dados = json.loads(resposta.read().decode())
+    assert dados["chave_publica"]
+    assert "CHAVE_PUBLICA_PADRAO" in dados["instrucao"]
+
 
 def test_linha_ilegivel_no_registro_e_ignorada(tmp_path):
     (tmp_path / "vendas.jsonl").write_text(

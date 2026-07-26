@@ -14,6 +14,47 @@ Pago e de lá você saca para a conta bancária. Vender o RTC Check dentro do
 digital) e não é necessária para receber: o checkout hospedado do Mercado Pago
 basta e funciona com Pix, cartão e boleto.
 
+## O roteiro sem terminal (recomendado)
+
+Nada aqui exige programar. São cliques e dois copiar-e-colar de credenciais —
+sempre do painel do Mercado Pago direto para o painel da hospedagem, nunca por
+e-mail ou chat.
+
+1. **Conta.** Entre em [mercadopago.com.br](https://www.mercadopago.com.br) e
+   complete a verificação de identidade (e de CNPJ, se vender como empresa).
+2. **Aplicação.** Em [Suas integrações](https://www.mercadopago.com.br/developers/panel/app),
+   use (ou crie) uma aplicação com o produto **CheckoutPro**.
+3. **Hospedagem.** Crie uma conta no [Render](https://dashboard.render.com),
+   clique em **New → Blueprint**, conecte seu GitHub e escolha este
+   repositório. O arquivo `render.yaml` já descreve o serviço inteiro
+   (`rtc-check-vendas`, disco persistente, URL pública automática).
+4. **Access token.** No painel do Mercado Pago, em **Credenciais de
+   produção**, copie o **Access Token** (`APP_USR-...`) e cole no Render como
+   valor da variável `PAYMENT_API_KEY`.
+5. **Webhook.** Ainda no painel do Mercado Pago, em **Webhooks → Modo
+   produção**, configure a URL
+   `https://SEU-SERVICO.onrender.com/webhook/mercadopago` com o evento
+   **Pagamentos**, copie a **assinatura secreta** exibida e cole no Render em
+   `PAYMENT_WEBHOOK_SECRET`.
+6. **Pronto.** No primeiro boot o servidor gera sozinho a chave de emissão de
+   licenças (fica no disco persistente) e anuncia a chave pública em
+   `https://SEU-SERVICO.onrender.com/chave-publica`. Copie esse valor para
+   `CHAVE_PUBLICA_PADRAO` em `src/rtc_check/edicao.py` (ou peça a quem cuida do
+   código — basta informar a URL do serviço) para que as instalações dos
+   clientes reconheçam as licenças vendidas.
+
+E-mail automático da chave é opcional: sem SMTP configurado, cada chave vendida
+fica registrada em `vendas.jsonl` no disco do serviço para envio manual. Para
+automatizar, preencha `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` e `SMTP_FROM` no
+Render (um Gmail com senha de app funciona: host `smtp.gmail.com`).
+
+No plano gratuito do Render o serviço hiberna sem tráfego e o webhook pode
+atrasar alguns segundos até acordar (o Mercado Pago reenvia em caso de erro);
+o plano Starter evita a hibernação.
+
+As seções seguintes detalham o mesmo processo para quem prefere fazer à mão em
+um VPS próprio.
+
 ## 1. Conta e credenciais (ação do titular)
 
 1. Crie ou use sua conta em [mercadopago.com.br](https://www.mercadopago.com.br)
@@ -25,36 +66,21 @@ basta e funciona com Pix, cartão e boleto.
    Ele é o `PAYMENT_API_KEY`. Nunca o commite; ele só existe no ambiente do
    servidor de vendas.
 
-## 2. Chave de emissão de licenças (ação do titular)
+## 2. Chave de emissão de licenças
 
 A licença que o comprador recebe é assinada com uma chave privada Ed25519 que
-não está — e não pode estar — neste repositório.
+não está — e não pode estar — neste repositório. **O servidor gera essa chave
+sozinho no primeiro boot** quando `RTC_CHECK_CHAVE_PRIVADA` não está definida,
+grava o PEM no diretório de dados (`RTC_CHECK_VENDAS_DIR`) e anuncia a chave
+pública correspondente em `GET /chave-publica`.
 
-```bash
-python - <<'EOF'
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-import base64
-
-privada = Ed25519PrivateKey.generate()
-with open("emissor-rtc.pem", "wb") as arquivo:
-    arquivo.write(privada.private_bytes(
-        serialization.Encoding.PEM,
-        serialization.PrivateFormat.PKCS8,
-        serialization.NoEncryption(),
-    ))
-publica = privada.public_key().public_bytes(
-    serialization.Encoding.Raw, serialization.PublicFormat.Raw
-)
-print("chave pública:", base64.urlsafe_b64encode(publica).decode().rstrip("="))
-EOF
-```
-
-Guarde `emissor-rtc.pem` fora do repositório (é o `RTC_CHECK_CHAVE_PRIVADA` do
-servidor) e atualize `CHAVE_PUBLICA_PADRAO` em `src/rtc_check/edicao.py` com a
-chave pública impressa, para que as instalações dos clientes validem as
-licenças vendidas. Se preferir manter a chave pública que já está no código,
-use o PEM correspondente a ela.
+Copie o valor de `/chave-publica` para `CHAVE_PUBLICA_PADRAO` em
+`src/rtc_check/edicao.py`: é assim que as instalações dos clientes validam as
+licenças vendidas. Quem preferir gerar o par por conta própria pode apontar
+`RTC_CHECK_CHAVE_PRIVADA` para um PEM Ed25519 existente; o arquivo gerado
+automaticamente fica no disco persistente — faça backup dele, pois perder a
+chave privada significa não conseguir emitir licenças que os aplicativos já
+distribuídos aceitem.
 
 ## 3. Subir o servidor de vendas
 
@@ -67,8 +93,9 @@ pip install "rtc-check @ git+https://github.com/TaynanGT/rtc-check.git"
 export PAYMENT_API_KEY="APP_USR-..."          # passo 1
 export PAYMENT_WEBHOOK_SECRET="..."           # passo 4
 export RTC_CHECK_VENDAS_URL="https://vendas.seudominio.com.br"
-export RTC_CHECK_CHAVE_PRIVADA="/etc/rtc-check/emissor-rtc.pem"
 export RTC_CHECK_VENDAS_DIR="/var/lib/rtc-check-vendas"
+# opcional: RTC_CHECK_CHAVE_PRIVADA aponta para um PEM próprio; sem ela, o
+# servidor gera a chave de emissão no primeiro boot dentro do diretório acima
 export SMTP_HOST="smtp.seuprovedor.com"       # envio da chave ao comprador
 export SMTP_PORT=465
 export SMTP_USER="vendas@seudominio.com.br"
@@ -88,6 +115,7 @@ Rotas expostas:
 | `POST /webhook/mercadopago` | notificação assinada; emite e envia a licença |
 | `GET /obrigado` | retorno pós-pagamento |
 | `GET /saude` | verificação de disponibilidade |
+| `GET /chave-publica` | chave pública do emissor, para `CHAVE_PUBLICA_PADRAO` |
 
 Cada venda (e também recusas, cancelamentos e reembolsos) fica registrada em
 `vendas.jsonl` no diretório de dados, incluindo a chave emitida — é por ali

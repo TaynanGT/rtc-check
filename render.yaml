@@ -1,0 +1,40 @@
+# Deploy de um clique do servidor de vendas (rtc-check-vendas) no Render.
+# Em https://dashboard.render.com: New → Blueprint → aponte este repositório.
+# Depois preencha PAYMENT_API_KEY e PAYMENT_WEBHOOK_SECRET no painel do serviço
+# (sync: false impede que esses segredos morem neste arquivo).
+services:
+  - type: web
+    name: rtc-check-vendas
+    runtime: python
+    plan: starter
+    buildCommand: pip install .
+    startCommand: rtc-check-vendas
+    healthCheckPath: /saude
+    autoDeploy: true
+    disk:
+      name: dados-vendas
+      mountPath: /var/dados-rtc-check
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: PAYMENT_PROVIDER
+        value: mercadopago
+      - key: RTC_CHECK_VENDAS_DIR
+        value: /var/dados-rtc-check
+      # Access token de produção do Mercado Pago (APP_USR-...).
+      - key: PAYMENT_API_KEY
+        sync: false
+      # Assinatura secreta mostrada no painel de Webhooks do Mercado Pago.
+      - key: PAYMENT_WEBHOOK_SECRET
+        sync: false
+      # A URL pública vem de RENDER_EXTERNAL_URL automaticamente; o e-mail da
+      # chave é opcional (sem SMTP, a chave fica em vendas.jsonl no disco).
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false

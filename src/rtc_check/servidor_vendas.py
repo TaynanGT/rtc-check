@@ -27,8 +27,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
 from . import mercadopago as mp
-from .edicao import Plano, gerar_chave
+from .edicao import Plano, _b64_codificar, _chave_privada, gerar_chave
 
 MAX_CORPO_WEBHOOK = 64 * 1024
 _TRAVA_REGISTRO = threading.Lock()
@@ -62,8 +65,46 @@ class ConfigVendas:
     remetente: str = ""
 
 
+def garantir_chave_de_emissao(diretorio: Path) -> None:
+    """Gera o par Ed25519 do emissor no primeiro boot, se ninguém forneceu um.
+
+    A chave privada fica no diretório de dados do servidor (fora do repositório)
+    e passa a valer via RTC_CHECK_CHAVE_PRIVADA para as emissões deste processo.
+    """
+    if os.environ.get("RTC_CHECK_CHAVE_PRIVADA"):
+        return
+    caminho = diretorio / "emissor-ed25519.pem"
+    if not caminho.exists():
+        diretorio.mkdir(parents=True, exist_ok=True)
+        privada = Ed25519PrivateKey.generate()
+        caminho.write_bytes(
+            privada.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.PKCS8,
+                serialization.NoEncryption(),
+            )
+        )
+        caminho.chmod(0o600)
+        print(f"chave de emissão Ed25519 gerada em {caminho}", file=sys.stderr)
+    os.environ["RTC_CHECK_CHAVE_PRIVADA"] = str(caminho)
+
+
+def chave_publica_do_emissor() -> str:
+    """Chave pública (base64url) correspondente à chave de emissão em uso."""
+    publica = _chave_privada().public_key()
+    return _b64_codificar(
+        publica.public_bytes(
+            serialization.Encoding.Raw, serialization.PublicFormat.Raw
+        )
+    )
+
+
 def carregar_config() -> ConfigVendas:
-    url_publica = os.environ.get("RTC_CHECK_VENDAS_URL", "").strip().rstrip("/")
+    # Plataformas como o Render informam a própria URL pública do serviço.
+    url_publica = (
+        os.environ.get("RTC_CHECK_VENDAS_URL", "").strip()
+        or os.environ.get("RENDER_EXTERNAL_URL", "").strip()
+    ).rstrip("/")
     if not url_publica.startswith("https://"):
         raise SystemExit(
             "defina RTC_CHECK_VENDAS_URL com a URL HTTPS pública deste servidor"
@@ -81,10 +122,12 @@ def carregar_config() -> ConfigVendas:
         smtp_porta = int(os.environ.get("SMTP_PORT", "465"))
     except ValueError as erro:
         raise SystemExit("SMTP_PORT precisa ser um número de porta") from erro
+    diretorio = Path(os.environ.get("RTC_CHECK_VENDAS_DIR", "vendas"))
+    garantir_chave_de_emissao(diretorio)
     return ConfigVendas(
         url_publica=url_publica,
         segredo_webhook=segredo,
-        diretorio=Path(os.environ.get("RTC_CHECK_VENDAS_DIR", "vendas")),
+        diretorio=diretorio,
         smtp_host=os.environ.get("SMTP_HOST", "").strip(),
         smtp_porta=smtp_porta,
         smtp_usuario=os.environ.get("SMTP_USER", "").strip(),
@@ -325,10 +368,33 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
                 self._html(_PAGINA_OBRIGADO)
             elif caminho == "/saude":
                 self._json({"ok": True})
+            elif caminho == "/chave-publica":
+                self._chave_publica()
             elif caminho.startswith("/comprar/"):
                 self._comprar(caminho.removeprefix("/comprar/"))
             else:
                 self._json({"erro": "recurso não encontrado"}, HTTPStatus.NOT_FOUND)
+
+        def _chave_publica(self) -> None:
+            # Chave pública é pública: é ela que as instalações dos clientes
+            # usam (via CHAVE_PUBLICA_PADRAO) para validar as licenças vendidas.
+            try:
+                publica = chave_publica_do_emissor()
+            except ValueError:
+                self._json(
+                    {"erro": "chave de emissão ainda não configurada"},
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                )
+                return
+            self._json(
+                {
+                    "chave_publica": publica,
+                    "instrucao": (
+                        "copie este valor para CHAVE_PUBLICA_PADRAO em "
+                        "src/rtc_check/edicao.py"
+                    ),
+                }
+            )
 
         def _comprar(self, codigo: str) -> None:
             plano = mp.PLANOS_DE_VENDA.get(codigo)

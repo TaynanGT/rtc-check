@@ -15,6 +15,10 @@ Versionamento semântico.
   reembolsos ficam auditáveis em `vendas.jsonl`.
 - Guia de ativação para o titular da conta em `docs/mercadopago.md`; variáveis
   correspondentes em `.env.example`.
+- Deploy de um clique do servidor de vendas via blueprint `render.yaml`: URL
+  pública detectada automaticamente (`RENDER_EXTERNAL_URL`), chave de emissão
+  Ed25519 gerada sozinha no primeiro boot no disco persistente e anunciada em
+  `GET /chave-publica`, com roteiro sem terminal na documentação.
 
 ## [0.3.1] / 2026-07-26
 
