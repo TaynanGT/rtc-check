@@ -16,6 +16,17 @@ Versionamento semântico.
 - Guia de ativação para o titular da conta em `docs/mercadopago.md`; variáveis
   correspondentes em `.env.example`.
 
+## [0.3.1] / 2026-07-26
+
+### Alterado
+- A ação principal e a demonstração aparecem já na abertura.
+- O indicador de etapas acompanha seleção, processamento e resultado.
+- A seleção mostra quantidade, tamanho, nomes e arquivos ignorados, com opção de limpar.
+- Trial e licença refazem automaticamente a análise selecionada para liberar o resultado.
+- A fila e cada ação podem ser copiadas diretamente para Excel, e-mail ou chamado do ERP.
+- O diagnóstico oferece uma nova análise sem recarregar o aplicativo.
+- O estado do plano explica quando os recursos estão efetivamente liberados.
+
 ## [0.3.0] / 2026-07-26
 
 ### Adicionado

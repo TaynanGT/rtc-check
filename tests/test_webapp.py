@@ -193,6 +193,9 @@ def test_http_entrega_interface_status_e_seguranca(app_local):
     assert status == 200
     assert dados["privacidade"]["telemetria"] is False
     assert dados["plano"] == "Comunidade"
+    assert not dados["em_teste"]
+    assert not dados["licenciado"]
+    assert dados["checkout"]["preco_mensal"] == "R$ 149/mês"
 
     assert _request(
         base,
@@ -209,6 +212,9 @@ def test_http_demo_e_todos_os_downloads(app_local):
     resultado = json.loads(body)
     assert resultado["demo"]
     assert resultado["itens"]
+    assert {"NCM001", "GTIN001"} <= {
+        codigo for item in resultado["itens"] for codigo in item["codigos"]
+    }
 
     for formato, trecho in (
         ("html", b"Minha Contabilidade"),
@@ -230,7 +236,7 @@ def test_http_demo_e_todos_os_downloads(app_local):
         assert "attachment" in headers["Content-Disposition"]
 
 
-def test_http_upload_real_e_bloqueia_exportacao_no_comunidade(app_local):
+def test_http_upload_real_exige_novo_lote_quando_trial_muda_regras(app_local):
     base, _ = app_local
     tipo, corpo = _multipart(
         [("nota.xml", (FIXTURES / "legado_crt3.xml").read_bytes())]
@@ -255,6 +261,28 @@ def test_http_upload_real_e_bloqueia_exportacao_no_comunidade(app_local):
     )
     assert status == 402
     assert "Escritório" in json.loads(body)["erro"]
+
+    status, _, body = _request(base, "/api/teste", method="POST", body=b"{}")
+    assert status == 200
+    status_teste = json.loads(body)["status"]
+    assert status_teste["em_teste"]
+    assert not status_teste["licenciado"]
+
+    status, _, body = _request(
+        base,
+        f"/api/atualizar/{resultado['id']}",
+        method="POST",
+        body=b"{}",
+    )
+    assert status == 409
+    assert "selecione o lote novamente" in json.loads(body)["erro"]
+
+    assert _request(
+        base,
+        f"/api/exportar/{resultado['id']}/csv",
+        method="POST",
+        body=b"{}",
+    )[0] == 409
 
 
 def test_http_trata_erros_e_ativa_teste(app_local):

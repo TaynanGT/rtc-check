@@ -28,6 +28,7 @@ from urllib.parse import urlparse
 
 from . import __version__
 from . import edicao as ed
+from .checkout import PRECO_ANUAL_BR, PRECO_MENSAL_BR
 from .checkout import carregar as carregar_checkout
 from .cli import analisar
 from .normativa import NORMATIVA_RTC
@@ -137,6 +138,7 @@ def _serializar_resultado(
             {"arquivo": nome, "motivo": motivo}
             for nome, motivo in resumo.arquivos_invalidos[:20]
         ],
+        "total_arquivos_invalidos": len(resumo.arquivos_invalidos),
         "notas_em_escopo": resumo.notas_em_escopo,
         "total_itens": resumo.total_itens,
         "bloqueios": resumo.por_severidade[Severidade.BLOQUEIO.value],
@@ -187,12 +189,16 @@ def _status() -> dict[str, Any]:
         "versao": __version__,
         "plano": atual.nome,
         "pago": atual.pago,
+        "em_teste": atual.plano is ed.Plano.TESTE,
+        "licenciado": atual.plano in {ed.Plano.ESCRITORIO, ed.Plano.PLATAFORMA},
         "dias_restantes": atual.dias_restantes(),
         "aviso": atual.aviso,
         "checkout": {
             "provedor": checkout.provedor,
             "url": checkout.url,
             "automatico": checkout.automatico,
+            "preco_mensal": PRECO_MENSAL_BR,
+            "preco_anual": PRECO_ANUAL_BR,
         },
         "normativa": NORMATIVA_RTC.como_json(),
         "privacidade": {
@@ -435,6 +441,8 @@ def _handler(estado: EstadoApp) -> type[BaseHTTPRequestHandler]:
                     self._encerrar()
                 elif caminho.startswith("/api/exportar/"):
                     self._exportar(caminho)
+                elif caminho.startswith("/api/atualizar/"):
+                    self._atualizar_resultado(caminho)
                 else:
                     self._json({"erro": "recurso não encontrado"}, HTTPStatus.NOT_FOUND)
             except EntradaInvalida as erro:
@@ -467,7 +475,8 @@ def _handler(estado: EstadoApp) -> type[BaseHTTPRequestHandler]:
                 destino = Path(pasta)
                 _criar_demo(destino)
                 atual = ed.resolver()
-                resumo = analisar(destino, regras=atual.regras_ativas)
+                regras_demo = ed.Edicao(plano=ed.Plano.ESCRITORIO).regras_ativas
+                resumo = analisar(destino, regras=regras_demo)
             self._concluir_analise(resumo, atual, demo=True)
 
         def _analisar_upload(self) -> None:
@@ -512,6 +521,34 @@ def _handler(estado: EstadoApp) -> type[BaseHTTPRequestHandler]:
             self._json({"mensagem": "RTC Check encerrado com segurança."})
             threading.Thread(target=self.server.shutdown, daemon=True).start()
 
+        def _atualizar_resultado(self, caminho: str) -> None:
+            partes = caminho.strip("/").split("/")
+            if len(partes) != 3:
+                raise EntradaInvalida("atualização de resultado inválida")
+            salvo = estado.relatorios.get(partes[2])
+            if salvo is None:
+                raise EntradaInvalida("análise expirada; execute novamente")
+            atual = ed.resolver()
+            if not salvo.demo and salvo.edicao.regras_ativas != atual.regras_ativas:
+                self._json(
+                    {
+                        "erro": (
+                            "o plano mudou e este resultado não contém todas as regras; "
+                            "selecione o lote novamente"
+                        )
+                    },
+                    HTTPStatus.CONFLICT,
+                )
+                return
+            self._json(
+                _serializar_resultado(
+                    salvo.resumo,
+                    atual,
+                    partes[2],
+                    demo=salvo.demo,
+                )
+            )
+
         def _exportar(self, caminho: str) -> None:
             partes = caminho.strip("/").split("/")
             if len(partes) != 4:
@@ -520,7 +557,8 @@ def _handler(estado: EstadoApp) -> type[BaseHTTPRequestHandler]:
             salvo = estado.relatorios.get(identificador)
             if salvo is None:
                 raise EntradaInvalida("análise expirada; execute novamente")
-            liberado = salvo.demo or salvo.edicao.tem(ed.Recurso.FORMATO_HTML)
+            atual = ed.resolver()
+            liberado = salvo.demo or atual.tem(ed.Recurso.FORMATO_HTML)
             if not liberado:
                 self._json(
                     {
@@ -528,6 +566,17 @@ def _handler(estado: EstadoApp) -> type[BaseHTTPRequestHandler]:
                         "como_liberar": "Teste grátis: rtc-check --iniciar-teste",
                     },
                     HTTPStatus.PAYMENT_REQUIRED,
+                )
+                return
+            if not salvo.demo and salvo.edicao.regras_ativas != atual.regras_ativas:
+                self._json(
+                    {
+                        "erro": (
+                            "o plano mudou e esta exportação ficaria incompleta; "
+                            "selecione o lote novamente"
+                        )
+                    },
+                    HTTPStatus.CONFLICT,
                 )
                 return
             marca = _validar_marca(self.headers.get("X-RTC-Brand"))

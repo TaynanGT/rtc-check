@@ -79,7 +79,7 @@ uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
 
 Em produção, prefira fixar uma versão a acompanhar a `main`: acrescente a tag da
-release à URL, como em `...rtc-check.git@v0.3.0`. As tags disponíveis estão em
+release à URL, como em `...rtc-check.git@v0.3.1`. As tags disponíveis estão em
 [releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.14.
@@ -90,9 +90,12 @@ Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.
 rtc-check --app
 ```
 
-Na interface, selecione XMLs ou um ZIP, veja a fila priorizada, filtre bloqueios,
-ative o teste, personalize a marca e exporte CSV, JSON ou um relatório pronto para
-impressão/PDF. O botão **Encerrar** finaliza o servidor e remove os resultados em memória.
+Na interface, selecione XMLs, ZIP ou uma pasta inteira em lotes de até 64 MB. A fila
+priorizada pode ser buscada por SKU, produto, NCM ou emitente e copiada diretamente
+para Excel, e-mail ou chamado do ERP. XMLs inválidos aparecem em um alerta separado.
+Ativar o teste ou uma licença libera e atualiza o diagnóstico sem perder o fluxo.
+Também é possível personalizar a marca e exportar CSV, JSON ou um relatório pronto
+para impressão/PDF. O botão **Encerrar** finaliza o servidor e remove os resultados em memória.
 
 ## Uso
 
