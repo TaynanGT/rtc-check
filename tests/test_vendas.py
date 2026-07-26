@@ -4,10 +4,12 @@ import hashlib
 import hmac
 import http.client
 import json
+import os
 import threading
 import urllib.error
 import urllib.request
 from datetime import date, timedelta
+from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
@@ -242,6 +244,18 @@ def test_carregar_config_exige_url_segredo_token_e_porta_smtp(monkeypatch, tmp_p
     monkeypatch.delenv("RTC_CHECK_VENDAS_URL", raising=False)
     monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://rtc.onrender.com/")
     assert sv.carregar_config().url_publica == "https://rtc.onrender.com"
+
+
+def test_diretorio_de_dados_confina_caminho_relativo(monkeypatch, tmp_path):
+    monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "../fora-do-projeto")
+    with pytest.raises(SystemExit, match="RTC_CHECK_VENDAS_DIR"):
+        sv._diretorio_de_dados()
+
+    monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "vendas/sub/../dados")
+    assert sv._diretorio_de_dados() == Path(os.getcwd()) / "vendas" / "dados"
+
+    monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", str(tmp_path / "dados"))
+    assert sv._diretorio_de_dados() == tmp_path / "dados"
 
 
 def test_chave_de_emissao_e_gerada_uma_vez_e_reaproveitada(monkeypatch, tmp_path):

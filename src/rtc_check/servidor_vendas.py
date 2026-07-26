@@ -65,6 +65,29 @@ class ConfigVendas:
     remetente: str = ""
 
 
+def _diretorio_de_dados() -> Path:
+    """Resolve RTC_CHECK_VENDAS_DIR com validação do caminho.
+
+    Caminho relativo fica confinado ao diretório de trabalho do serviço (um
+    valor com ``..`` que escape dele é recusado). Caminho absoluto é decisão
+    explícita do operador — ex.: o disco persistente do Render — e é apenas
+    normalizado.
+    """
+    bruto = os.environ.get("RTC_CHECK_VENDAS_DIR", "vendas").strip() or "vendas"
+    if os.path.isabs(bruto):
+        candidato = os.path.normpath(bruto)
+        if not candidato.startswith(os.path.dirname(candidato)):
+            raise SystemExit(f"RTC_CHECK_VENDAS_DIR inválido: {bruto!r}")
+    else:
+        raiz = os.getcwd()
+        candidato = os.path.normpath(os.path.join(raiz, bruto))
+        if not candidato.startswith(raiz + os.sep):
+            raise SystemExit(
+                f"RTC_CHECK_VENDAS_DIR relativo precisa ficar dentro de {raiz}: {bruto!r}"
+            )
+    return Path(candidato)
+
+
 def garantir_chave_de_emissao(diretorio: Path) -> None:
     """Gera o par Ed25519 do emissor no primeiro boot, se ninguém forneceu um.
 
@@ -122,7 +145,7 @@ def carregar_config() -> ConfigVendas:
         smtp_porta = int(os.environ.get("SMTP_PORT", "465"))
     except ValueError as erro:
         raise SystemExit("SMTP_PORT precisa ser um número de porta") from erro
-    diretorio = Path(os.environ.get("RTC_CHECK_VENDAS_DIR", "vendas"))
+    diretorio = _diretorio_de_dados()
     garantir_chave_de_emissao(diretorio)
     return ConfigVendas(
         url_publica=url_publica,
