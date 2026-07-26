@@ -9,7 +9,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from xml.etree import ElementTree
+from typing import Protocol
+
+from defusedxml import ElementTree
+from defusedxml.common import DefusedXmlException
 
 NS = {"nfe": "http://www.portalfiscal.inf.br/nfe"}
 
@@ -19,6 +22,16 @@ CRT_REGIME_NORMAL = "3"
 # layout 4.00 (NT 2016.002). Em 2.00 e 3.xx, cEAN vazio era a forma correta de
 # dizer a mesma coisa, entao cobrar o literal ali e falso positivo.
 LAYOUT_COM_SEM_GTIN = "4.00"
+
+
+class _ElementoXml(Protocol):
+    text: str | None
+
+    def find(
+        self,
+        path: str,
+        namespaces: dict[str, str] | None = None,
+    ) -> _ElementoXml | None: ...
 
 
 class XmlInvalido(Exception):
@@ -88,7 +101,7 @@ class NotaFiscal:
         return False
 
 
-def _texto(elemento: ElementTree.Element, caminho: str) -> str:
+def _texto(elemento: _ElementoXml, caminho: str) -> str:
     achado = elemento.find(caminho, NS)
     return achado.text.strip() if achado is not None and achado.text else ""
 
@@ -97,6 +110,8 @@ def ler_nota(caminho: Path) -> NotaFiscal:
     """Lê um arquivo XML e devolve a nota. Levanta ``XmlInvalido`` se não der."""
     try:
         arvore = ElementTree.parse(caminho)
+    except DefusedXmlException as erro:
+        raise XmlInvalido(f"XML inseguro: {erro}") from erro
     except ElementTree.ParseError as erro:
         raise XmlInvalido(f"XML malformado: {erro}") from erro
     except OSError as erro:
@@ -104,6 +119,8 @@ def ler_nota(caminho: Path) -> NotaFiscal:
         raise XmlInvalido(f"não foi possível ler o arquivo: {motivo}") from erro
 
     raiz = arvore.getroot()
+    if raiz is None:
+        raise XmlInvalido("XML vazio")
     inf = raiz.find(".//nfe:infNFe", NS)
     if inf is None:
         raise XmlInvalido("não contém o elemento infNFe (não é uma NF-e)")

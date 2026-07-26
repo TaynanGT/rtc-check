@@ -9,6 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   testes:
     name: ${{ matrix.os }} / Python ${{ matrix.python }}
@@ -121,3 +124,18 @@ jobs:
           conferir 0 "acervo limpo" vazia --falhar-em-bloqueio
 
           echo "exit codes corretos nos cinco cenários"
+
+  ci-concluido:
+    name: CI concluído
+    if: always()
+    needs: [testes, instalacao-limpa]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar todos os jobs
+        env:
+          TESTES: ${{ needs.testes.result }}
+          INSTALACAO_LIMPA: ${{ needs.instalacao-limpa.result }}
+        run: |
+          test "$TESTES" = success
+          test "$INSTALACAO_LIMPA" = success
+          echo "matriz e instalação limpa aprovadas"

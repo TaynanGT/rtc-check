@@ -3,6 +3,20 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.2.2] / 2026-07-25
+
+### Corrigido
+- XMLs com DTD ou entidades externas agora são rejeitados pelo parser seguro,
+  evitando leitura indevida de arquivos locais e expansão de entidades.
+
+### Adicionado
+- Dependabot semanal para dependências Python e GitHub Actions.
+
+### Alterado
+- Adicionada a dependência `defusedxml` e seus tipos de desenvolvimento.
+- `cryptography` atualizado para a série 48, corrigindo o alerta alto
+  `GHSA-537c-gmf6-5ccf` identificado pelo Dependabot.
+
 ## [0.2.1] / 2026-07-25
 
 ### Corrigido

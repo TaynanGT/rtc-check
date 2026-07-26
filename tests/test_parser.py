@@ -56,6 +56,25 @@ def test_xml_malformado_levanta():
         ler_nota(FIXTURES / "malformado.xml")
 
 
+def test_xml_com_entidade_e_rejeitado_como_inseguro(tmp_path):
+    arquivo = tmp_path / "entidade.xml"
+    arquivo.write_text(
+        """\
+<!DOCTYPE NFe [<!ENTITY segredo SYSTEM "file:///arquivo-que-nao-deve-ser-lido">]>
+<NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+  <infNFe versao="4.00">
+    <ide><mod>55</mod></ide>
+    <emit><CNPJ>00000000000000</CNPJ><xNome>&segredo;</xNome><CRT>3</CRT></emit>
+  </infNFe>
+</NFe>
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(XmlInvalido, match="inseguro"):
+        ler_nota(arquivo)
+
+
 def test_xml_que_nao_e_nfe_levanta():
     with pytest.raises(XmlInvalido, match="infNFe"):
         ler_nota(FIXTURES / "nao_e_nfe.xml")
