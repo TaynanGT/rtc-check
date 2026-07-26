@@ -8,7 +8,7 @@ def test_landing_reflete_produto_atual_e_contato_privado_configuravel():
     configuracao = (RAIZ / "site" / "lead-config.js").read_text(encoding="utf-8")
 
     assert "RTC006" in pagina
-    assert "v0.3.1" in pagina
+    assert "v0.4.0" in pagina
     assert "151 passando" not in pagina
     assert "issues/new?template=comercial" not in pagina
     assert 'id="lead-form"' in pagina

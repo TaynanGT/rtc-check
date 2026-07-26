@@ -140,5 +140,7 @@ entregues.
 
 O pacote atual fecha o caminho principal: importar, analisar localmente,
 entender a fila, comparar, copiar, entregar um ZIP profissional e pedir suporte
-sem expor XMLs. Os quatro itens não ativados dependem de identidade, contrato ou
-sistema externo; não foram simulados como recursos reais.
+sem expor XMLs. Três itens dependem de identidade, contrato ou sistema externo
+(webhook, cupom e Authenticode) e não foram simulados como recursos reais. O GIF
+foi substituído deliberadamente por demonstração interativa e teste visual do
+fluxo verdadeiro.

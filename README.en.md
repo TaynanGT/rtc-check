@@ -62,7 +62,7 @@ uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
 
 In production, pin a version instead of tracking `main`: append the release tag to
-the URL, as in `...rtc-check.git@v0.3.1`. Available tags are listed under
+the URL, as in `...rtc-check.git@v0.4.0`. Available tags are listed under
 [releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requires Python 3.11+. Tested on Windows, Linux and macOS, from 3.11 to 3.14.

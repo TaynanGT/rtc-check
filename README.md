@@ -79,7 +79,7 @@ uvx --from git+https://github.com/TaynanGT/rtc-check.git rtc-check ./xmls
 ```
 
 Em produção, prefira fixar uma versão a acompanhar a `main`: acrescente a tag da
-release à URL, como em `...rtc-check.git@v0.3.1`. As tags disponíveis estão em
+release à URL, como em `...rtc-check.git@v0.4.0`. As tags disponíveis estão em
 [releases](https://github.com/TaynanGT/rtc-check/releases).
 
 Requer Python 3.11 ou superior. Testado em Windows, Linux e macOS, do 3.11 ao 3.14.
@@ -104,8 +104,9 @@ A opção `rtc-check --diagnostico` gera um resumo seguro para suporte: versão,
 limites e normativa, sem XMLs, caminhos, CNPJ ou credenciais.
 
 O pacote ZIP não inclui os XMLs originais. Ele contém `relatorio.html`,
-`fila-de-correcao.csv`, `auditoria-rtc.json` e `manifesto.json`, que registra a
-versão, a normativa usada, as contagens e o limite de privacidade da entrega.
+`fila-de-correcao.csv`, `auditoria-rtc.json`, `plano-de-acao.csv`, `LEIA-ME.txt`,
+`manifesto.json` e `SHA256SUMS.txt`. O manifesto registra a versão, a normativa,
+as contagens e o limite de privacidade da entrega.
 
 ## Uso
 

@@ -3,6 +3,28 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.4.0] / 2026-07-26
+
+### Adicionado
+- Catálogo de 100 melhorias verificáveis, cobrindo produto, segurança, motor
+  fiscal, acessibilidade, distribuição, crescimento e receita.
+- Seleção de regras, cobertura normativa, explicação rastreável de cada achado e
+  comparação local entre análises compatíveis.
+- Pacote profissional com plano de ação, instruções e checksums, além de
+  histórico, diagnóstico e eventos operacionais estritamente locais.
+- Smoke visual Chromium no CI, auditoria de dependências, validação do site e
+  materiais de suporte, parceiros, vendas e primeiros cinco minutos.
+
+### Alterado
+- Fluxos demorados agora são assíncronos, canceláveis e protegidos contra
+  análises concorrentes.
+- Interface refinada para desktop, teclado, alto contraste, impressão e telas
+  móveis sem rolagem horizontal.
+- Captação comercial passou a exigir consentimento separado e honeypot; checkout
+  externo agora respeita uma lista explícita de hosts permitidos.
+- Site público ganhou calculadora de esforço, comparação de planos, FAQ,
+  privacidade, termos, status, sitemap e fallback de demonstração.
+
 ## [0.3.1] / 2026-07-26
 
 ### Adicionado
