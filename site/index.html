@@ -108,6 +108,7 @@ footer a{color:var(--dim)}
 ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
 .destaque{font-variant-numeric:tabular-nums;font-weight:640}
 .demo{margin:2rem 0;background:linear-gradient(135deg,#101a19,#23413c);color:#fff;border-radius:14px;padding:1.35rem;box-shadow:0 20px 45px #18181b22}.demo small,.demo p{color:#d2e4df}.demo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}.demo-card{background:#ffffff12;border:1px solid #ffffff2b;border-radius:9px;padding:.8rem}.demo-card strong{display:block;font-size:1.35rem}.regra{background:#f3faf8;border:1px solid #b7ded3;border-radius:10px;padding:1.1rem 1.25rem;margin:1.5rem 0}.regra p{margin:.35rem 0;color:#31544b}.segmentos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem;margin:1.5rem 0}.segmento{border:1px solid var(--line);border-radius:10px;padding:1.2rem}.segmento p{font-size:.9rem;color:var(--dim)}.lead{border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin:1.5rem 0;background:var(--soft)}.lead label{display:block;font-size:.88rem;font-weight:620;margin:.8rem 0 .3rem}.lead input,.lead select{width:100%;border:1px solid var(--line);border-radius:7px;padding:.65rem;background:var(--bg);font:inherit}.lead-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.consent{display:flex!important;gap:.55rem;align-items:flex-start;font-weight:400!important}.consent input{width:auto!important;margin-top:.25rem}.lead-status{font-size:.86rem;color:var(--dim);margin-top:.8rem}.privacy-note{font-size:.82rem;color:var(--dim)}.honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important}.calculator{border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin:1.5rem 0}.calculator output{display:block;font-size:1.35rem;font-weight:700;color:var(--green);margin-top:1rem}
+ .faq{border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin:1.5rem 0}.faq details{border-top:1px solid var(--line);padding:.75rem 0}.faq summary{cursor:pointer;font-weight:620}.faq details p{font-size:.9rem;color:var(--dim);margin:.5rem 0 0}
 @media(max-width:560px){.demo-grid,.segmentos,.lead-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -432,6 +433,20 @@ e dá para removê-la. Isso é conhecido e não vai mudar: fechar o código cust
   </div>
   <output id="calc-output">≈ 33,3 horas de conferência manual por lote.</output>
   <p class="privacy-note">Não é promessa de economia: o ganho real depende do acervo, das regras e do processo da equipe.</p>
+</div>
+
+<div class="faq" id="faq">
+  <h3>Perguntas frequentes</h3>
+  <details><summary>O RTC Check garante conformidade?</summary>
+    <p>Não. Ele faz triagem dentro da cobertura declarada e encaminha a confirmação para o validador oficial.</p>
+  </details>
+  <details><summary>O que é a rejeição 1115?</summary>
+    <p>É o risco associado à ausência do grupo IBS/CBS em item no escopo monitorado pela UB12-10.</p>
+  </details>
+  <details><summary>Meus XMLs vão para a Internet?</summary>
+    <p>Não no Desktop: o servidor escuta em 127.0.0.1 e os temporários são apagados ao terminar.</p>
+  </details>
+  <p class="privacy-note"><a href="https://github.com/TaynanGT/rtc-check/blob/main/docs/faq-rtc.md">Ver FAQ operacional completa ↗</a></p>
 </div>
 
 <div class="lead" id="contato">
