@@ -17,6 +17,7 @@
     </a>
     <div class="top-actions">
       <span class="privacy-pill"><span class="pulse"></span> 100% local</span>
+      <button class="button ghost compact" id="help-open" type="button">Ajuda</button>
       <button class="button ghost compact" id="settings-open" type="button">Personalizar</button>
       <button class="button ghost compact" id="shutdown" type="button">Encerrar</button>
     </div>
@@ -40,6 +41,7 @@
           <span>✓ Nenhuma telemetria</span>
           <span>✓ Arquivos apagados após a análise</span>
           <span>✓ Código auditável</span>
+          <span id="rules-age">✓ Regras versionadas</span>
         </div>
       </div>
       <aside class="deadline-card" aria-label="Prazo monitorado">
@@ -72,6 +74,11 @@
             <small id="selection-label">Nenhum arquivo selecionado</small>
           </label>
           <p class="upload-limits">Até 64 MB por envio · XML de até 25 MB · ZIP aceito</p>
+          <details class="rule-picker" id="rule-picker">
+            <summary>Escolher regras desta auditoria</summary>
+            <p class="muted">Por padrão, todas as regras disponíveis no seu plano são usadas.</p>
+            <div id="rule-picker-content" class="rule-picker-content"></div>
+          </details>
           <input id="folder-files" class="hidden" type="file"
             accept=".xml" multiple webkitdirectory aria-hidden="true" tabindex="-1">
           <button class="button text folder-button" id="folder-open" type="button">
@@ -127,7 +134,7 @@
       </div>
     </section>
 
-    <section id="progress" class="progress-panel hidden" aria-live="polite">
+    <section id="progress" class="progress-panel hidden" aria-live="polite" aria-busy="false">
       <div class="spinner" aria-hidden="true"></div>
       <div>
         <strong>Conferindo os documentos…</strong>
@@ -135,7 +142,10 @@
         <p class="progress-count" id="progress-count"></p>
       </div>
       <button class="button dark-outline compact" id="cancel-analysis" type="button">Cancelar análise</button>
-      <div class="progress-track"><span></span></div>
+      <div class="progress-track" role="progressbar" aria-label="Progresso da análise"
+        aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span id="progress-bar"></span>
+      </div>
     </section>
 
     <section id="results" class="results hidden" aria-labelledby="results-title">
@@ -151,6 +161,10 @@
       </div>
 
       <div class="metrics" id="metrics"></div>
+      <div class="comparison-card hidden" id="comparison-card" aria-live="polite">
+        <strong>Comparação local com a análise anterior</strong>
+        <span id="comparison-text"></span>
+      </div>
 
       <div class="invalid-alert hidden" id="invalid-alert" role="alert">
         <strong id="invalid-title"></strong>
@@ -171,18 +185,41 @@
           <button class="filter active" data-filter="todos" type="button">Todos</button>
           <button class="filter" data-filter="bloqueio" type="button">Bloqueios</button>
           <button class="filter" data-filter="alerta" type="button">Alertas</button>
+          <button class="filter" data-filter="info" type="button">Informativos</button>
         </div>
         <div class="export-group">
           <button class="button ghost compact" id="copy-queue" type="button">
             Copiar fila
+          </button>
+          <button class="button ghost compact" id="copy-summary" type="button">
+            Copiar resumo
+          </button>
+          <button class="button ghost compact" id="print-result" type="button">
+            Imprimir
           </button>
           <button class="button ghost compact export" data-format="csv" type="button">CSV</button>
           <button class="button ghost compact export" data-format="json" type="button">JSON</button>
           <button class="button primary compact export" data-format="html" type="button">
             Baixar relatório
           </button>
+          <button class="button secondary compact export" data-format="pacote" type="button">
+            Pacote ZIP
+          </button>
         </div>
       </div>
+
+      <details class="coverage-card" id="coverage-card">
+        <summary>Escopo, fontes e confiança das regras</summary>
+        <div id="coverage-content"></div>
+      </details>
+      <details class="coverage-card" id="technical-card">
+        <summary>Diagnóstico técnico seguro</summary>
+        <p class="muted">Mostra versões e limites, sem XMLs, caminhos, CNPJ ou credenciais.</p>
+        <div id="technical-content"></div>
+        <button class="button ghost compact" id="copy-diagnostic" type="button">
+          Copiar diagnóstico para suporte
+        </button>
+      </details>
 
       <div id="upgrade-note" class="upgrade-note hidden">
         <div><strong>A análise completa terminou.</strong>
@@ -197,6 +234,15 @@
           <span class="visually-hidden">Buscar na fila</span>
           <input id="queue-search" type="search"
             placeholder="Buscar SKU, produto, NCM ou emitente">
+        </label>
+        <label class="sort-control">
+          <span>Ordenar</span>
+          <select id="queue-sort">
+            <option value="prioridade">Prioridade</option>
+            <option value="ocorrencias">Mais ocorrências</option>
+            <option value="sku">SKU</option>
+            <option value="emitente">Emitente</option>
+          </select>
         </label>
         <span id="visible-count"></span>
       </div>
@@ -235,6 +281,12 @@
           </button>
         </div>
       </section>
+      <section class="feedback-card" aria-labelledby="feedback-title">
+        <div><h3 id="feedback-title">A fila ajudou a encontrar o próximo ajuste?</h3>
+          <p>Seu voto fica somente neste navegador; não envia telemetria.</p></div>
+        <div class="next-buttons"><button class="button ghost feedback" data-feedback="sim" type="button">Sim</button>
+          <button class="button ghost feedback" data-feedback="nao" type="button">Ainda não</button></div>
+      </section>
     </section>
 
     <section class="why-local" aria-labelledby="why-title">
@@ -271,6 +323,19 @@
       <label>Cor principal
         <input id="brand-color" type="color" value="#0f766e">
       </label>
+      <label class="settings-check">
+        <input id="high-contrast" type="checkbox"> Usar contraste alto nesta interface
+      </label>
+      <label class="settings-check">
+        <input id="local-history" type="checkbox">
+        Permitir métricas das últimas análises neste navegador (opt-in)
+      </label>
+      <button class="button ghost full" id="history-clear" type="button">
+        Apagar histórico local de métricas
+      </button>
+      <button class="button ghost full" id="metrics-copy" type="button">
+        Copiar métricas locais de uso
+      </button>
       <p class="fine">A personalização fica somente no armazenamento deste navegador.</p>
       <button class="button primary full" id="settings-save" value="default">Salvar</button>
     </form>
@@ -292,7 +357,31 @@
     </form>
   </dialog>
 
-  <div class="toast hidden" id="toast" role="status"></div>
+  <dialog id="help-dialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-head">
+        <div><p class="section-kicker">Ajuda rápida</p><h2>Como tirar valor da análise</h2></div>
+        <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+      </div>
+      <ol class="help-list">
+        <li>Comece pela demonstração se quiser entender a fila antes de selecionar seus XMLs.</li>
+        <li>Corrija o cadastro no ERP por SKU, não nota por nota.</li>
+        <li>Use o pacote ZIP para entregar HTML, CSV, JSON e o manifesto ao time.</li>
+        <li>Confirme a emissão corrigida no validador oficial da SVRS.</li>
+      </ol>
+      <div class="shortcut-list">
+        <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> analisar lote</span>
+        <span><kbd>/</kbd> buscar na fila</span>
+        <span><kbd>Esc</kbd> fechar esta janela</span>
+      </div>
+      <button class="button ghost full" id="copy-diagnostics" type="button">
+        Copiar diagnóstico seguro para suporte
+      </button>
+      <p class="fine">O RTC Check é uma triagem local e não substitui o validador oficial ou a revisão profissional.</p>
+    </form>
+  </dialog>
+
+  <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
   <script src="/app.js"></script>
 </body>
 </html>

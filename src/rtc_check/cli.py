@@ -11,6 +11,7 @@ from pathlib import Path
 
 from . import __version__
 from . import edicao as ed
+from .diagnostico import dados as dados_diagnostico
 from .parser import XmlInvalido, ler_nota, varrer_pasta
 from .report import (
     Comparativo,
@@ -171,6 +172,11 @@ def construir_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="mostra o plano em uso e o que está liberado",
     )
+    p.add_argument(
+        "--diagnostico",
+        action="store_true",
+        help="mostra diagnóstico seguro para suporte, sem XMLs ou caminhos",
+    )
 
     p.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     return p
@@ -272,6 +278,9 @@ def main(argv: list[str] | None = None) -> int:
         return _ativar_licenca(args.licenca)
     if args.iniciar_teste:
         return _iniciar_teste()
+    if args.diagnostico:
+        print(json.dumps(dados_diagnostico(), ensure_ascii=False, indent=2))
+        return 0
 
     edicao = ed.resolver(args.licenca)
     if edicao.aviso:

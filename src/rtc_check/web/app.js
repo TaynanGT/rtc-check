@@ -5,9 +5,13 @@ let selectedFiles = [];
 let currentResult = null;
 let currentFilter = "todos";
 let currentSearch = "";
+let currentSort = localStorage.getItem("rtc-sort") || "prioridade";
 let selectionTooLarge = false;
 let currentAnalysisId = null;
+let appStatus = null;
 const MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
+const HISTORY_KEY = "rtc-metric-history";
+const EVENTS_KEY = "rtc-local-events";
 
 function setStep(step) {
   ["select", "analyze", "correct"].forEach((name, index) => {
@@ -47,6 +51,7 @@ function toast(message) {
 
 function setBusy(active, message = "Lendo XMLs e agrupando os produtos.") {
   $("#progress").classList.toggle("hidden", !active);
+  $("#progress").setAttribute("aria-busy", active ? "true" : "false");
   $("#progress-message").textContent = message;
   $("#cancel-analysis").classList.toggle("hidden", !active || !currentAnalysisId);
   if (active && currentAnalysisId) $("#cancel-analysis").disabled = false;
@@ -57,6 +62,7 @@ function setBusy(active, message = "Lendo XMLs e agrupando os produtos.") {
 }
 
 function renderStatus(status) {
+  appStatus = status;
   $("#version").textContent = `v${status.versao}`;
   $("#plan-name").textContent = status.plano;
   const details = [];
@@ -65,7 +71,33 @@ function renderStatus(status) {
     details.push(`<p>${status.dias_restantes} dia(s) restante(s)</p>`);
   }
   details.push(`<p>NT ${status.normativa.versao} · tabela ${status.normativa.tabela_versao}</p>`);
+  details.push(`<p>${status.catalogo_regras.length} regras catalogadas · snapshot há ${status.idade_snapshot_dias} dia(s)</p>`);
   $("#plan-details").innerHTML = details.join("");
+  $("#rules-age").textContent =
+    `✓ NT ${status.normativa.versao} · tabela ${status.normativa.tabela_versao}`;
+  const coverage = status.cobertura;
+  $("#coverage-content").innerHTML = `<div class="coverage-grid">
+    <section><h4>Coberto nesta versão</h4><ul>${coverage.incluido.map((item) =>
+      `<li>${escapeText(item)}</li>`).join("")}</ul></section>
+    <section><h4>Fora do escopo</h4><ul>${coverage.fora_de_escopo.map((item) =>
+      `<li>${escapeText(item)}</li>`).join("")}</ul></section>
+    <section><h4>Documentos e leiautes</h4><ul>
+      <li>${coverage.documentos.map(escapeText).join(", ")}</li>
+      <li>${coverage.layouts.map(escapeText).join(", ")}</li></ul></section>
+    <section><h4>Fonte embarcada</h4><p class="muted">NT ${escapeText(status.normativa.versao)}
+      e tabela ${escapeText(status.normativa.tabela_versao)}.
+      <a target="_blank" rel="noreferrer" href="${escapeAttribute(status.normativa.fonte)}">
+      Abrir fonte oficial ↗</a></p></section></div>`;
+  $("#rule-picker-content").innerHTML = status.catalogo_regras.map((rule) =>
+    `<label class="rule-choice"><input type="checkbox" name="selected-rule" value="${escapeAttribute(rule.codigo)}" checked>
+      <span><strong>${escapeText(rule.codigo)} · ${escapeText(rule.titulo)}</strong><small>${escapeText(rule.campo)}</small></span></label>`
+  ).join("");
+  $("#technical-content").innerHTML = `<ul class="technical-list">
+    <li>Interface: somente ${escapeText(status.privacidade.servidor)} · telemetria: não</li>
+    <li>Envio máximo: ${status.limites.requisicao_mb} MB · XML: ${status.limites.xml_mb} MB</li>
+    <li>Até ${status.limites.xmls_por_lote.toLocaleString("pt-BR")} XMLs · ZIP: ${status.limites.zip_descompactado_mb} MB descompactados</li>
+    <li>Snapshot de regras: ${status.idade_snapshot_dias} dia(s) · ${status.catalogo_regras.length} regras catalogadas</li>
+  </ul>`;
   $("#trial").classList.toggle("hidden", status.pago);
   $("#checkout").classList.toggle("hidden", status.licenciado);
   $("#offer-summary").classList.toggle("hidden", status.licenciado);
@@ -123,6 +155,18 @@ async function copyText(value, successMessage) {
   toast(successMessage);
 }
 
+function registerEvent(name) {
+  // Eventos operacionais ficam locais e nunca carregam SKU, CNPJ, nome ou XML.
+  try {
+    const eventos = JSON.parse(localStorage.getItem(EVENTS_KEY) || "[]");
+    const lista = Array.isArray(eventos) ? eventos : [];
+    lista.push({evento: name, data: new Date().toISOString(), versao: appStatus?.versao || null});
+    localStorage.setItem(EVENTS_KEY, JSON.stringify(lista.slice(-50)));
+  } catch {
+    // Armazenamento bloqueado não pode impedir a análise local.
+  }
+}
+
 function renderRows() {
   if (!currentResult) return;
   const query = currentSearch.trim().toLocaleLowerCase("pt-BR");
@@ -134,6 +178,20 @@ function renderRows() {
     ].join(" ").toLocaleLowerCase("pt-BR");
     return matchesFilter && (!query || haystack.includes(query));
   });
+  const severityRank = {bloqueio: 0, alerta: 1, info: 2};
+  items.sort((left, right) => {
+    if (currentSort === "ocorrencias") {
+      return right.ocorrencias - left.ocorrencias || left.sku.localeCompare(right.sku, "pt-BR");
+    }
+    if (currentSort === "sku") return left.sku.localeCompare(right.sku, "pt-BR");
+    if (currentSort === "emitente") {
+      return left.emitente.localeCompare(right.emitente, "pt-BR")
+        || left.sku.localeCompare(right.sku, "pt-BR");
+    }
+    return (severityRank[left.severidade] ?? 9) - (severityRank[right.severidade] ?? 9)
+      || right.ocorrencias - left.ocorrencias
+      || left.sku.localeCompare(right.sku, "pt-BR");
+  });
   $("#empty-filter").classList.toggle("hidden", items.length !== 0);
   $("#visible-count").textContent = query || currentFilter !== "todos"
     ? `${items.length} correspondência(s) · ${currentResult.itens.length} carregada(s)`
@@ -141,7 +199,15 @@ function renderRows() {
   $("#result-rows").innerHTML = items.map((item) => {
     const first = item.mensagens[0] || {codigo: "", mensagem: "", acao: ""};
     const messages = item.mensagens.map((entry) =>
-      `<span class="message"><span class="code">${escapeText(entry.codigo)}</span>${escapeText(entry.mensagem)}</span>`
+      `<span class="message"><span class="code">${escapeText(entry.codigo)}</span>${escapeText(entry.mensagem)}</span>
+      ${entry.regra ? `<details class="rule-detail"><summary>Entender ${escapeText(entry.codigo)}</summary>
+        <p><strong>Campo:</strong> ${escapeText(entry.regra.campo)} ·
+        <strong>Referência:</strong> ${escapeText(entry.regra.referencia)}</p>
+        <p><strong>Impacto:</strong> ${escapeText(entry.regra.impacto)}</p>
+        <p><strong>Responsável sugerido:</strong> ${escapeText(entry.regra.responsavel)} ·
+        <strong>Confiança:</strong> ${escapeText(entry.regra.confianca)}</p>
+        <a href="${escapeAttribute(entry.regra.fonte)}" target="_blank" rel="noreferrer">
+          Abrir fonte primária ↗</a></details>` : ""}`
     ).join("");
     return `<tr data-severity="${item.severidade}">
       <td><span class="severity ${item.severidade}">${item.severidade}</span></td>
@@ -158,6 +224,8 @@ function renderRows() {
 }
 
 function renderResult(result) {
+  renderComparison(result);
+  registerEvent(result.demo ? "demonstracao_concluida" : "analise_concluida");
   currentResult = result;
   $("#results").classList.remove("hidden");
   $("#results-summary").textContent = result.aprovado
@@ -216,9 +284,62 @@ function renderResult(result) {
   );
   currentSearch = "";
   $("#queue-search").value = "";
+  $("#queue-sort").value = currentSort;
   renderRows();
   setStep(3);
   $("#results").scrollIntoView({behavior: "smooth", block: "start"});
+}
+
+function readHistory() {
+  try {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+    return Array.isArray(history) ? history.slice(-10) : [];
+  } catch {
+    return [];
+  }
+}
+
+function renderComparison(result) {
+  const historyEnabled = localStorage.getItem("rtc-history-enabled") === "true";
+  const history = readHistory();
+  const previous = history.at(-1);
+  const card = $("#comparison-card");
+  card.classList.toggle("hidden", !historyEnabled || !previous);
+  if (historyEnabled && previous) {
+    const catalogo = (appStatus?.catalogo_regras || []).map((item) => item.codigo).join(",");
+    const compatível = previous.versao === appStatus?.versao
+      && previous.normativa === appStatus?.normativa?.versao
+      && previous.tabela === appStatus?.normativa?.tabela_versao
+      && previous.catalogo === catalogo;
+    if (!compatível) {
+      $("#comparison-text").textContent =
+        "Comparação indisponível: a versão ou a base normativa mudou. Reanalise o lote.";
+    } else {
+      const deltaSku = result.skus_a_corrigir - previous.skus_a_corrigir;
+      const deltaScore = result.pontuacao - previous.pontuacao;
+      const skuText = deltaSku === 0 ? "mesma quantidade de SKUs" :
+        `${Math.abs(deltaSku)} SKU(s) ${deltaSku < 0 ? "a menos" : "a mais"}`;
+      const scoreText = deltaScore === 0 ? "prontidão estável" :
+        `${Math.abs(deltaScore)} ponto(s) ${deltaScore > 0 ? "a mais" : "a menos"} de prontidão`;
+      $("#comparison-text").textContent = `${skuText} · ${scoreText}.`;
+    }
+  }
+  if (historyEnabled && !result.demo) {
+    const catalogo = (appStatus?.catalogo_regras || []).map((item) => item.codigo).join(",");
+    history.push({
+      data: new Date().toISOString(),
+      versao: appStatus?.versao || null,
+      normativa: appStatus?.normativa?.versao || null,
+      tabela: appStatus?.normativa?.tabela_versao || null,
+      catalogo,
+      pontuacao: result.pontuacao,
+      arquivos_lidos: result.arquivos_lidos,
+      bloqueios: result.bloqueios,
+      alertas: result.alertas,
+      skus_a_corrigir: result.skus_a_corrigir,
+    });
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-10)));
+  }
 }
 
 async function analyze(path, options = {}) {
@@ -242,6 +363,11 @@ function renderProgress(status) {
   $("#progress-count").textContent = status.total
     ? `${status.processados.toLocaleString("pt-BR")} de ${status.total.toLocaleString("pt-BR")} XMLs analisados`
     : "Preparação local em andamento.";
+  const percentage = status.total
+    ? Math.min(100, Math.round((status.processados / status.total) * 100))
+    : 0;
+  $(".progress-track").setAttribute("aria-valuenow", String(percentage));
+  $("#progress-bar").style.width = `${percentage}%`;
 }
 
 async function analyzeSelectedAsync(data, message) {
@@ -316,6 +442,7 @@ function updateSelection(files, {preserveResult = false} = {}) {
 async function activateTrial() {
   try {
     const payload = await api("/api/teste", {method: "POST", body: "{}"});
+    registerEvent("teste_ativado");
     renderStatus(payload.status);
     if (currentResult && !currentResult.demo) {
       if (selectedFiles.length) {
@@ -339,6 +466,15 @@ function analyzeSelected(message = `Processando ${selectedFiles.length} arquivo(
   }
   const data = new FormData();
   selectedFiles.forEach((file) => data.append("arquivos", file, file.name));
+  const selectedRules = $$('[name="selected-rule"]:checked').map((input) => input.value);
+  const allRules = $$('[name="selected-rule"]').length;
+  if (allRules && !selectedRules.length) {
+    toast("Selecione pelo menos uma regra ou feche esta opção para usar o padrão.");
+    return Promise.resolve();
+  }
+  if (selectedRules.length && selectedRules.length !== allRules) {
+    selectedRules.forEach((code) => data.append("regra", code));
+  }
   return analyzeSelectedAsync(data, message);
 }
 
@@ -359,9 +495,9 @@ async function exportResult(format) {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url; anchor.download = filename; anchor.click();
-    if (format === "html") {
-      toast("Relatório baixado. Abra o HTML e use Imprimir para salvar em PDF.");
-    }
+    if (format === "html") toast("Relatório HTML baixado. Use Imprimir para salvar em PDF.");
+    if (format === "pacote") toast("Pacote ZIP baixado com HTML, CSV, JSON e manifesto.");
+    registerEvent(`exportacao_${format}`);
     window.setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (error) {
     toast(error.message);
@@ -421,6 +557,7 @@ $("#demo").addEventListener("click", () => analyze("/api/demo", {
   method: "POST", body: "{}",
   message: "Preparando uma análise demonstrativa.",
 }));
+$("#demo").addEventListener("click", () => registerEvent("demo_iniciada"));
 $("#hero-demo").addEventListener("click", () => $("#demo").click());
 $("#trial").addEventListener("click", activateTrial);
 $("#upgrade-trial").addEventListener("click", activateTrial);
@@ -433,6 +570,11 @@ $$(".filter").forEach((button) => button.addEventListener("click", () => {
 }));
 $("#queue-search").addEventListener("input", (event) => {
   currentSearch = event.target.value;
+  renderRows();
+});
+$("#queue-sort").addEventListener("change", (event) => {
+  currentSort = event.target.value;
+  localStorage.setItem("rtc-sort", currentSort);
   renderRows();
 });
 $$(".export").forEach((button) => button.addEventListener("click", () =>
@@ -465,6 +607,40 @@ $("#copy-queue").addEventListener("click", () => {
   copyText(lines.join("\n"), "Fila copiada. Cole no Excel, e-mail ou chamado do ERP.");
 });
 
+$("#copy-summary").addEventListener("click", () => {
+  if (!currentResult) return;
+  const status = currentResult.aprovado ? "sem bloqueios" : "com bloqueios";
+  copyText(
+    [
+      `RTC Check — ${status}`,
+      `Prontidão: ${currentResult.pontuacao}%`,
+      `XMLs lidos: ${currentResult.arquivos_lidos}`,
+      `Itens analisados: ${currentResult.total_itens}`,
+      `Bloqueios: ${currentResult.bloqueios}`,
+      `Alertas: ${currentResult.alertas}`,
+      `SKUs a corrigir: ${currentResult.skus_a_corrigir}`,
+    ].join("\n"),
+    "Resumo copiado para o e-mail ou chamado.",
+  );
+});
+$("#print-result").addEventListener("click", () => window.print());
+$("#copy-diagnostic").addEventListener("click", () => {
+  if (!appStatus) return;
+  const safe = {
+    produto: "RTC Check",
+    versao: appStatus.versao,
+    plano: appStatus.plano,
+    normativa: appStatus.normativa,
+    limites: appStatus.limites,
+    privacidade: appStatus.privacidade,
+  };
+  copyText(JSON.stringify(safe, null, 2), "Diagnóstico seguro copiado. Não inclui XMLs nem caminhos.");
+});
+$$('.feedback').forEach((button) => button.addEventListener("click", () => {
+  localStorage.setItem("rtc-last-feedback", JSON.stringify({valor: button.dataset.feedback, em: new Date().toISOString()}));
+  toast("Obrigado. O voto ficou apenas neste navegador.");
+}));
+
 $("#copy-first").addEventListener("click", () => {
   const item = currentResult?.itens[0];
   const first = item?.mensagens[0];
@@ -488,13 +664,63 @@ const settings = $("#settings-dialog");
 $("#settings-open").addEventListener("click", () => {
   $("#brand-name").value = localStorage.getItem("rtc-brand") || "RTC Check";
   $("#brand-color").value = localStorage.getItem("rtc-color") || "#0f766e";
+  $("#high-contrast").checked = document.body.classList.contains("high-contrast");
+  $("#local-history").checked = localStorage.getItem("rtc-history-enabled") === "true";
   settings.showModal();
+});
+
+const help = $("#help-dialog");
+$("#help-open").addEventListener("click", () => help.showModal());
+$("#copy-diagnostics").addEventListener("click", () => {
+  const status = appStatus;
+  if (!status) {
+    toast("O diagnóstico ainda está carregando.");
+    return;
+  }
+  const eventos = (() => {
+    try {
+      const value = JSON.parse(localStorage.getItem(EVENTS_KEY) || "[]");
+      return Array.isArray(value) ? value.length : 0;
+    } catch {
+      return 0;
+    }
+  })();
+  const linhas = [
+    `RTC Check ${status.versao}`,
+    `Plano: ${status.plano}`,
+    `Normativa: NT ${status.normativa.versao} · tabela ${status.normativa.tabela_versao}`,
+    `Snapshot: ${status.idade_snapshot_dias} dia(s) · ${status.catalogo_regras.length} regra(s)`,
+    `Servidor: ${status.privacidade.servidor} · telemetria: ${status.privacidade.telemetria ? "sim" : "não"}`,
+    `Limites: ${status.limites.requisicao_mb} MB por envio · ${status.limites.xml_mb} MB por XML · `
+      + `${status.limites.xmls_por_lote.toLocaleString("pt-BR")} XMLs · ZIP descompactado `
+      + `${status.limites.zip_descompactado_mb} MB`,
+    `Eventos locais agregados: ${eventos}`,
+    "Nenhum XML, SKU, CNPJ ou credencial é incluído neste diagnóstico.",
+  ];
+  copyText(linhas.join("\n"), "Diagnóstico seguro copiado.");
 });
 $("#settings-save").addEventListener("click", () => {
   localStorage.setItem("rtc-brand", $("#brand-name").value.trim() || "RTC Check");
   localStorage.setItem("rtc-color", $("#brand-color").value);
+  localStorage.setItem("rtc-high-contrast", $("#high-contrast").checked ? "true" : "false");
+  localStorage.setItem("rtc-history-enabled", $("#local-history").checked ? "true" : "false");
+  document.body.classList.toggle("high-contrast", $("#high-contrast").checked);
   toast("Personalização salva neste navegador.");
 });
+$("#history-clear").addEventListener("click", () => {
+  localStorage.removeItem(HISTORY_KEY);
+  localStorage.removeItem(EVENTS_KEY);
+  $("#comparison-card").classList.add("hidden");
+  toast("Histórico local e eventos operacionais apagados.");
+});
+$("#metrics-copy").addEventListener("click", () => {
+  const events = localStorage.getItem(EVENTS_KEY) || "{}";
+  copyText(
+    `RTC Check — métricas locais agregadas\n${events}`,
+    "Métricas locais copiadas. Elas não contêm XML, CNPJ ou nome de arquivo.",
+  );
+});
+$("#checkout").addEventListener("click", () => trackLocal("checkout_aberto"));
 
 const license = $("#license-dialog");
 $("#license-open").addEventListener("click", () => license.showModal());
@@ -539,4 +765,26 @@ $("#shutdown").addEventListener("click", async () => {
   }
 });
 
+document.addEventListener("keydown", (event) => {
+  const tag = event.target.tagName.toLowerCase();
+  const editing = tag === "input" || tag === "textarea" || tag === "select";
+  if (event.key === "Escape") {
+    if (help.open) help.close();
+    if (settings.open) settings.close();
+    if (license.open) license.close();
+  }
+  if (event.key === "/" && !editing) {
+    event.preventDefault();
+    $("#queue-search").focus();
+  }
+  if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !editing) {
+    event.preventDefault();
+    if (!$("#analyze").disabled) analyzeSelected();
+  }
+});
+
+document.body.classList.toggle(
+  "high-contrast",
+  localStorage.getItem("rtc-high-contrast") === "true",
+);
 api("/api/status").then(renderStatus).catch((error) => toast(error.message));

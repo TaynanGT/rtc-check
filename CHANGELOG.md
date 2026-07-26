@@ -5,6 +5,16 @@ Versionamento semântico.
 
 ## [0.3.1] / 2026-07-26
 
+### Adicionado
+- Pacote ZIP de entrega com relatório HTML, CSV, JSON, plano de ação, manifesto
+  e hashes SHA-256 dos arquivos entregues (sem XMLs originais).
+- Catálogo rastreável de regras, seletor de regras por auditoria, comparação e
+  histórico local opcional de métricas.
+- Diagnóstico seguro por `rtc-check --diagnostico`, sem documentos, caminhos ou
+  credenciais, além de guia inicial, FAQ, roteiro comercial e atualização manual.
+- Painel técnico local, cópia de resumo/diagnóstico e feedback que permanece
+  somente no navegador, sem telemetria.
+
 ### Alterado
 - A ação principal e a demonstração aparecem já na abertura.
 - O indicador de etapas acompanha seleção, processamento e resultado.

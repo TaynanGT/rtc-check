@@ -85,6 +85,10 @@ Use a [captação comercial privada](https://taynangt.github.io/rtc-check/#conta
 somente e-mail corporativo, perfil e interesse. Nunca envie XML, CNPJ, chave de NF-e,
 credenciais ou dados de pagamento.
 
-O checkout é modular e ainda não está ativo: `.env.example` reserva provedor, URL,
-chave de API e segredo de webhook sem comprometer dados no repositório. Até a conta do
-provedor ser escolhida e verificada pelo titular, a compra é assistida pelo formulário.
+O checkout é modular. Quando `RTC_CHECK_PAYMENT_PROVIDER` e
+`RTC_CHECK_CHECKOUT_URL` estão configurados com uma URL HTTPS, a instalação
+mostra o checkout automático; sem essas variáveis, o produto usa a captação
+assistida privada como fallback. A conta do provedor e a verificação final
+continuam sendo responsabilidade do titular, e nenhuma credencial fica no
+repositório. O pacote local nunca precisa de credenciais de pagamento para
+ativar o teste.

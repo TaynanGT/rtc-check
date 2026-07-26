@@ -107,7 +107,7 @@ font-size:.85rem;color:var(--dim)}
 footer a{color:var(--dim)}
 ul{margin:0 0 1rem 1.15rem}li{margin-bottom:.4rem}
 .destaque{font-variant-numeric:tabular-nums;font-weight:640}
-.demo{margin:2rem 0;background:linear-gradient(135deg,#101a19,#23413c);color:#fff;border-radius:14px;padding:1.35rem;box-shadow:0 20px 45px #18181b22}.demo small,.demo p{color:#d2e4df}.demo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}.demo-card{background:#ffffff12;border:1px solid #ffffff2b;border-radius:9px;padding:.8rem}.demo-card strong{display:block;font-size:1.35rem}.regra{background:#f3faf8;border:1px solid #b7ded3;border-radius:10px;padding:1.1rem 1.25rem;margin:1.5rem 0}.regra p{margin:.35rem 0;color:#31544b}.segmentos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem;margin:1.5rem 0}.segmento{border:1px solid var(--line);border-radius:10px;padding:1.2rem}.segmento p{font-size:.9rem;color:var(--dim)}.lead{border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin:1.5rem 0;background:var(--soft)}.lead label{display:block;font-size:.88rem;font-weight:620;margin:.8rem 0 .3rem}.lead input,.lead select{width:100%;border:1px solid var(--line);border-radius:7px;padding:.65rem;background:var(--bg);font:inherit}.lead-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.consent{display:flex!important;gap:.55rem;align-items:flex-start;font-weight:400!important}.consent input{width:auto!important;margin-top:.25rem}.lead-status{font-size:.86rem;color:var(--dim);margin-top:.8rem}.privacy-note{font-size:.82rem;color:var(--dim)}
+.demo{margin:2rem 0;background:linear-gradient(135deg,#101a19,#23413c);color:#fff;border-radius:14px;padding:1.35rem;box-shadow:0 20px 45px #18181b22}.demo small,.demo p{color:#d2e4df}.demo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}.demo-card{background:#ffffff12;border:1px solid #ffffff2b;border-radius:9px;padding:.8rem}.demo-card strong{display:block;font-size:1.35rem}.regra{background:#f3faf8;border:1px solid #b7ded3;border-radius:10px;padding:1.1rem 1.25rem;margin:1.5rem 0}.regra p{margin:.35rem 0;color:#31544b}.segmentos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem;margin:1.5rem 0}.segmento{border:1px solid var(--line);border-radius:10px;padding:1.2rem}.segmento p{font-size:.9rem;color:var(--dim)}.lead{border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin:1.5rem 0;background:var(--soft)}.lead label{display:block;font-size:.88rem;font-weight:620;margin:.8rem 0 .3rem}.lead input,.lead select{width:100%;border:1px solid var(--line);border-radius:7px;padding:.65rem;background:var(--bg);font:inherit}.lead-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.consent{display:flex!important;gap:.55rem;align-items:flex-start;font-weight:400!important}.consent input{width:auto!important;margin-top:.25rem}.lead-status{font-size:.86rem;color:var(--dim);margin-top:.8rem}.privacy-note{font-size:.82rem;color:var(--dim)}.honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important}.calculator{border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin:1.5rem 0}.calculator output{display:block;font-size:1.35rem;font-weight:700;color:var(--green);margin-top:1rem}
 @media(max-width:560px){.demo-grid,.segmentos,.lead-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -176,6 +176,10 @@ servidor ou CI, a mesma análise continua disponível pelo terminal:</p>
 produto se corrige uma vez; o mesmo SKU quebrado aparece em milhares de notas.
 Relatório que conta ocorrência em vez de produto transforma um dia de trabalho
 numa parede intransponível.</p>
+
+<p><strong>Entrega pronta:</strong> no plano Escritório, a interface baixa um único
+ZIP com relatório HTML imprimível, fila CSV, auditoria JSON e manifesto. Os XMLs
+originais permanecem fora do pacote.</p>
 
 <blockquote>Os números acima são de um acervo de exemplo. Os seus saem da
 primeira execução, que leva alguns segundos.</blockquote>
@@ -383,7 +387,7 @@ ou a memória saírem da ordem de grandeza. Você pode reproduzir com
   <td class="ok">completa</td></tr>
 <tr><td>Regras de cadastro (<code>NCM001</code>, <code>GTIN001</code>)</td>
   <td class="no">não</td><td class="ok">sim</td></tr>
-<tr><td>Saída em JSON, CSV e HTML</td><td class="no">não</td><td class="ok">sim</td></tr>
+<tr><td>Saída em JSON, CSV, HTML e pacote ZIP</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Gravar relatório em arquivo</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Travar o build no CI</td><td class="no">não</td><td class="ok">sim</td></tr>
 <tr><td>Detalhamento por CNPJ</td><td class="no">não</td><td class="ok">sim</td></tr>
@@ -417,12 +421,29 @@ e dá para removê-la. Isso é conhecido e não vai mudar: fechar o código cust
 única coisa que faz alguém apontar uma pasta de notas fiscais para este programa, que
 é conseguir ler o que ele faz. A assinatura não vende acesso ao binário.</blockquote>
 
+<div class="calculator" id="calculadora">
+  <h3>Estime o tamanho da triagem manual.</h3>
+  <p class="privacy-note">Estimativa educativa feita no navegador; nenhum valor é enviado.</p>
+  <div class="lead-grid">
+    <div><label for="calc-xml">XMLs por mês</label>
+      <input id="calc-xml" type="number" min="1" max="1000000" value="4000"></div>
+    <div><label for="calc-segundos">Segundos de conferência por XML</label>
+      <input id="calc-segundos" type="number" min="1" max="3600" value="30"></div>
+  </div>
+  <output id="calc-output">≈ 33,3 horas de conferência manual por lote.</output>
+  <p class="privacy-note">Não é promessa de economia: o ganho real depende do acervo, das regras e do processo da equipe.</p>
+</div>
+
 <div class="lead" id="contato">
   <h3>Receba o próximo passo comercial de forma privada.</h3>
   <p class="privacy-note">Informe somente dados de contato. Nunca envie XML, CNPJ, chave de NF-e ou credenciais.</p>
   <form id="lead-form">
+    <div class="honeypot" aria-hidden="true">
+      <label for="lead-site">Não preencha este campo</label>
+      <input id="lead-site" name="site" tabindex="-1" autocomplete="off">
+    </div>
     <div class="lead-grid">
-      <div><label for="lead-email">E-mail corporativo</label><input id="lead-email" name="email" type="email" autocomplete="email" required></div>
+      <div><label for="lead-email">E-mail corporativo</label><input id="lead-email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
       <div><label for="lead-empresa">Empresa (opcional)</label><input id="lead-empresa" name="empresa" autocomplete="organization" maxlength="80"></div>
     </div>
     <div class="lead-grid">
@@ -430,8 +451,10 @@ e dá para removê-la. Isso é conhecido e não vai mudar: fechar o código cust
       <div><label for="lead-plano">Interesse</label><select id="lead-plano" name="plano" required><option value="">Selecione</option><option>Escritório</option><option>Plataforma</option></select></div>
     </div>
     <label class="consent"><input id="lead-consent" type="checkbox" required> Concordo que estes dados mínimos sejam usados somente para responder a este pedido comercial.</label>
+    <label class="consent"><input id="lead-news" name="novidades" type="checkbox" value="sim">
+      Quero receber, separadamente, atualizações sobre mudanças de NT e novas versões.</label>
     <p><button class="btn" type="submit">Solicitar contato privado</button></p>
-    <p class="lead-status" id="lead-status" role="status"></p>
+    <p class="lead-status" id="lead-status" role="status" aria-live="polite"></p>
   </form>
 </div>
 <p class="nota">O recebimento é configurável e não usa issue pública. Consulte o <a href="https://github.com/TaynanGT/rtc-check/blob/main/docs/captacao-privada.md">guia de captação privada</a> antes de ativar um endpoint.</p>
@@ -443,6 +466,9 @@ e dá para removê-la. Isso é conhecido e não vai mudar: fechar o código cust
   <p>Ferramenta independente, sem vínculo com a SEFAZ, a Receita Federal ou
   qualquer órgão público. Não substitui orientação do seu contador.</p>
   <p><a href="https://github.com/TaynanGT/rtc-check">Código no GitHub</a> ·
+  <a href="privacy.html">Privacidade</a> ·
+  <a href="terms.html">Termos</a> ·
+  <a href="status.html">Status normativo</a> ·
   <a href="https://github.com/TaynanGT/rtc-check/blob/main/docs/planos.md">Planos e
   licença</a> ·
   <a href="https://github.com/TaynanGT/rtc-check/blob/main/README.en.md">English</a></p>
@@ -475,12 +501,16 @@ document.getElementById('lead-form').addEventListener('submit', async function (
   event.preventDefault();
   var status = document.getElementById('lead-status');
   var dados = Object.fromEntries(new FormData(event.currentTarget).entries());
-  var endpoint = window.RTC_CHECK_LEADS_ENDPOINT || '';
-  if (!endpoint) {
-    await navigator.clipboard.writeText('Interesse RTC Check\nE-mail: ' + dados.email + '\nEmpresa: ' + (dados.empresa || '-') + '\nPerfil: ' + dados.perfil + '\nPlano: ' + dados.plano);
-    status.textContent = 'Pedido copiado. O recebimento privado será ativado assim que o endpoint comercial for configurado.';
+  if (dados.site) {
+    status.textContent = 'Pedido recusado.';
     return;
   }
+  var endpoint = window.RTC_CHECK_LEADS_ENDPOINT || '';
+  if (!endpoint) {
+    status.innerHTML = 'A captação privada ainda não está ativa. <a href="https://github.com/TaynanGT/rtc-check/releases/latest">Baixe o aplicativo</a> e use o teste local sem cadastro.';
+    return;
+  }
+  delete dados.site;
   status.textContent = 'Enviando somente seus dados de contato…';
   try {
     var resposta = await fetch(endpoint, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dados)});
@@ -491,6 +521,20 @@ document.getElementById('lead-form').addEventListener('submit', async function (
     status.textContent = 'Não foi possível enviar agora. Tente novamente mais tarde.';
   }
 });
+</script>
+<script>
+(function () {
+  var xml = document.getElementById('calc-xml');
+  var segundos = document.getElementById('calc-segundos');
+  var output = document.getElementById('calc-output');
+  function calcular() {
+    var horas = Math.max(0, Number(xml.value) * Number(segundos.value) / 3600);
+    output.textContent = '≈ ' + horas.toLocaleString('pt-BR', {maximumFractionDigits: 1}) +
+      ' horas de conferência manual por lote.';
+  }
+  xml.addEventListener('input', calcular);
+  segundos.addEventListener('input', calcular);
+})();
 </script>
 
 </body>

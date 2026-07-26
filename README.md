@@ -95,8 +95,17 @@ priorizada pode ser buscada por SKU, produto, NCM ou emitente e copiada diretame
 para Excel, e-mail ou chamado do ERP. XMLs inválidos aparecem em um alerta separado.
 Em lotes maiores, a interface mostra a etapa, a contagem de XMLs analisados e permite
 cancelar com descarte dos arquivos temporários. Ativar o teste ou uma licença libera e atualiza o diagnóstico sem perder o fluxo.
-Também é possível personalizar a marca e exportar CSV, JSON ou um relatório pronto
-para impressão/PDF. O botão **Encerrar** finaliza o servidor e remove os resultados em memória.
+Também é possível personalizar a marca e exportar CSV, JSON, um relatório pronto
+para impressão/PDF ou um **pacote ZIP** com os três formatos e um manifesto. O
+botão **Encerrar** finaliza o servidor e remove os resultados em memória.
+
+Para um primeiro uso real, siga o [guia de cinco minutos](docs/primeiro-lote-em-5-minutos.md).
+A opção `rtc-check --diagnostico` gera um resumo seguro para suporte: versão,
+limites e normativa, sem XMLs, caminhos, CNPJ ou credenciais.
+
+O pacote ZIP não inclui os XMLs originais. Ele contém `relatorio.html`,
+`fila-de-correcao.csv`, `auditoria-rtc.json` e `manifesto.json`, que registra a
+versão, a normativa usada, as contagens e o limite de privacidade da entrega.
 
 ## Uso
 
@@ -152,6 +161,7 @@ rtc-check ./xmls --comparar prontidao-da-semana-passada.json
 | `--iniciar-teste` | libera 14 dias de teste nesta máquina | gratuito |
 | `--licenca` | ativa uma chave | gratuito |
 | `--plano` | mostra a edição em uso e o que está liberado | gratuito |
+| `--diagnostico` | gera diagnóstico seguro de versão, limites e normativa | gratuito |
 
 Códigos de saída: `0` tudo certo, `1` há bloqueio (com `--falhar-em-bloqueio`),
 `2` erro de uso, `3` recurso fora do plano em uso.
@@ -213,6 +223,10 @@ A `RTC001` respeita as exceções oficiais para devolução/complementar que ref
 NF-e anterior a 2026 e para `cProdANP` presente na tabela de combustíveis monofásicos.
 Como a entrada é um acervo histórico, “bloqueio” significa que o padrão encontrado
 causará rejeição se continuar numa emissão sujeita à regra após o corte.
+
+Veja respostas curtas sobre 1115, CRT 3, privacidade e suporte em
+[docs/faq-rtc.md](docs/faq-rtc.md). Para atualizar sem depender de instalador,
+siga [a conferência manual de integridade](docs/atualizacao-manual.md).
 
 O `cEAN` vazio é tratado conforme a versão do layout da nota. O literal `SEM GTIN` só
 existe a partir do 4.00 (NT 2016.002): em notas antigas, no 2.00 ou 3.xx, campo vazio

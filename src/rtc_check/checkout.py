@@ -28,7 +28,13 @@ def carregar() -> Checkout:
     provedor = os.environ.get("RTC_CHECK_PAYMENT_PROVIDER", "").strip()[:40]
     url = os.environ.get("RTC_CHECK_CHECKOUT_URL", "").strip()
     parsed = urlparse(url)
-    if parsed.scheme == "https" and parsed.netloc:
+    permitidos = {
+        host.strip().lower()
+        for host in os.environ.get("RTC_CHECK_CHECKOUT_ALLOWED_HOSTS", "").split(",")
+        if host.strip()
+    }
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme == "https" and host and host in permitidos:
         return Checkout(
             provedor=provedor or "checkout externo",
             url=url,

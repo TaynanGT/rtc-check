@@ -186,6 +186,20 @@ def test_parser_multipart():
         webapp._partes_multipart("text/plain", b"sem multipart")
 
 
+def test_parser_multipart_le_campos_de_regra_sem_confundir_com_xml():
+    # A construção manual abaixo reproduz um FormData com campo textual.
+    limite = "RTC-CHECK-TESTE"
+    corpo = (
+        f"--{limite}\r\nContent-Disposition: form-data; name=\"regra\"\r\n\r\nRTC001\r\n"
+        f"--{limite}\r\nContent-Disposition: form-data; "
+        'name="arquivos"; filename="nota.xml"\r\n'
+        "Content-Type: application/xml\r\n\r\n<NFe/>\r\n"
+        f"--{limite}--\r\n"
+    ).encode()
+    tipo = f"multipart/form-data; boundary={limite}"
+    assert webapp._campos_multipart(tipo, corpo) == {"regra": ["RTC001"]}
+
+
 def test_demo_cria_acervo_analisavel(tmp_path):
     webapp._criar_demo(tmp_path)
     resumo = analisar(tmp_path)
@@ -216,6 +230,15 @@ def test_http_entrega_interface_status_e_seguranca(app_local):
     assert not dados["licenciado"]
     assert dados["checkout"]["preco_mensal"] == "R$ 149/mês"
     assert dados["checkout"]["url"].endswith("/#contato")
+    assert len(dados["catalogo_regras"]) == 8
+    assert dados["cobertura"]["documentos"] == ["NF-e modelo 55"]
+    assert dados["idade_snapshot_dias"] >= 0
+    assert dados["limites"] == {
+        "requisicao_mb": 64,
+        "xml_mb": 25,
+        "xmls_por_lote": 20_000,
+        "zip_descompactado_mb": 500,
+    }
 
     assert _request(
         base,
@@ -254,6 +277,31 @@ def test_http_demo_e_todos_os_downloads(app_local):
         assert status == 200
         assert trecho in conteudo
         assert "attachment" in headers["Content-Disposition"]
+
+    status, headers, conteudo = _request(
+        base,
+        f"/api/exportar/{resultado['id']}/pacote",
+        method="POST",
+        body=b"{}",
+    )
+    assert status == 200
+    assert headers["Content-Type"] == "application/zip"
+    with zipfile.ZipFile(BytesIO(conteudo)) as pacote:
+        assert set(pacote.namelist()) == {
+            "relatorio.html",
+            "fila-de-correcao.csv",
+            "plano-de-acao.csv",
+            "auditoria-rtc.json",
+            "LEIA-ME.txt",
+            "manifesto.json",
+            "SHA256SUMS.txt",
+        }
+        manifesto = json.loads(pacote.read("manifesto.json"))
+        assert manifesto["privacidade"].startswith("Os XMLs originais")
+        assert json.loads(pacote.read("auditoria-rtc.json"))["itens"]
+        assert b"responsavel" in pacote.read("plano-de-acao.csv")
+        assert b"relatorio.html" in pacote.read("SHA256SUMS.txt")
+        assert b"manifesto.json" in pacote.read("SHA256SUMS.txt")
 
 
 def test_http_upload_real_exige_novo_lote_quando_trial_muda_regras(app_local):
@@ -340,6 +388,38 @@ def test_http_permite_cancelar_analise_local(app_local, monkeypatch):
     final = _aguardar_analise(base, identificador)
     assert final["etapa"] == "cancelada"
     assert "apagados" in final["mensagem"]
+
+
+def test_http_limita_analises_simultaneas(app_local, monkeypatch):
+    base, _ = app_local
+    liberada = threading.Event()
+
+    def analisar_lento(*args, progresso, cancelar, **kwargs):
+        progresso(0, 1)
+        liberada.wait(timeout=2)
+        return Resumo()
+
+    monkeypatch.setattr(webapp, "analisar", analisar_lento)
+    tipo, corpo = _multipart([("nota.xml", b"<NFe/>")])
+    primeira = _request(
+        base,
+        "/api/analisar",
+        method="POST",
+        body=corpo,
+        headers={"Content-Type": tipo},
+    )
+    assert primeira[0] == 202
+    segunda = _request(
+        base,
+        "/api/analisar",
+        method="POST",
+        body=corpo,
+        headers={"Content-Type": tipo},
+    )
+    assert segunda[0] == 400
+    assert "andamento" in json.loads(segunda[2])["erro"]
+    liberada.set()
+    _aguardar_analise(base, json.loads(primeira[2])["id"])
 
 
 def test_http_trata_erros_e_ativa_teste(app_local):

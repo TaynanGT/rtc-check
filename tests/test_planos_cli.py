@@ -158,6 +158,15 @@ def test_plano_mostra_o_que_esta_liberado(capsys):
     assert "Fora do plano:" in saida
 
 
+def test_diagnostico_nao_expoe_caminhos_ou_documentos(capsys):
+    assert main(["--diagnostico"]) == 0
+    dados = json.loads(capsys.readouterr().out)
+    assert dados["produto"] == "RTC Check"
+    assert dados["privacidade"]["telemetria"] is False
+    assert dados["limites"]["xmls_por_lote"] == 20_000
+    assert "CNPJ" not in json.dumps(dados)
+
+
 def test_iniciar_teste_libera_tudo(tmp_path, capsys):
     assert main(["--iniciar-teste"]) == 0
     assert "teste grátis liberado" in capsys.readouterr().out

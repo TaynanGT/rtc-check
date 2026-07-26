@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://taynangt.github.io/rtc-check/sitemap.xml
