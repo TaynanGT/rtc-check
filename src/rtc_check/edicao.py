@@ -40,7 +40,7 @@ URL_PLANOS = "https://taynangt.github.io/rtc-check/#precos"
 # Chave pública Ed25519 do emissor oficial (o servidor de vendas em
 # https://rtc-check-vendas.onrender.com/chave-publica). Ela pode estar no
 # programa: só a chave privada, mantida fora do repositório, emite licenças.
-CHAVE_PUBLICA_PADRAO = "50Uc5gDpEqzQtsJ6-p4RKuV7w2yqDucghq2JfKP3MvA"
+CHAVE_PUBLICA_PADRAO = "4cbmXWpYzkAeQDfhM4u-iBl_WOJuhXFfd6LlTcqJanU"
 
 
 class Plano(StrEnum):
