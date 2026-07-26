@@ -261,9 +261,11 @@ def test_diretorio_de_dados_valida_relativo_e_absoluto(monkeypatch, tmp_path):
         monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "/var/dados-rtc-check")
         assert sv._diretorio_de_dados() == Path("/var/dados-rtc-check")
 
-    monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "/etc/area-do-sistema")
-    with pytest.raises(SystemExit, match="absoluto"):
-        sv._diretorio_de_dados()
+        # No Windows 3.13+, "/etc/..." nem é absoluto: cai no ramo relativo
+        # e é igualmente recusado, então o caso vale só para POSIX.
+        monkeypatch.setenv("RTC_CHECK_VENDAS_DIR", "/etc/area-do-sistema")
+        with pytest.raises(SystemExit, match="absoluto"):
+            sv._diretorio_de_dados()
 
 
 def test_chave_de_emissao_e_gerada_uma_vez_e_reaproveitada(monkeypatch, tmp_path):
