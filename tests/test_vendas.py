@@ -645,3 +645,31 @@ def test_pagina_de_planos_e_saude(servidor):
         pagina = resposta.read().decode()
     assert "/comprar/mensal" in pagina
     assert "R$ 1.490" in pagina
+
+
+def test_cors_liberado_so_nas_rotas_publicas(servidor):
+    # A página de status do site lê estas duas rotas do navegador.
+    for caminho in ("/saude", "/chave-publica"):
+        with urllib.request.urlopen(f"{servidor}{caminho}") as resposta:
+            assert resposta.headers["Access-Control-Allow-Origin"] == "*", caminho
+    # A página de vendas e o webhook não expõem CORS.
+    with urllib.request.urlopen(f"{servidor}/") as resposta:
+        assert resposta.headers.get("Access-Control-Allow-Origin") is None
+
+
+def test_preflight_options_responde_as_rotas_publicas(servidor):
+    endereco = urlparse(servidor)
+    conexao = http.client.HTTPConnection(endereco.hostname, endereco.port)
+    try:
+        conexao.request("OPTIONS", "/saude")
+        resposta = conexao.getresponse()
+        resposta.read()
+        assert resposta.status == 204
+        assert resposta.getheader("Access-Control-Allow-Origin") == "*"
+
+        conexao.request("OPTIONS", "/webhook/mercadopago")
+        recusada = conexao.getresponse()
+        recusada.read()
+        assert recusada.status == 404
+    finally:
+        conexao.close()
