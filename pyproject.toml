@@ -1,6 +1,6 @@
 [project]
 name = "rtc-check"
-version = "0.6.0"
+version = "0.7.0"
 description = "Auditoria local de prontidão da NF-e para a Reforma Tributária (IBS/CBS)"
 readme = "README.md"
 requires-python = ">=3.11"

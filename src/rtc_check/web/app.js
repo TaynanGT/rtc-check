@@ -233,7 +233,13 @@ function renderResult(result) {
     : `${result.skus_a_corrigir.toLocaleString("pt-BR")} SKU(s) concentram os bloqueios encontrados.`;
   const score = $("#score");
   score.querySelector("strong").textContent = `${result.pontuacao}%`;
-  score.style.background = `conic-gradient(var(--brand) ${result.pontuacao * 3.6}deg,#e5eeeb 0deg)`;
+  // Anel do medidor: gradiente cônico com a cor do estado (verde/âmbar/
+  // vermelho) e trilha translúcida, para o vidro do miolo aparecer.
+  const tomDoAnel =
+    result.pontuacao >= 80 ? "var(--ok)" : result.pontuacao >= 50 ? "var(--warn)" : "var(--danger)";
+  score.style.background =
+    `conic-gradient(from -90deg,${tomDoAnel} ${result.pontuacao * 3.6}deg,` +
+    "color-mix(in srgb,var(--ink) 12%,transparent) 0deg)";
   $("#metrics").innerHTML = [
     metric(result.arquivos_lidos, "XMLs lidos"),
     metric(result.total_itens, "Itens analisados"),

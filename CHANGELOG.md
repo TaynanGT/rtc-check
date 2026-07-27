@@ -3,6 +3,39 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento semântico.
 
+## [0.7.0] / 2026-07-27
+
+Identidade visual Liquid Glass e conectividade viva. A interface e o site
+ganham superfícies translúcidas com desfoque, profundidade por camadas e
+**tema escuro nativo**; a página de status passa a consultar o serviço de
+assinatura em tempo real, do navegador de quem visita.
+
+### Adicionado
+- Sistema de design Liquid Glass: tokens de cor únicos para claro e escuro,
+  malha de gradiente ao fundo, superfícies de vidro com realce especular,
+  botões com gradiente e resposta tátil ao toque.
+- Tema escuro completo no aplicativo e no site, seguindo o sistema
+  operacional (`prefers-color-scheme`).
+- Respeito a `prefers-reduced-transparency`: o vidro vira superfície sólida
+  para quem pede menos transparência; alto contraste continua prioritário.
+- Medidor de prontidão colorido pelo estado (verde, âmbar ou vermelho),
+  com miolo de vidro.
+- Página de status consulta ao vivo a saúde do serviço de assinatura e a
+  chave pública do emissor, com latência medida e degradação graciosa quando
+  o serviço está hibernando ou fora do ar.
+- CORS de leitura apenas em `/saude` e `/chave-publica` do servidor de
+  vendas, com preflight `OPTIONS`; nenhuma rota com dado de comprador é
+  exposta.
+
+### Corrigido
+- Textos com cor fixa (linha de confiança, prova local, indicador de etapas,
+  seleção de arquivos, cabeçalhos de tabela) ficavam ilegíveis em fundo
+  escuro; agora usam tokens e passam em contraste AA nos dois temas.
+- Cartões da fila em telas pequenas tinham fundo branco fixo, quebrando o
+  tema escuro no celular.
+- O cartão de vidro do formulário de contato do site vazava para o parágrafo
+  de abertura, que é texto corrido.
+
 ## [0.6.0] / 2026-07-26
 
 Auditoria de ponta a ponta com verificação adversarial: uma regra nova no

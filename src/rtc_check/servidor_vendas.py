@@ -36,6 +36,9 @@ from .edicao import Plano, _b64_codificar, _chave_privada, gerar_chave
 
 MAX_CORPO_WEBHOOK = 64 * 1024
 LIMITE_DE_COMPRAS_POR_MINUTO = 10
+# Só leitura de informação já pública: nada de comprador, chave privada ou
+# credencial passa por aqui.
+_ROTAS_PUBLICAS_CORS = frozenset({"/saude", "/chave-publica"})
 _TRAVA_REGISTRO = threading.Lock()
 _TRAVAS_DE_PAGAMENTO: dict[str, threading.Lock] = {}
 _TRAVA_DAS_TRAVAS = threading.Lock()
@@ -522,12 +525,24 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
             if len(args) > 1 and str(args[1]) >= "400":
                 super().log_message(formato, *args)
 
+        def _cors_publico(self) -> None:
+            """Libera leitura anônima só do que já é público (saúde e chave).
+
+            A página de status do site consulta esses dois endpoints do
+            navegador; nada aqui expõe dado de comprador ou credencial.
+            """
+            if urlparse(self.path).path in _ROTAS_PUBLICAS_CORS:
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Allow-Methods", "GET, HEAD")
+                self.send_header("Access-Control-Max-Age", "600")
+
         def _enviar(
             self, corpo: bytes, tipo: str, status: HTTPStatus = HTTPStatus.OK
         ) -> None:
             self.send_response(status)
             self.send_header("Content-Type", tipo)
             self.send_header("Content-Length", str(len(corpo)))
+            self._cors_publico()
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("X-Frame-Options", "DENY")
@@ -557,6 +572,18 @@ def _handler(config: ConfigVendas) -> type[BaseHTTPRequestHandler]:
             self.send_response(
                 HTTPStatus.OK if conhecido else HTTPStatus.NOT_FOUND
             )
+            self._cors_publico()
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def do_OPTIONS(self) -> None:  # noqa: N802
+            # Preflight do navegador para as rotas públicas de leitura.
+            self.send_response(
+                HTTPStatus.NO_CONTENT
+                if urlparse(self.path).path in _ROTAS_PUBLICAS_CORS
+                else HTTPStatus.NOT_FOUND
+            )
+            self._cors_publico()
             self.send_header("Content-Length", "0")
             self.end_headers()
 
