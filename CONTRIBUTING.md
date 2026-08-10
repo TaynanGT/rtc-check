@@ -26,3 +26,19 @@ Cada regra vive em `src/rtc_check/rules.py` e precisa de:
 
 Use CNPJ e chave de acesso fictícios. Nunca commite XML de empresa real.
 o `.gitignore` ajuda, mas ele não substitui conferir o `git diff`.
+
+## Claude Code
+
+`.claude/settings.json` e `CLAUDE.md` já vêm no repositório e valem para quem
+clona: permissões dos comandos do projeto, bloqueio de leitura em `.env`,
+`credentials/`, `xmls/` e `acervo/`, e dois subagentes (`explorador`, `revisor`).
+
+Para aplicar a mesma configuração nos seus **outros** projetos, em nível de
+usuário:
+
+```bash
+./scripts/aplicar-config-claude.sh --ver   # mostra o que seria escrito
+./scripts/aplicar-config-claude.sh         # mescla em ~/.claude/settings.json
+```
+
+O script faz backup do seu `settings.json` atual e mescla em vez de sobrescrever.

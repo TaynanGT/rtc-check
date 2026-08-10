@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "env": {
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "999999",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "5",
+    "ENABLE_TOOL_SEARCH": "true",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  },
+
+  "workflowSizeGuideline": "unrestricted",
+  "effortLevel": "high",
+  "skillListingMaxDescChars": 768,
+
+  "autoCompactEnabled": true,
+  "spinnerTipsEnabled": false,
+  "promptSuggestionEnabled": false,
+  "feedbackSurveyRate": 0,
+
+  "fallbackModel": ["default", "sonnet"],
+
+  "permissions": {
+    "allow": [
+      "Grep",
+      "Glob",
+      "Skill",
+      "TodoWrite",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)"
+    ],
+    "deny": [
+      "Read(//**/.env)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.claude/.credentials.json)",
+      "Read(//**/*.pem)",
+      "Read(//**/id_rsa*)"
+    ]
+  }
+}
