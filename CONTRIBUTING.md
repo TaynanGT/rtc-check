@@ -42,3 +42,9 @@ usuário:
 ```
 
 O script faz backup do seu `settings.json` atual e mescla em vez de sobrescrever.
+
+A config de usuário liga mensagens entre sessões e Remote Control. Se elas não
+aparecerem, procure por `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`,
+`DISABLE_TELEMETRY`, `DO_NOT_TRACK` ou `DISABLE_GROWTHBOOK` no seu shell: cada uma
+delas desliga a avaliação de feature flag de que os dois recursos dependem, e o
+sintoma é o recurso simplesmente não existir, sem erro.

@@ -3,13 +3,21 @@
 
   "env": {
     "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "999999",
-    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "5",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "999999",
+    "CLAUDE_CODE_EFFORT_LEVEL": "max",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000",
+    "MAX_MCP_OUTPUT_TOKENS": "200000",
     "ENABLE_TOOL_SEARCH": "true"
   },
 
   "workflowSizeGuideline": "unrestricted",
-  "effortLevel": "high",
-  "skillListingMaxDescChars": 768,
+  "effortLevel": "xhigh",
+
+  "autoCompactEnabled": true,
+  "autoCompactWindow": 1000000,
+  "skillListingBudgetFraction": 0.05,
+  "skillListingMaxDescChars": 1536,
+  "cleanupPeriodDays": 365,
 
   "permissions": {
     "allow": [
