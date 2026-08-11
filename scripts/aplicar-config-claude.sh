@@ -45,8 +45,9 @@ else
 fi
 
 # Mescla profunda: o que já existia é preservado, as chaves novas entram por cima.
-# `permissions.allow` e `.deny` são concatenados e deduplicados, para não descartar
-# permissões que você já tinha aprovado.
+# O `*` do jq só funde objeto; array ele substitui. Por isso `permissions.allow`,
+# `.deny` e cada evento de `hooks` são concatenados à mão — sem isso, instalar o
+# guarda de segredos apagaria os hooks que você já tivesse configurado.
 TEMPORARIO="$(mktemp)"
 jq -s '
   .[0] as $atual | .[1] as $novo |
@@ -54,6 +55,17 @@ jq -s '
   | .env = (($atual.env // {}) + ($novo.env // {}))
   | .permissions.allow = ((($atual.permissions.allow // []) + ($novo.permissions.allow // [])) | unique)
   | .permissions.deny  = ((($atual.permissions.deny  // []) + ($novo.permissions.deny  // [])) | unique)
+  | .hooks = (
+      (($atual.hooks // {}) * ($novo.hooks // {}))
+      | with_entries(
+          .key as $evento
+          | .value = (
+              ((($atual.hooks // {})[$evento]) // [])
+              + ((($novo.hooks // {})[$evento]) // [])
+              | unique
+            )
+        )
+    )
 ' "$DESTINO" "$ORIGEM" > "$TEMPORARIO"
 
 mv "$TEMPORARIO" "$DESTINO"
@@ -99,8 +111,23 @@ if [ -d "$AGENTES_ORIGEM" ]; then
   done
 fi
 
+# O hook precisa existir no disco e ser executável antes de a config apontar
+# para ele; um comando de hook que não roda falha em silêncio.
+HOOKS_ORIGEM="$RAIZ/.claude/hooks"
+HOOKS_DESTINO="$(dirname "$DESTINO")/hooks"
+
+if [ -d "$HOOKS_ORIGEM" ]; then
+  mkdir -p "$HOOKS_DESTINO"
+  for gancho in "$HOOKS_ORIGEM"/*; do
+    [ -e "$gancho" ] || continue
+    cp "$gancho" "$HOOKS_DESTINO/"
+    chmod +x "$HOOKS_DESTINO/$(basename "$gancho")"
+    echo "hook instalado: $HOOKS_DESTINO/$(basename "$gancho")"
+  done
+fi
+
 echo
-echo "confira dentro do Claude Code com:  /config  /permissions  /memory  /agents"
+echo "confira dentro do Claude Code com:  /config  /permissions  /memory  /agents  /hooks"
 echo "para voltar atrás, restaure o backup mostrado acima."
 echo
 # O ultracode é session-only por definição: a chave não é lida de settings.json.

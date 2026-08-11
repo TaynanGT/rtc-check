@@ -48,7 +48,19 @@ projetos:
 - `.claude/CLAUDE.global.example.md` → `~/.claude/CLAUDE.md`, lido no início de
   toda sessão, em qualquer projeto e com qualquer modelo;
 - `.claude/agents.global/*.md` → `~/.claude/agents/`, os subagentes genéricos
-  (`explorador` e `revisor`).
+  (`explorador` e `revisor`);
+- `.claude/hooks/*` → `~/.claude/hooks/`, mais a entrada correspondente em
+  `hooks` no `settings.json`.
+
+O `guarda-segredos.py` é um hook `PreToolUse` que barra leitura de `.env`,
+`credentials/`, `.ssh/`, `.aws/`, `*.pem`, `*.key` e chave SSH privada. Ele
+existe porque `permissions.deny` cobre a ferramenta `Read` mas **não** cobre
+`cat .env` pelo Bash — e é por aí que o segredo escapa. Arquivos `.example`,
+`.sample` e `.template` passam de propósito.
+
+Quando não reconhece nada sensível, o hook sai calado e a decisão volta para as
+suas regras de permissão. Ele nunca responde `allow`: um hook que aprova por
+conta própria desmontaria o resto da configuração.
 
 Nada que cite arquivo ou regra deste repositório vai para o nível de usuário. O
 `revisor-pagamento` fica só no projeto, e o `revisor` daqui também: escopo de

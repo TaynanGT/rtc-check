@@ -35,6 +35,20 @@
 
   "fallbackModel": ["default", "sonnet"],
 
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Edit|Write|NotebookEdit|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/guarda-segredos.py"
+          }
+        ]
+      }
+    ]
+  },
+
   "permissions": {
     "allow": [
       "Grep",
