@@ -62,3 +62,16 @@ echo "config de usuário aplicada em: $DESTINO"
 echo
 echo "confira dentro do Claude Code com:  /config    e   /permissions"
 echo "para voltar atrás, restaure o backup mostrado acima."
+echo
+# O ultracode é session-only por definição: a chave não é lida de settings.json.
+# A única forma de "sempre ligado" é o lançamento sempre pedir por ele.
+cat <<'FIM'
+Ultracode não tem forma persistente — a chave não é lida de settings.json.
+Para que toda sessão já comece com ele, coloque no seu ~/.bashrc ou ~/.zshrc:
+
+    alias claude='claude --effort ultracode'
+
+Dentro de uma sessão já aberta, use /effort ultracode.
+Sem alias, o padrão desta config é effort xhigh, que é o nível que o
+ultracode envia ao modelo — muda só a orquestração de workflows.
+FIM

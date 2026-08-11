@@ -33,7 +33,7 @@ Nunca leia, copie para relatório, log ou commit: `.env`, `credentials/`, `*.pem
 `*.key`, e principalmente `xmls/` e `acervo/` — são notas fiscais de cliente.
 `.env.example` é público e serve de referência; os valores reais, não.
 `src/rtc_check/mercadopago.py`, `checkout.py` e `servidor_vendas.py` tocam
-pagamento e licenciamento: mudança ali pede o subagente `revisor`.
+pagamento e licenciamento: mudança ali pede o subagente `revisor-pagamento`.
 
 ## Convenções
 
@@ -45,8 +45,11 @@ pagamento e licenciamento: mudança ali pede o subagente `revisor`.
 
 ## Subagentes deste projeto
 
-- `explorador` (haiku) — localizar código sem encher o contexto principal.
-- `revisor` (sonnet) — revisar o diff em contexto limpo antes do commit.
+- `explorador` (haiku, read-only) — localizar código sem encher o contexto
+  principal. Haiku não tem nível de esforço; a economia vem do modelo.
+- `revisor` (sonnet, esforço `high`) — revisar o diff antes do commit.
+- `revisor-pagamento` (opus, esforço `xhigh`) — pagamento, licenciamento e
+  webhook. Só aqui vale o modelo caro: é onde um erro custa dinheiro do cliente.
 
 Delegue busca ampla ao `explorador`: ele devolve `arquivo:linha` em vez de
 despejar arquivos no contexto.

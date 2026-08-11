@@ -48,3 +48,16 @@ aparecerem, procure por `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`,
 `DISABLE_TELEMETRY`, `DO_NOT_TRACK` ou `DISABLE_GROWTHBOOK` no seu shell: cada uma
 delas desliga a avaliação de feature flag de que os dois recursos dependem, e o
 sintoma é o recurso simplesmente não existir, sem erro.
+
+### Esforço e ultracode
+
+O padrão de sessão é `effortLevel: xhigh`. A variável `CLAUDE_CODE_EFFORT_LEVEL`
+é deliberadamente **não** definida: ela tem precedência sobre tudo, e defini-la
+anula o campo `effort` do frontmatter de cada subagente — que é justamente como
+`explorador`, `revisor` e `revisor-pagamento` rodam em níveis diferentes.
+
+Ultracode não é persistível: a chave não é lida de `settings.json` e nem
+`effortLevel` nem `CLAUDE_CODE_EFFORT_LEVEL` aceitam o valor. Use
+`claude --effort ultracode` no lançamento, ou `/effort ultracode` na sessão. Ele
+envia `xhigh` ao modelo e acrescenta a orquestração de workflows; sessões com
+ultracode ativo também ficam isentas do limite de subagentes simultâneos.
