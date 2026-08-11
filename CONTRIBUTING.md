@@ -42,6 +42,15 @@ usuário:
 ```
 
 O script faz backup do seu `settings.json` atual e mescla em vez de sobrescrever.
+Ele também instala `.claude/CLAUDE.global.example.md` como `~/.claude/CLAUDE.md`,
+que é lido em toda sessão, em todos os projetos e com qualquer modelo. Se você já
+tiver um, o script não sobrescreve: deixa a versão nova ao lado, com `.novo` no
+nome, para você comparar.
+
+Nada na configuração é preso a um modelo — `model` e `availableModels` ficam sem
+valor de propósito. Um nível de esforço que o modelo em uso não suporta cai para
+o maior nível suportado abaixo dele, então `xhigh` vira `high` em modelo que não
+tem `xhigh`, sem erro.
 
 A config de usuário liga mensagens entre sessões e Remote Control. Se elas não
 aparecerem, procure por `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`,

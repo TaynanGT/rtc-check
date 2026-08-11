@@ -59,8 +59,27 @@ jq -s '
 mv "$TEMPORARIO" "$DESTINO"
 
 echo "config de usuário aplicada em: $DESTINO"
+
+# O CLAUDE.md global é prosa, não JSON: mesclar automaticamente misturaria regras
+# de dois autores sem ninguém conferir. Só instala quando não existe nada lá.
+MEMORIA_ORIGEM="$RAIZ/.claude/CLAUDE.global.example.md"
+MEMORIA_DESTINO="$(dirname "$DESTINO")/CLAUDE.md"
+
+if [ -f "$MEMORIA_ORIGEM" ]; then
+  if [ ! -f "$MEMORIA_DESTINO" ]; then
+    cp "$MEMORIA_ORIGEM" "$MEMORIA_DESTINO"
+    echo "instruções globais instaladas em: $MEMORIA_DESTINO"
+  else
+    cp "$MEMORIA_ORIGEM" "$MEMORIA_DESTINO.novo"
+    echo
+    echo "você já tem um $MEMORIA_DESTINO — não sobrescrevi."
+    echo "a versão nova ficou em $MEMORIA_DESTINO.novo; compare com:"
+    echo "    diff '$MEMORIA_DESTINO' '$MEMORIA_DESTINO.novo'"
+  fi
+fi
+
 echo
-echo "confira dentro do Claude Code com:  /config    e   /permissions"
+echo "confira dentro do Claude Code com:  /config    /permissions    /memory"
 echo "para voltar atrás, restaure o backup mostrado acima."
 echo
 # O ultracode é session-only por definição: a chave não é lida de settings.json.
