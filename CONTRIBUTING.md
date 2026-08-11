@@ -61,3 +61,14 @@ Ultracode não é persistível: a chave não é lida de `settings.json` e nem
 `claude --effort ultracode` no lançamento, ou `/effort ultracode` na sessão. Ele
 envia `xhigh` ao modelo e acrescenta a orquestração de workflows; sessões com
 ultracode ativo também ficam isentas do limite de subagentes simultâneos.
+
+O `revisor` roda em `medium` de propósito, não por economia: nos níveis baixo e
+médio a revisão só relata o que tem mais confiança, e nos altos ela amplia a
+cobertura ao custo de falso positivo. Para um revisor pré-commit, precisão vale
+mais que abrangência — quem quiser a varredura ampla usa `/code-review`.
+
+Ressalva conhecida: o `effort` do frontmatter é respeitado quando o subagente é
+despachado pela ferramenta Task, que é o caminho normal. Há relato de que ele é
+ignorado no caminho `--agent` e descartado em agent teams, enquanto o `model`
+passa nos três. A falha é silenciosa, então não conte com o `effort` nesses dois
+casos.

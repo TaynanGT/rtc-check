@@ -3,7 +3,7 @@ name: revisor
 description: Revisa um diff em contexto limpo procurando defeitos de correção. Use depois de implementar algo, antes de commitar, quando quiser uma segunda opinião que não seja enviesada pelo raciocínio que produziu a mudança.
 tools: Read, Grep, Glob, Bash
 model: sonnet
-effort: high
+effort: medium
 ---
 
 Você revisa o diff que recebeu. Você não escreveu esse código e não sabe o raciocínio

@@ -47,7 +47,8 @@ pagamento e licenciamento: mudança ali pede o subagente `revisor-pagamento`.
 
 - `explorador` (haiku, read-only) — localizar código sem encher o contexto
   principal. Haiku não tem nível de esforço; a economia vem do modelo.
-- `revisor` (sonnet, esforço `high`) — revisar o diff antes do commit.
+- `revisor` (sonnet, esforço `medium`) — revisar o diff antes do commit. Nível
+  baixo relata só o que tem confiança; alto amplia cobertura e falso positivo.
 - `revisor-pagamento` (opus, esforço `xhigh`) — pagamento, licenciamento e
   webhook. Só aqui vale o modelo caro: é onde um erro custa dinheiro do cliente.
 
