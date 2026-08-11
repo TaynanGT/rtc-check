@@ -66,7 +66,7 @@ MEMORIA_ORIGEM="$RAIZ/.claude/CLAUDE.global.example.md"
 MEMORIA_DESTINO="$(dirname "$DESTINO")/CLAUDE.md"
 
 if [ -f "$MEMORIA_ORIGEM" ]; then
-  if [ ! -f "$MEMORIA_DESTINO" ]; then
+  if [ ! -f "$MEMORIA_DESTINO" ] || cmp -s "$MEMORIA_ORIGEM" "$MEMORIA_DESTINO"; then
     cp "$MEMORIA_ORIGEM" "$MEMORIA_DESTINO"
     echo "instruções globais instaladas em: $MEMORIA_DESTINO"
   else
@@ -78,8 +78,29 @@ if [ -f "$MEMORIA_ORIGEM" ]; then
   fi
 fi
 
+# Subagentes de nível de usuário valem em todos os projetos. Só entram aqui os
+# genéricos: os que citam arquivo ou regra deste repositório ficam no projeto,
+# onde o escopo de projeto tem precedência sobre o de usuário de qualquer forma.
+AGENTES_ORIGEM="$RAIZ/.claude/agents.global"
+AGENTES_DESTINO="$(dirname "$DESTINO")/agents"
+
+if [ -d "$AGENTES_ORIGEM" ]; then
+  mkdir -p "$AGENTES_DESTINO"
+  for agente in "$AGENTES_ORIGEM"/*.md; do
+    [ -e "$agente" ] || continue
+    nome="$(basename "$agente")"
+    if [ -f "$AGENTES_DESTINO/$nome" ] && ! cmp -s "$agente" "$AGENTES_DESTINO/$nome"; then
+      cp "$agente" "$AGENTES_DESTINO/$nome.novo"
+      echo "subagente $nome já existe e difere; versão nova em $nome.novo"
+    else
+      cp "$agente" "$AGENTES_DESTINO/$nome"
+      echo "subagente global instalado: $AGENTES_DESTINO/$nome"
+    fi
+  done
+fi
+
 echo
-echo "confira dentro do Claude Code com:  /config    /permissions    /memory"
+echo "confira dentro do Claude Code com:  /config  /permissions  /memory  /agents"
 echo "para voltar atrás, restaure o backup mostrado acima."
 echo
 # O ultracode é session-only por definição: a chave não é lida de settings.json.

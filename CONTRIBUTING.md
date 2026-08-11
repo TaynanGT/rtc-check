@@ -42,10 +42,22 @@ usuário:
 ```
 
 O script faz backup do seu `settings.json` atual e mescla em vez de sobrescrever.
-Ele também instala `.claude/CLAUDE.global.example.md` como `~/.claude/CLAUDE.md`,
-que é lido em toda sessão, em todos os projetos e com qualquer modelo. Se você já
-tiver um, o script não sobrescreve: deixa a versão nova ao lado, com `.novo` no
-nome, para você comparar.
+Ele também instala, no nível de usuário — ou seja, valendo em **todos** os seus
+projetos:
+
+- `.claude/CLAUDE.global.example.md` → `~/.claude/CLAUDE.md`, lido no início de
+  toda sessão, em qualquer projeto e com qualquer modelo;
+- `.claude/agents.global/*.md` → `~/.claude/agents/`, os subagentes genéricos
+  (`explorador` e `revisor`).
+
+Nada que cite arquivo ou regra deste repositório vai para o nível de usuário. O
+`revisor-pagamento` fica só no projeto, e o `revisor` daqui também: escopo de
+projeto tem precedência sobre o de usuário, então dentro do rtc-check vale a
+versão específica e fora dele vale a genérica.
+
+Onde você já tiver um arquivo diferente, o script não sobrescreve: deixa a versão
+nova ao lado, com `.novo` no nome, para você comparar. Quando o conteúdo é
+idêntico ele apenas reinstala, sem criar `.novo`.
 
 Nada na configuração é preso a um modelo — `model` e `availableModels` ficam sem
 valor de propósito. Um nível de esforço que o modelo em uso não suporta cai para
