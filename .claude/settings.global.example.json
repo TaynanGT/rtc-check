@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "env": {
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "999999",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "999999",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000",
+    "MAX_MCP_OUTPUT_TOKENS": "200000",
+    "ENABLE_TOOL_SEARCH": "true",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  },
+
+  "workflowSizeGuideline": "unrestricted",
+  "effortLevel": "xhigh",
+  "disableAgentView": false,
+
+  "autoCompactEnabled": true,
+  "autoCompactWindow": 1000000,
+  "skillListingBudgetFraction": 0.05,
+  "skillListingMaxDescChars": 1536,
+  "cleanupPeriodDays": 365,
+
+  "crossSessionInbound": "accept",
+  "isolatePeerMachines": false,
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
+  "inputNeededNotifEnabled": true,
+  "sessionUrl": true,
+  "dialogExpiry": "never",
+  "askUserQuestionTimeout": "never",
+
+  "spinnerTipsEnabled": false,
+  "promptSuggestionEnabled": false,
+  "feedbackSurveyRate": 0,
+
+  "fallbackModel": ["default", "sonnet"],
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Edit|Write|NotebookEdit|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/guarda-segredos.py"
+          }
+        ]
+      }
+    ]
+  },
+
+  "permissions": {
+    "allow": [
+      "Grep",
+      "Glob",
+      "Skill",
+      "TodoWrite",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)"
+    ],
+    "deny": [
+      "Read(//**/.env)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.claude/.credentials.json)",
+      "Read(//**/*.pem)",
+      "Read(//**/id_rsa*)"
+    ]
+  }
+}

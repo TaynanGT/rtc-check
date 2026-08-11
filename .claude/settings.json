@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "env": {
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "999999",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "999999",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000",
+    "MAX_MCP_OUTPUT_TOKENS": "200000",
+    "ENABLE_TOOL_SEARCH": "true"
+  },
+
+  "workflowSizeGuideline": "unrestricted",
+  "effortLevel": "xhigh",
+
+  "autoCompactEnabled": true,
+  "autoCompactWindow": 1000000,
+  "skillListingBudgetFraction": 0.05,
+  "skillListingMaxDescChars": 1536,
+  "cleanupPeriodDays": 365,
+
+  "permissions": {
+    "allow": [
+      "Read(./**)",
+      "Grep",
+      "Glob",
+      "Skill",
+      "TodoWrite",
+
+      "Bash(uv venv:*)",
+      "Bash(uv pip install:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv lock:*)",
+      "Bash(uv build:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run ruff:*)",
+      "Bash(uv run mypy:*)",
+      "Bash(uv run rtc-check:*)",
+      "Bash(uv run python -c:*)",
+      "Bash(uv run python scripts/validate_site.py:*)",
+      "Bash(uv run playwright install:*)",
+      "Bash(uvx --from bandit bandit:*)",
+      "Bash(uvx pip-audit:*)",
+
+      "Bash(node --check:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Bash(mypy:*)",
+
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+
+      "WebFetch(domain:code.claude.com)",
+      "WebFetch(domain:docs.python.org)",
+      "WebFetch(domain:www.gov.br)"
+    ],
+
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.production)",
+      "Read(./credentials/**)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)",
+      "Read(./xmls/**)",
+      "Read(./acervo/**)",
+      "Read(./config-do-ci/**)",
+      "Read(./output/**)"
+    ]
+  }
+}

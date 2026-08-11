@@ -26,3 +26,82 @@ Cada regra vive em `src/rtc_check/rules.py` e precisa de:
 
 Use CNPJ e chave de acesso fictícios. Nunca commite XML de empresa real.
 o `.gitignore` ajuda, mas ele não substitui conferir o `git diff`.
+
+## Claude Code
+
+`.claude/settings.json` e `CLAUDE.md` já vêm no repositório e valem para quem
+clona: permissões dos comandos do projeto, bloqueio de leitura em `.env`,
+`credentials/`, `xmls/` e `acervo/`, e dois subagentes (`explorador`, `revisor`).
+
+Para aplicar a mesma configuração nos seus **outros** projetos, em nível de
+usuário:
+
+```bash
+./scripts/aplicar-config-claude.sh --ver   # mostra o que seria escrito
+./scripts/aplicar-config-claude.sh         # mescla em ~/.claude/settings.json
+```
+
+O script faz backup do seu `settings.json` atual e mescla em vez de sobrescrever.
+Ele também instala, no nível de usuário — ou seja, valendo em **todos** os seus
+projetos:
+
+- `.claude/CLAUDE.global.example.md` → `~/.claude/CLAUDE.md`, lido no início de
+  toda sessão, em qualquer projeto e com qualquer modelo;
+- `.claude/agents.global/*.md` → `~/.claude/agents/`, os subagentes genéricos
+  (`explorador` e `revisor`);
+- `.claude/hooks/*` → `~/.claude/hooks/`, mais a entrada correspondente em
+  `hooks` no `settings.json`.
+
+O `guarda-segredos.py` é um hook `PreToolUse` que barra leitura de `.env`,
+`credentials/`, `.ssh/`, `.aws/`, `*.pem`, `*.key` e chave SSH privada. Ele
+existe porque `permissions.deny` cobre a ferramenta `Read` mas **não** cobre
+`cat .env` pelo Bash — e é por aí que o segredo escapa. Arquivos `.example`,
+`.sample` e `.template` passam de propósito.
+
+Quando não reconhece nada sensível, o hook sai calado e a decisão volta para as
+suas regras de permissão. Ele nunca responde `allow`: um hook que aprova por
+conta própria desmontaria o resto da configuração.
+
+Nada que cite arquivo ou regra deste repositório vai para o nível de usuário. O
+`revisor-pagamento` fica só no projeto, e o `revisor` daqui também: escopo de
+projeto tem precedência sobre o de usuário, então dentro do rtc-check vale a
+versão específica e fora dele vale a genérica.
+
+Onde você já tiver um arquivo diferente, o script não sobrescreve: deixa a versão
+nova ao lado, com `.novo` no nome, para você comparar. Quando o conteúdo é
+idêntico ele apenas reinstala, sem criar `.novo`.
+
+Nada na configuração é preso a um modelo — `model` e `availableModels` ficam sem
+valor de propósito. Um nível de esforço que o modelo em uso não suporta cai para
+o maior nível suportado abaixo dele, então `xhigh` vira `high` em modelo que não
+tem `xhigh`, sem erro.
+
+A config de usuário liga mensagens entre sessões e Remote Control. Se elas não
+aparecerem, procure por `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`,
+`DISABLE_TELEMETRY`, `DO_NOT_TRACK` ou `DISABLE_GROWTHBOOK` no seu shell: cada uma
+delas desliga a avaliação de feature flag de que os dois recursos dependem, e o
+sintoma é o recurso simplesmente não existir, sem erro.
+
+### Esforço e ultracode
+
+O padrão de sessão é `effortLevel: xhigh`. A variável `CLAUDE_CODE_EFFORT_LEVEL`
+é deliberadamente **não** definida: ela tem precedência sobre tudo, e defini-la
+anula o campo `effort` do frontmatter de cada subagente — que é justamente como
+`explorador`, `revisor` e `revisor-pagamento` rodam em níveis diferentes.
+
+Ultracode não é persistível: a chave não é lida de `settings.json` e nem
+`effortLevel` nem `CLAUDE_CODE_EFFORT_LEVEL` aceitam o valor. Use
+`claude --effort ultracode` no lançamento, ou `/effort ultracode` na sessão. Ele
+envia `xhigh` ao modelo e acrescenta a orquestração de workflows; sessões com
+ultracode ativo também ficam isentas do limite de subagentes simultâneos.
+
+O `revisor` roda em `medium` de propósito, não por economia: nos níveis baixo e
+médio a revisão só relata o que tem mais confiança, e nos altos ela amplia a
+cobertura ao custo de falso positivo. Para um revisor pré-commit, precisão vale
+mais que abrangência — quem quiser a varredura ampla usa `/code-review`.
+
+Ressalva conhecida: o `effort` do frontmatter é respeitado quando o subagente é
+despachado pela ferramenta Task, que é o caminho normal. Há relato de que ele é
+ignorado no caminho `--agent` e descartado em agent teams, enquanto o `model`
+passa nos três. A falha é silenciosa, então não conte com o `effort` nesses dois
+casos.
