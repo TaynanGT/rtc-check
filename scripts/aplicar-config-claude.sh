@@ -118,8 +118,12 @@ HOOKS_DESTINO="$(dirname "$DESTINO")/hooks"
 
 if [ -d "$HOOKS_ORIGEM" ]; then
   mkdir -p "$HOOKS_DESTINO"
+  # Só arquivo: um __pycache__ deixado por teste faria o cp falhar e, com
+  # `set -e`, abortaria a instalação no meio — deixando a config apontando para
+  # um hook que não foi copiado.
   for gancho in "$HOOKS_ORIGEM"/*; do
-    [ -e "$gancho" ] || continue
+    [ -f "$gancho" ] || continue
+    case "$gancho" in *.pyc | *~) continue ;; esac
     cp "$gancho" "$HOOKS_DESTINO/"
     chmod +x "$HOOKS_DESTINO/$(basename "$gancho")"
     echo "hook instalado: $HOOKS_DESTINO/$(basename "$gancho")"
